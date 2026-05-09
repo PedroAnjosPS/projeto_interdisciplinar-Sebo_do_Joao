@@ -1,11 +1,13 @@
 package model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public class Cliente extends Usuario {
     // Atributos
     private String cpf;
     private LocalDateTime dataNascimento;
+    private ArrayList<Pedido> pedidos;
 
     // Construtores
     public Cliente() {}
@@ -31,5 +33,9 @@ public class Cliente extends Usuario {
 
     public void setDataNascimento(LocalDateTime dataNascimento) {
         this.dataNascimento = dataNascimento;
+    }
+
+    public ArrayList<Pedido> getPedidos() {
+        return pedidos;
     }
 }

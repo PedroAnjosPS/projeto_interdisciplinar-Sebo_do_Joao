@@ -1,8 +1,12 @@
 package model;
 
+import java.util.ArrayList;
+
 public class Funcionario extends Usuario {
     // Atributos
     private String codigoFuncionario;
+    private ArrayList<Pedido> pedidos;
+    private ArrayList<Produto> produtos;
 
     // Construtores
     public Funcionario() {}
@@ -19,5 +23,13 @@ public class Funcionario extends Usuario {
 
     public void setCodigoFuncionario(String codigoFuncionario) {
         this.codigoFuncionario = codigoFuncionario;
+    }
+
+    public ArrayList<Pedido> getPedidos() {
+        return pedidos;
+    }
+
+    public ArrayList<Produto> getProdutos() {
+        return produtos;
     }
 }

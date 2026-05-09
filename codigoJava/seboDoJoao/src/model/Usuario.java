@@ -99,4 +99,17 @@ public class Usuario {
     public void setStatus(StatusUsuario status) {
         this.status = status;
     }
+
+    // toString
+    @Override
+    public String toString() {
+        return "Id: " + id
+                + "\nNome: " + nome
+                + "\nEmail: " + email
+                + "\nSenha: " + senha
+                + "\nTelefone: " + telefone
+                + "\nEndereço: " + logradouro
+                + ", " + bairro + " - " + cep
+                + "\nStatus: " + status;
+    }
 }

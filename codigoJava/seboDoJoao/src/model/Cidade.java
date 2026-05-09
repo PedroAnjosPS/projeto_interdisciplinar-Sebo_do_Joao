@@ -1,10 +1,13 @@
 package model;
 
+import java.util.ArrayList;
+
 public class Cidade {
     // Atributos
     private int id;
     private String nome;
     private UF uf;
+    private ArrayList<CEP> ceps;
 
     // Construtores
     public Cidade() {}
@@ -38,5 +41,9 @@ public class Cidade {
 
     public void setUf(UF uf) {
         this.uf = uf;
+    }
+
+    public ArrayList<CEP> getCeps() {
+        return ceps;
     }
 }

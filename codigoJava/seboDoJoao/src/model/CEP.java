@@ -2,23 +2,23 @@ package model;
 
 public class CEP {
     // Atributos
-    private int nr;
+    private String nr;
     private Cidade cidade;
 
     // Construtores
     public CEP() {}
 
-    public CEP(int nr, Cidade cidade) {
+    public CEP(String nr, Cidade cidade) {
         this.nr = nr;
         this.cidade = cidade;
     }
 
     // Métodos acessores e modificadores
-    public int getNr() {
+    public String getNr() {
         return nr;
     }
 
-    public void setNr(int nr) {
+    public void setNr(String nr) {
         this.nr = nr;
     }
 
@@ -28,5 +28,12 @@ public class CEP {
 
     public void setCidade(Cidade cidade) {
         this.cidade = cidade;
+    }
+
+    // toString
+
+    @Override
+    public String toString() {
+        return cidade.getNome() + "/" + cidade.getUf().getSigla() + ", " + nr;
     }
 }

@@ -1,9 +1,12 @@
 package model;
 
+import java.util.ArrayList;
+
 public class UF {
     // Atributos
     private String sigla;
     private String nome;
+    private ArrayList<Cidade> cidades;
 
     // Construtores
     public UF() {}
@@ -28,5 +31,9 @@ public class UF {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public ArrayList<Cidade> getCidades() {
+        return cidades;
     }
 }

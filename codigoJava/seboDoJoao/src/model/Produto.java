@@ -9,7 +9,7 @@ public class Produto {
     private String descricao;
     private double preco;
     private int estoque;
-    private int tipo;
+    private String tipo;
     private Categoria categoria;
     private Genero genero;
     private ArrayList<ImagemProduto> imagens;
@@ -18,7 +18,7 @@ public class Produto {
     // Construtores
     public Produto() {}
 
-    public Produto(int id, String nome, String descricao, double preco, int estoque, int tipo, Categoria categoria, Genero genero, StatusProduto status) {
+    public Produto(int id, String nome, String descricao, double preco, int estoque, String tipo, Categoria categoria, Genero genero, StatusProduto status) {
         this.id = id;
         this.nome = nome;
         this.descricao = descricao;
@@ -71,11 +71,11 @@ public class Produto {
         this.estoque = estoque;
     }
 
-    public int getTipo() {
+    public String getTipo() {
         return tipo;
     }
 
-    public void setTipo(int tipo) {
+    public void setTipo(String tipo) {
         this.tipo = tipo;
     }
 
@@ -106,4 +106,35 @@ public class Produto {
     public void setStatus(StatusProduto status) {
         this.status = status;
     }
+
+    public void adicionarImagem(ImagemProduto imagem) {
+        imagens.add(imagem);
+    }
+
+    public void removerImagem(ImagemProduto imagem) {
+        imagens.remove(imagem);
+    }
+
+    public void mostrarImagens() {
+        for (ImagemProduto imagem : imagens) {
+            System.out.println(imagem);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Id: " + id 
+                + "\nNome: " + nome  
+                + "\nDescrição: " + descricao  
+                + "\nPreço: " + preco 
+                + "\nEstoque: " + estoque 
+                + "\nTipo: " + tipo 
+                + "\nCategoria: " + categoria 
+                + "\nGênero: " + genero 
+                + "\nImagens: " + imagens
+                + "\nStatus: " + status;
+    }
+
+    // toString
+    
 }

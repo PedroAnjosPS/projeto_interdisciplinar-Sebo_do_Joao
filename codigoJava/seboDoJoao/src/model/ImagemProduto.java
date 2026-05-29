@@ -3,15 +3,15 @@ package model;
 public class ImagemProduto {
     // Atributos
     private int id;
-    private String url;
+    private String caminho;
     private Produto produto;
 
     // Construtores
     public ImagemProduto() {}
 
-    public ImagemProduto(int id, String url, Produto produto) {
+    public ImagemProduto(int id, String caminho, Produto produto) {
         this.id = id;
-        this.url = url;
+        this.caminho = caminho;
         this.produto = produto;
     }
 
@@ -24,12 +24,12 @@ public class ImagemProduto {
         this.id = id;
     }
 
-    public String getUrl() {
-        return url;
+    public String getCaminho() {
+        return caminho;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setUrl(String caminho) {
+        this.caminho = caminho;
     }
 
     public Produto getProduto() {
@@ -38,5 +38,15 @@ public class ImagemProduto {
 
     public void setProduto(Produto produto) {
         this.produto = produto;
+    }
+
+    // toString
+    @Override
+    public String toString() {
+        return "Imagens do Produto: {"
+        + "\n\tId: " + id 
+        + "\n\tCaminho: " + caminho 
+        + "\n\tId do produto: " + produto.getId() 
+        + "\n}";
     }
 }

@@ -43,10 +43,10 @@ public class ImagemProduto {
     // toString
     @Override
     public String toString() {
-        return "Imagens do Produto: {"
-        + "\n\tId: " + id 
-        + "\n\tCaminho: " + caminho 
-        + "\n\tId do produto: " + produto.getId() 
-        + "\n}";
+        return "\n\t{"
+        + "\n\t\tId: " + id
+        + "\n\t\tCaminho: " + caminho
+        + "\n\t\tId do produto: " + produto.getId()
+        + "\n\t}";
     }
 }

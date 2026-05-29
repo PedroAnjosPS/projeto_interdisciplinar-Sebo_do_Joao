@@ -7,7 +7,7 @@ public class Cliente extends Usuario {
     // Atributos
     private String cpf;
     private LocalDate dataNascimento;
-    private ArrayList<Pedido> pedidos;
+    private ArrayList<Pedido> pedidos = new ArrayList<>();
 
     // Construtores
     public Cliente() {}
@@ -39,13 +39,20 @@ public class Cliente extends Usuario {
         return pedidos;
     }
 
+    public void adicionarPedido(Pedido pedido) {
+        pedidos.add(pedido);
+    }
+
+    public void removerPedido(Pedido pedido) {
+        pedidos.remove(pedido);
+    }
+
     // toString
 
     @Override
     public String toString() {
         return super.toString()
                 + "\nCPF: " + cpf
-                + "\nData de Nascimento: " + dataNascimento
-                + "\nId dos pedidos: ";
+                + "\nData de Nascimento: " + dataNascimento;
     }
 }

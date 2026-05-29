@@ -12,7 +12,7 @@ public class Produto {
     private String tipo;
     private Categoria categoria;
     private Genero genero;
-    private ArrayList<ImagemProduto> imagens;
+    private ArrayList<ImagemProduto> imagens = new ArrayList<>();
     private StatusProduto status;
 
     // Construtores
@@ -115,10 +115,20 @@ public class Produto {
         imagens.remove(imagem);
     }
 
-    public void mostrarImagens() {
+    public String mostrarImagens() {
+        String dadosImagemProduto = "";
+        int i = 0;
         for (ImagemProduto imagem : imagens) {
-            System.out.println(imagem);
+            if (i == 0) {
+                dadosImagemProduto += imagem.toString() + ",";
+            } else {
+                dadosImagemProduto += imagem.toString();
+            }
+
+            i++;
         }
+
+        return dadosImagemProduto;
     }
 
     @Override
@@ -126,12 +136,12 @@ public class Produto {
         return "Id: " + id 
                 + "\nNome: " + nome  
                 + "\nDescrição: " + descricao  
-                + "\nPreço: " + preco 
+                + "\nPreço: " + "R$" +String.format("%.2f", preco)
                 + "\nEstoque: " + estoque 
                 + "\nTipo: " + tipo 
                 + "\nCategoria: " + categoria 
                 + "\nGênero: " + genero 
-                + "\nImagens: " + imagens
+                + "\nImagens do Produto: " + mostrarImagens()
                 + "\nStatus: " + status;
     }
 

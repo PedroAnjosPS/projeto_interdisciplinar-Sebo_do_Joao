@@ -1,6 +1,8 @@
 package app;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import model.*;
 
 public class Main {
@@ -16,14 +18,37 @@ public class Main {
         CEP cep2 = new CEP("89013-445", cidade);
 
         // Instanciando o cliente
-        Usuario cliente1 = new Cliente(1, "Marcelo", "marcelo@gmail.com", "marc123", "(11)11111-1111", "bairro Maria Gabriela", "rua José Fagundes", cep1, StatusUsuario.ATIVO, "222.222.222-22", LocalDate.of(2000, 10, 3));
+        Usuario cliente1 = new Cliente(
+                1,
+                "Marcelo",
+                "marcelo@gmail.com",
+                "marc123",
+                "(11)11111-1111",
+                "bairro Maria Gabriela",
+                "rua José Fagundes",
+                cep1,
+                StatusUsuario.ATIVO,
+                "222.222.222-22",
+                LocalDate.of(2000, 10, 3)
+        );
 
-        System.out.println("Cliente cadastrado:\n" + cliente1);
+        System.out.println("======= CLIENTE CADASTRADO =======\n" + cliente1);
 
         // Instanciando o funcionário
-        Usuario funcionario1 = new Funcionario(1, "Natália", "natalia@gmail.com", "nat456", "(22)22222-2222", "bairro do Limoeiro", "rua Daiana Monique", cep2, StatusUsuario.ATIVO, "8906");
+        Usuario funcionario1 = new Funcionario(
+                1,
+                "Natália",
+                "natalia@gmail.com",
+                "nat456",
+                "(22)22222-2222",
+                "bairro do Limoeiro",
+                "rua Daiana Monique",
+                cep2,
+                StatusUsuario.ATIVO,
+                "8906"
+        );
 
-        System.out.println("\nFuncionário cadastrado:\n" + funcionario1);
+        System.out.println("\n\n======= FUNCIONÁRIO CADASTRADO =======\n" + funcionario1);
 
         // Instanciando a categoria
         Categoria categoria1 = new Categoria(1, "Livros");
@@ -41,16 +66,47 @@ public class Main {
         Genero genero7 = new Genero(7, "Rap");
 
         // Instanciando o produto
-        Produto produto1 = new Produto(1, "Harry Potter e a Ordem da Fênix", "Primeiro livro da saga britânica infanto-juvenil, Harry Potter", 45.00, 100, "Novo", categoria1, genero1, StatusProduto.DISPONIVEL);
+        Produto produto1 = new Produto(
+                1,
+                "Harry Potter e a Ordem da Fênix",
+                "Primeiro livro da saga britânica infanto-juvenil, Harry Potter",
+                45.00,
+                100,
+                "Novo",
+                categoria1,
+                genero1,
+                StatusProduto.DISPONIVEL
+        );
 
         // Instanciando imagens do produto
-        ImagemProduto imagem1 = new ImagemProduto(1, "assets/images/imagem1.png", produto1);
-        ImagemProduto imagem2 = new ImagemProduto(2, "assets/images/imagem2.png", produto1);
+        ImagemProduto imagem1 = new ImagemProduto(
+                1,
+                "assets/images/imagem1.png",
+                produto1
+        );
+
+        ImagemProduto imagem2 = new ImagemProduto(
+                2,
+                "assets/images/imagem2.png",
+                produto1
+        );
 
         // Adicionando as imagens ao produto cadastrado
         produto1.adicionarImagem(imagem1);
         produto1.adicionarImagem(imagem2);
 
-        System.out.println("\nProduto cadastrado:\n" + produto1);
+        System.out.println("\n\n======= PRODUTO CADASTRADO =======\n" + produto1);
+
+        // Instanciando a entrega
+        Entrega entrega1 = new Entrega(
+                1,
+                "Correios",
+                "https://rastreamento.correios.com.br/app/index.php",
+                "BR123456789BR",
+                LocalDateTime.of(2024, 5, 10, 14, 30),
+                LocalDateTime.of(2024, 5, 15, 10, 15),
+                LocalDateTime.of(2024, 5, 18, 18, 0),
+                StatusEntrega.ENTREGUE
+        );
     }
 }

@@ -33,9 +33,9 @@ public class Genero {
     // toString
     @Override
     public String toString() {
-        return "Gênero {" +
-                "\n\tid: " + id +
-                "\n\tnome: " + nome +
-                "\n}";
+        return "\n\t{" +
+                "\n\t\tid: " + id +
+                "\n\t\tnome: " + nome +
+                "\n\t}";
     }
 }

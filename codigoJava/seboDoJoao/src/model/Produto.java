@@ -107,6 +107,7 @@ public class Produto {
         this.status = status;
     }
 
+    // Outros métodos
     public void adicionarImagem(ImagemProduto imagem) {
         imagens.add(imagem);
     }
@@ -141,7 +142,7 @@ public class Produto {
                 + "\nTipo: " + tipo 
                 + "\nCategoria: " + categoria 
                 + "\nGênero: " + genero 
-                + "\nImagens do Produto: " + mostrarImagens()
+                + "\nImagens do produto: " + mostrarImagens()
                 + "\nStatus: " + status;
     }
 

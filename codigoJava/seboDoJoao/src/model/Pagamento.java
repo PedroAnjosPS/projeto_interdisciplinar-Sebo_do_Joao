@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Pagamento {
@@ -8,15 +9,15 @@ public class Pagamento {
     private double valor;
     private int numeroParcela;
     private int quantidadeParcelas;
-    private LocalDateTime dataPagamento;
-    private LocalDateTime dataVencimento;
+    private LocalDate dataPagamento;
+    private LocalDate dataVencimento;
     private StatusPagamento status;
     private Pedido pedido;
 
     // Construtores
     public Pagamento() {}
 
-    public Pagamento(int id, double valor, int numeroParcela, int quantidadeParcelas, LocalDateTime dataPagamento, LocalDateTime dataVencimento, StatusPagamento status, Pedido pedido) {
+    public Pagamento(int id, double valor, int numeroParcela, int quantidadeParcelas, LocalDate dataPagamento, LocalDate dataVencimento, StatusPagamento status, Pedido pedido) {
         this.id = id;
         this.valor = valor;
         this.numeroParcela = numeroParcela;
@@ -60,19 +61,19 @@ public class Pagamento {
         this.quantidadeParcelas = quantidadeParcelas;
     }
 
-    public LocalDateTime getDataPagamento() {
+    public LocalDate getDataPagamento() {
         return dataPagamento;
     }
 
-    public void setDataPagamento(LocalDateTime dataPagamento) {
+    public void setDataPagamento(LocalDate dataPagamento) {
         this.dataPagamento = dataPagamento;
     }
 
-    public LocalDateTime getDataVencimento() {
+    public LocalDate getDataVencimento() {
         return dataVencimento;
     }
 
-    public void setDataVencimento(LocalDateTime dataVencimento) {
+    public void setDataVencimento(LocalDate dataVencimento) {
         this.dataVencimento = dataVencimento;
     }
 
@@ -90,5 +91,20 @@ public class Pagamento {
 
     public void setPedido(Pedido pedido) {
         this.pedido = pedido;
+    }
+
+    // toString
+    @Override
+    public String toString() {
+        return "\n\t{"
+                + "\n\t\tId: " + id
+                + "\n\t\tValor: R$" + String.format("%.2f", valor)
+                + "\n\t\tNúmero da parcela: " + numeroParcela
+                + "\n\t\tQuantidade de parcelas: " + quantidadeParcelas
+                + "\n\t\tData de pagamento: " + dataPagamento
+                + "\n\t\tData de vencimento: " + dataVencimento
+                + "\n\t\tStatus: " + status
+                + "\n\t\tId do pedido: " + pedido.getId()
+                + "\n\t}";
     }
 }

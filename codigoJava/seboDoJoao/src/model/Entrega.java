@@ -91,4 +91,19 @@ public class Entrega {
     public void setStatus(StatusEntrega status) {
         this.status = status;
     }
+
+    // toString
+    @Override
+    public String toString() {
+        return "\n\t{" +
+                "\n\t\tId: " + id
+                + "\n\t\tTransportadora: " + transportadora
+                + "\n\t\tLink de rastreio: " + linkRastreio
+                + "\n\t\tCódigo de rastreio: " + codigoRastreio
+                + "\n\t\tData de postagem: " + dataPostagem
+                + "\n\t\tData de entrega: " + dataEntrega
+                + "\n\t\tData de previsão de entrega: " + dataPrevisaoEntrega
+                + "\n\t\tStatus: " + status
+                + "\n\t}";
+    }
 }

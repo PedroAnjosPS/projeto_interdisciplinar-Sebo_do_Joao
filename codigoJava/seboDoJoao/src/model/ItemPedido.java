@@ -49,4 +49,15 @@ public class ItemPedido {
     public void setPrecoUnitario(double precoUnitario) {
         this.precoUnitario = precoUnitario;
     }
+
+    // toString
+    @Override
+    public String toString() {
+        return "\n\t{" +
+                "\n\t\tId do pedido: " + pedido.getId() +
+                "\n\t\tProduto: " + produto.getNome() +
+                "\n\t\tQuantidade: " + quantidade +
+                "\n\t\tPreço unitário: R$" + String.format("%.2f", precoUnitario) +
+                "\n\t}";
+    }
 }

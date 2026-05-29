@@ -18,7 +18,7 @@ public class Main {
         CEP cep2 = new CEP("89013-445", cidade);
 
         // Instanciando o cliente
-        Usuario cliente1 = new Cliente(
+        Cliente cliente1 = new Cliente(
                 1,
                 "Marcelo",
                 "marcelo@gmail.com",
@@ -35,7 +35,7 @@ public class Main {
         System.out.println("======= CLIENTE CADASTRADO =======\n" + cliente1);
 
         // Instanciando o funcionário
-        Usuario funcionario1 = new Funcionario(
+        Funcionario funcionario1 = new Funcionario(
                 1,
                 "Natália",
                 "natalia@gmail.com",
@@ -103,10 +103,76 @@ public class Main {
                 "Correios",
                 "https://rastreamento.correios.com.br/app/index.php",
                 "BR123456789BR",
-                LocalDateTime.of(2024, 5, 10, 14, 30),
-                LocalDateTime.of(2024, 5, 15, 10, 15),
-                LocalDateTime.of(2024, 5, 18, 18, 0),
+                LocalDateTime.of(2026, 3, 24, 14, 30),
+                LocalDateTime.of(2026, 4, 15, 10, 15),
+                LocalDateTime.of(2026, 5, 18, 18, 0),
                 StatusEntrega.ENTREGUE
         );
+
+        int quantidadeProduto = 2;
+
+        // Instanciando o pedido
+        Pedido pedido1 = new Pedido(
+                1,
+                LocalDateTime.of(2026, 3, 22, 17, 15),
+                (produto1.getPreco() * quantidadeProduto),
+                StatusPedido.ENTREGUE,
+                cliente1,
+                funcionario1,
+                entrega1
+        );
+
+        // Instanciando o itemPedido
+        ItemPedido itemPedido1 = new ItemPedido(
+                pedido1,
+                produto1,
+                quantidadeProduto,
+                produto1.getPreco()
+        );
+
+        // Instanciando os pagamentos (Exemplo de parcelamento em 3 vezes)
+        double valorParcelado = pedido1.getTotal() / 3;
+
+        Pagamento pagamento1 = new Pagamento(
+                1,
+                valorParcelado,
+                1,
+                3,
+                LocalDate.of(2026, 4, 22),
+                LocalDate.of(2026, 4, 27),
+                StatusPagamento.APROVADO,
+                pedido1
+        );
+
+        Pagamento pagamento2 = new Pagamento(
+                2,
+                valorParcelado,
+                3,
+                3,
+                LocalDate.of(2026, 5, 17),
+                LocalDate.of(2026, 5, 27),
+                StatusPagamento.APROVADO,
+                pedido1
+        );
+
+        Pagamento pagamento3 = new Pagamento(
+                3,
+                valorParcelado,
+                3,
+                3,
+                LocalDate.of(2026, 6, 20),
+                LocalDate.of(2026, 6, 27),
+                StatusPagamento.PENDENTE,
+                pedido1
+        );
+
+        // Adicionando itemPedido e Pagamentos em Pedido
+        pedido1.adicionarItemPedido(itemPedido1);
+        pedido1.adicionarPagamento(pagamento1);
+        pedido1.adicionarPagamento(pagamento2);
+        pedido1.adicionarPagamento(pagamento3);
+
+        // Exibindo pedido e seus atributos
+        System.out.println("\n\n======= PEDIDO CADASTRADO =======\n" + pedido1);
     }
 }

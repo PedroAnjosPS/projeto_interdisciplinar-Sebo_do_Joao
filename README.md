@@ -1,6 +1,6 @@
-# 📚 Sebo do João — Sistema de Gestão de Acervo de Produtos
+# 📚 Sebo do João — Sistema de E-commerce (Loja Virtual)
 
-> **Projeto Interdisciplinar** desenvolvido para a digitalização de processos do Sebo do João, uma tradicional loja física de São José do Rio Preto (SP), com foco na organização de seu acervo de produtos.
+> **Projeto Interdisciplinar** desenvolvido para a digitalização dos processos do Sebo do João, uma tradicional loja física de São José do Rio Preto (SP), por meio da implementação de uma plataforma de e-commerce para comercialização e gerenciamento de produtos.
 ---
 
 ## 🏪 Sobre o Sebo do João
@@ -32,11 +32,12 @@ O projeto encontra-se na fase inicial de desenvolvimento, com foco em modelagem 
 
 Até o momento foram desenvolvidos:
 
-- 📦 Entidades do sistema em **Java (pacote `model`)**
-- 🧪 Instanciação e testes das classes na classe `Main`
-- 🗄️ Modelagem conceitual do banco de dados através do **DER**
-- 🧾 Criação das tabelas e inserção de dados (aproximadamente 10 inserts por tabela) em **SQL Server**
-- 🎨 Protótipos das principais interfaces do sistema desenvolvidos no **Figma**
+- 📑 Levantamento de Requisitos e construção do Diagrama de Classes para identificação das funcionalidades do sistema, modelagem das entidades e definição de seus relacionamentos.
+- 📦 Entidades do sistema em **Java (pacote `model`)**.
+- 🧪 Instanciação e testes das classes na classe `Main`.
+- 🗄️ Modelagem conceitual do banco de dados através do **DER**.
+- 🧾 Criação das tabelas e inserção de dados (aproximadamente 10 inserts por tabela) em **SQL Server**.
+- 🎨 Protótipos das principais interfaces do sistema desenvolvidos no **Figma**.
 
 ---
 

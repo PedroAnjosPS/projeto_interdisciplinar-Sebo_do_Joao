@@ -126,5 +126,4 @@ sebo-do-joao/
 │               ├── Cliente.java
 │               └── ...
 │
-├── .gitignore
 └── README.md

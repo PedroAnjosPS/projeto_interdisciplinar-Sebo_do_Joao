@@ -95,9 +95,11 @@ A seguir estão os protótipos das principais interfaces desenvolvidas para o si
 
 ## 🛠️ Tecnologias Utilizadas
 
+- 📋 Umbrello — Diagrama de Classes  
 - ☕ Java — modelagem das entidades do sistema  
-- 🗄️ SQL Server — banco de dados relacional  
+- 🛢️ DbDiagram.io — Modelagem de Banco de Dados  
 - 📊 BrModelo — modelagem do DER  
+- 🗄️ SQL Server — banco de dados relacional  
 - 🎨 Figma — prototipação das interfaces  
 
 ---

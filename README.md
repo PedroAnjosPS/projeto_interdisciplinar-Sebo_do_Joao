@@ -44,10 +44,13 @@ Até o momento foram desenvolvidos:
 Diagramas de modelagem do sistema:
 
 
+##### DER (Diagrama de Entidade e Relacionamento)
 ![DER (Diagrama de Entidade e Relacionamento)](docs/diagramas/DER-Sebo_do_Joao.png)
 
+##### Diagrama de Banco de Dados
 ![Diagrama de Banco de Dados](docs/diagramas/Diagrama_Banco_de_Dados.png)
 
+##### Diagrama de Classe
 ![Diagrama de Classe](docs/diagramas/Diagrama_de_classe-Sebo_do_Joao.png)
 
 ---
@@ -57,16 +60,32 @@ Diagramas de modelagem do sistema:
 A seguir estão os protótipos das principais interfaces desenvolvidas para o sistema:
 
 
+##### Tela de Index
 ![Tela de Index](docs/interfaces/Tela-principal-index.png)
-![Tela de Cadastro de Cliente](docs/interfaces/Tela-cadastro-cliente.png)
-![Tela de Login de Cliente](docs/interfaces/Tela-login-cliente.png)
-![Tela de Informações do Produto](docs/interfaces/Tela-informacoes-produto.png)
-![Tela de Cadastro de Produto](docs/interfaces/Tela-cadastro-produto.png)
-![Tela de Resultados de Pesquisa](docs/interfaces/Tela-resultados-pesquisa.png)
-![Tela de Carrinho de Compras](docs/interfaces/Tela-carrinho-de-compras.png)
-![Tela de Informações do Cliente](docs/interfaces/Tela-informacoes-cliente.png)
-![Tela de Edição de Informações do Cliente](docs/interfaces/Tela-editar-informacoes-cliente.png)
 
+##### Tela de Cadastro de Cliente
+![Tela de Cadastro de Cliente](docs/interfaces/Tela-cadastro-cliente.png)
+
+##### Tela de Login de Cliente
+![Tela de Login de Cliente](docs/interfaces/Tela-login-cliente.png)
+
+##### Tela de Informações do Produto
+![Tela de Informações do Produto](docs/interfaces/Tela-informacoes-produto.png)
+
+##### Tela de Cadastro de Produto
+![Tela de Cadastro de Produto](docs/interfaces/Tela-cadastro-produto.png)
+
+##### Tela de Resultados de Pesquisa
+![Tela de Resultados de Pesquisa](docs/interfaces/Tela-resultados-pesquisa.png)
+
+##### Tela de Carrinho de Compras
+![Tela de Carrinho de Compras](docs/interfaces/Tela-carrinho-de-compras.png)
+
+##### Tela de Informações do Cliente
+![Tela de Informações do Cliente](docs/interfaces/Tela-informacoes-cliente.png)
+
+##### Tela de Edição de Informações do Cliente
+![Tela de Edição de Informações do Cliente](docs/interfaces/Tela-editar-informacoes-cliente.png)
 ---
 
 📁 Todos os documentos estão organizados na pasta `/docs` do repositório.

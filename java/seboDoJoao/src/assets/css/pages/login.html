@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - E-commerce</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome for icons (e.g., mail, lock, close) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom standardized style -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="ec-page-base">
+
+<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+    <!-- Main standardized Login Card component -->
+    <!-- Repare que tiramos o col-md-10 e col-lg-8, adicionamos mx-auto para centralizar e a classe ec-login-card -->
+    <div class="ec-card ec-card-shadow row overflow-hidden g-0 ec-login-card col-11 mx-auto">
+
+        <!-- Ajustamos o padding para p-4 (celular) e p-md-5 (PC) -->
+        <div
+            class="ec-card-panel-dark col-12 col-md-6 d-flex flex-column justify-content-center p-4 p-md-5 text-center text-md-start">
+            <h1 class="ec-heading-light fw-bold mb-3">Que bom te ver novamente!</h1>
+            <p class="ec-text-light mb-0">Entre com o seus dados para acessar a sua conta</p>
+        </div>
+
+        <!-- Ajustamos o padding para p-4 (celular) e p-md-5 (PC) -->
+        <div
+            class="ec-card-panel-light col-12 col-md-6 d-flex flex-column justify-content-center p-4 p-md-5 position-relative">
+            <!-- Restante do conteúdo do formulário continua igual -->
+
+            <h2 class="ec-heading-dark fw-bold mb-4">Fazer Login</h2>
+
+            <form action="#" method="POST" class="w-100 ec-form">
+
+                <!-- Standardized Input Group with Icons -->
+                <div class="input-group mb-4">
+                    <span class="input-group-text ec-input-icon-text">
+                        <i class="fas fa-envelope ec-icon-accent"></i>
+                    </span>
+                    <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail" required>
+                </div>
+
+                <div class="input-group mb-4">
+                    <span class="input-group-text ec-input-icon-text">
+                        <i class="fas fa-lock ec-icon-accent"></i>
+                    </span>
+                    <input type="password" class="form-control ec-form-control" placeholder="Digite sua senha" required>
+                </div>
+
+                <!-- Standardized Primary Button (matching the outline style) -->
+                <div class="text-center mb-4">
+                    <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">ENTRAR</button>
+                </div>
+
+                <!-- Standardized Footer Text -->
+                <div class="ec-form-footer text-center">
+                    <span class="ec-text-muted">Novo por aqui?</span>
+                    <a href="signup.html" class="ec-link-accent text-decoration-none fw-medium">Crie uma conta</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</html>

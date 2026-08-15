@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - E-commerce</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- O nosso CSS padronizado que já faz toda a mágica! -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-base">
+
+    <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100 py-5">
+
+        <!-- Reaproveitamos a estrutura exata do Card de Login -->
+        <div class="ec-card ec-card-shadow row overflow-hidden g-0 ec-login-card">
+
+            <!-- Painel Esquerdo (Dark) -->
+            <div
+                class="ec-card-panel-dark col-12 col-md-5 d-flex flex-column justify-content-center p-4 p-md-5 text-center text-md-start">
+                <h1 class="ec-heading-light fw-bold mb-3">Junte-se a nós!</h1>
+                <p class="ec-text-light mb-4">Crie sua conta e aproveite as melhores ofertas do nosso e-commerce.</p>
+                <p class="ec-text-light small mt-auto d-none d-md-block">Garantimos a segurança dos seus dados.</p>
+            </div>
+
+            <!-- Painel Direito (Light) -->
+            <div
+                class="ec-card-panel-light col-12 col-md-7 d-flex flex-column justify-content-center p-4 p-md-5 position-relative">
+
+                <!-- Botão de Voltar (reaproveitando o estilo do close, mas com ícone de seta) -->
+                <a href="index.html" class="text-decoration-none position-absolute top-0 end-0 m-4">
+                    <i class="fas fa-times" style="color: var(--ec-color-sand); font-size: 1.2rem; opacity: 0.6;"></i>
+                </a>
+
+                <h2 class="ec-heading-dark fw-bold mb-4">Criar Conta</h2>
+
+                <form action="#" method="POST" class="w-100 ec-form">
+
+                    <!-- Campo: Nome Completo -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-user ec-icon-accent"></i>
+                        </span>
+                        <input type="text" class="form-control ec-form-control" placeholder="Seu nome completo"
+                            required>
+                    </div>
+
+                    <!-- Campo: E-mail -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-envelope ec-icon-accent"></i>
+                        </span>
+                        <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
+                            required>
+                    </div>
+
+                    <!-- Campo: Senha -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-lock ec-icon-accent"></i>
+                        </span>
+                        <input type="password" class="form-control ec-form-control" placeholder="Crie uma senha"
+                            required>
+                    </div>
+
+                    <!-- Campo: Confirmar Senha (com mb-4 para dar um espaço extra antes do botão) -->
+                    <div class="input-group mb-4">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-check-circle ec-icon-accent"></i>
+                        </span>
+                        <input type="password" class="form-control ec-form-control" placeholder="Confirme sua senha"
+                            required>
+                    </div>
+
+                    <!-- Botão de Cadastrar -->
+                    <div class="text-center mb-4">
+                        <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">CADASTRAR</button>
+                    </div>
+
+                    <!-- Rodapé com link para voltar ao Login -->
+                    <div class="ec-form-footer text-center">
+                        <span class="ec-text-muted">Já tem uma conta?</span>
+                        <a href="login.html" class="ec-link-accent text-decoration-none fw-medium">Fazer Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

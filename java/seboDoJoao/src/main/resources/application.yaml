@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: sebodojoao
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=Sebo_Do_Joao;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: Fatec@2026
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

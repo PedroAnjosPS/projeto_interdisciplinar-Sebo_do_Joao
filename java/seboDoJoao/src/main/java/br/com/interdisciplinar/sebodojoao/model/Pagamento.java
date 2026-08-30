@@ -1,97 +1,49 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "pagamentos")
+@Getter
+@Setter
 public class Pagamento {
     // Atributos
-    private int id;
-    private double valor;
-    private int numeroParcela;
-    private int quantidadeParcelas;
-    private LocalDate dataPagamento;
-    private LocalDate dataVencimento;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @Column(name = "numero_parcela", nullable = false)
+    private Integer numeroParcela;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "status", nullable = false)
     private StatusPagamento status;
+
+    @Column(name = "valor", nullable = false, precision = 10, scale = 2)
+    private BigDecimal valor;
+
+    @Column(name = "quantidade_parcelas", nullable = false)
+    private Integer quantidadeParcelas;
+
+    @Column(name = "data_vencimento", nullable = false)
+    private LocalDate dataVencimento;
+
+    @Column(name = "data_pagamento", nullable = false)
+    private LocalDate dataPagamento;
+
+    @ManyToOne
+    @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
 
     // Construtores
     public Pagamento() {}
-
-    public Pagamento(int id, double valor, int numeroParcela, int quantidadeParcelas, LocalDate dataPagamento, LocalDate dataVencimento, StatusPagamento status, Pedido pedido) {
-        this.id = id;
-        this.valor = valor;
-        this.numeroParcela = numeroParcela;
-        this.quantidadeParcelas = quantidadeParcelas;
-        this.dataPagamento = dataPagamento;
-        this.dataVencimento = dataVencimento;
-        this.status = status;
-        this.pedido = pedido;
-    }
-
-    // Métodos acessores e modificadores
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public double getValor() {
-        return valor;
-    }
-
-    public void setValor(double valor) {
-        this.valor = valor;
-    }
-
-    public int getNumeroParcela() {
-        return numeroParcela;
-    }
-
-    public void setNumeroParcela(int numeroParcela) {
-        this.numeroParcela = numeroParcela;
-    }
-
-    public int getQuantidadeParcelas() {
-        return quantidadeParcelas;
-    }
-
-    public void setQuantidadeParcelas(int quantidadeParcelas) {
-        this.quantidadeParcelas = quantidadeParcelas;
-    }
-
-    public LocalDate getDataPagamento() {
-        return dataPagamento;
-    }
-
-    public void setDataPagamento(LocalDate dataPagamento) {
-        this.dataPagamento = dataPagamento;
-    }
-
-    public LocalDate getDataVencimento() {
-        return dataVencimento;
-    }
-
-    public void setDataVencimento(LocalDate dataVencimento) {
-        this.dataVencimento = dataVencimento;
-    }
-
-    public StatusPagamento getStatus() {
-        return status;
-    }
-
-    public void setStatus(StatusPagamento status) {
-        this.status = status;
-    }
-
-    public Pedido getPedido() {
-        return pedido;
-    }
-
-    public void setPedido(Pedido pedido) {
-        this.pedido = pedido;
-    }
 
     // toString
     @Override

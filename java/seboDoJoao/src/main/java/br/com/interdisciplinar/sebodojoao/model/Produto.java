@@ -1,48 +1,56 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Produtos")
+@Table(name = "produtos")
+@Getter
+@Setter
 public class Produto {
     // Atributos
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @Column(name = "nome")
+    @Column(name = "nome", nullable = false)
     private String nome;
 
-    @Column(name = "descricao")
-    private String descricao;
-
-    @Column(name = "preco")
-    private BigDecimal preco;
-
-    @Column(name = "estoque")
-    private int estoque;
-
-    @Column(name = "tipo")
+    @Column(name = "tipo", nullable = false)
     private String tipo;
 
+    @Column(name = "descricao", nullable = false)
+    private String descricao;
+
+    @Column(name = "preco", nullable = false, precision = 10, scale = 2)
+    private BigDecimal preco;
+
+    @Column(name = "estoque", nullable = false)
+    private Integer estoque;
+
     @ManyToOne
-    @JoinColumn(name = "categoria_id")
+    @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
     @ManyToOne
-    @JoinColumn(name = "genero_id")
+    @JoinColumn(name = "genero_id", nullable = false)
     private Genero genero;
 
-    @OneToMany(mappedBy = "produtos")
+    @ManyToOne
+    @JoinColumn(name = "funcionario_id", nullable = false)
+    private Funcionario funcionario;
+
+    @OneToMany(mappedBy = "produto")
     private List<ImagemProduto> imagens = new ArrayList<>();
 
     @Enumerated(EnumType.ORDINAL)
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     private StatusProduto status;
 
     // Construtores

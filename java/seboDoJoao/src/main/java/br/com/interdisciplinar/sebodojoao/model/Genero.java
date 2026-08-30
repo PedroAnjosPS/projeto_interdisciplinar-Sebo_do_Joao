@@ -1,34 +1,26 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Table(name = "generos")
+@Getter
+@Setter
 public class Genero {
     // Atributos
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @OneToMany
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @Column(name = "nome", nullable = false)
     private String nome;
 
     // Construtores
     public Genero() {}
-
-    public Genero(int id, String nome) {
-        this.id = id;
-        this.nome = nome;
-    }
-
-    // Métodos acessores e modificadores
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
 
     // toString
     @Override

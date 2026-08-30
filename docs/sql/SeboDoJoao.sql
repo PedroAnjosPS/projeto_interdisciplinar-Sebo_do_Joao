@@ -188,7 +188,7 @@ CREATE TABLE pedidos
     data DATETIME NOT NULL DEFAULT GETDATE(),
     total DECIMAL(10,2) NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
-    entrega_id INT,
+    entrega_id INT UNIQUE,
     cliente_id INT NOT NULL,
     funcionario_id INT NOT NULL,
 

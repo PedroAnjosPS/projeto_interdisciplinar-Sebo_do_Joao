@@ -1,44 +1,29 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Table(name = "imagem_produtos")
+@Getter
+@Setter
 public class ImagemProduto {
     // Atributos
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @Column(name = "caminho", nullable = false)
     private String caminho;
+
+    @ManyToOne
+    @JoinColumn(name = "produto_id", nullable = false)
     private Produto produto;
 
     // Construtores
     public ImagemProduto() {}
-
-    public ImagemProduto(int id, String caminho, Produto produto) {
-        this.id = id;
-        this.caminho = caminho;
-        this.produto = produto;
-    }
-
-    // Métodos acessores e modificadores
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getCaminho() {
-        return caminho;
-    }
-
-    public void setUrl(String caminho) {
-        this.caminho = caminho;
-    }
-
-    public Produto getProduto() {
-        return produto;
-    }
-
-    public void setProduto(Produto produto) {
-        this.produto = produto;
-    }
 
     // toString
     @Override

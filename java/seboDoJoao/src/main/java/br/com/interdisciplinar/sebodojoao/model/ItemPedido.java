@@ -1,54 +1,38 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "item_pedidos")
+@Getter
+@Setter
 public class ItemPedido {
     // Atributos
+    @EmbeddedId
+    private ItemPedidoId id;
+
+    @ManyToOne
+    @MapsId("pedidoId")
+    @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
+
+    @ManyToOne
+    @MapsId("produtoId")
+    @JoinColumn(name = "produto_id", nullable = false)
     private Produto produto;
-    private int quantidade;
-    private double precoUnitario;
+
+    @Column(name = "quantidade", nullable = false)
+    private Integer quantidade;
+
+    @Column(name = "preco_unitario", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precoUnitario;
 
     // Construtores
     public ItemPedido() {}
-
-    public ItemPedido(Pedido pedido, Produto produto, int quantidade, double precoUnitario) {
-        this.pedido = pedido;
-        this.produto = produto;
-        this.quantidade = quantidade;
-        this.precoUnitario = precoUnitario;
-    }
-
-    // Métodos acessores e modificadores
-    public Pedido getPedido() {
-        return pedido;
-    }
-
-    public void setPedido(Pedido pedido) {
-        this.pedido = pedido;
-    }
-
-    public Produto getProduto() {
-        return produto;
-    }
-
-    public void setProduto(Produto produto) {
-        this.produto = produto;
-    }
-
-    public int getQuantidade() {
-        return quantidade;
-    }
-
-    public void setQuantidade(int quantidade) {
-        this.quantidade = quantidade;
-    }
-
-    public double getPrecoUnitario() {
-        return precoUnitario;
-    }
-
-    public void setPrecoUnitario(double precoUnitario) {
-        this.precoUnitario = precoUnitario;
-    }
 
     // toString
     @Override

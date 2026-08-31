@@ -1,4 +1,4 @@
-package com.example.demo.entities;
+package br.com.interdisciplinar.sebodojoao.model;
 
 public enum StatusUsuario {
     ATIVO,

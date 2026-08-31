@@ -1,39 +1,22 @@
-package br.com.interdisciplinar.sebodojoao.model;
+package com.example.demo.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.ArrayList;
 
+@Entity
+@Table(name = "ufs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UF {
-    // Atributos
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String sigla;
+
     private String nome;
     private ArrayList<Cidade> cidades;
-
-    // Construtores
-    public UF() {}
-
-    public UF(String sigla, String nome) {
-        this.sigla = sigla;
-        this.nome = nome;
-    }
-
-    // Métodos acessores e modificadores
-    public String getSigla() {
-        return sigla;
-    }
-
-    public void setSigla(String sigla) {
-        this.sigla = sigla;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public ArrayList<Cidade> getCidades() {
-        return cidades;
-    }
 }

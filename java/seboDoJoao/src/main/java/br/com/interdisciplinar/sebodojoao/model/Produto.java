@@ -1,8 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -10,8 +9,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "produtos")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Produto {
     // Atributos
     @Id
@@ -52,22 +52,4 @@ public class Produto {
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "status", nullable = false)
     private StatusProduto status;
-
-    // Construtores
-    public Produto() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "Id: " + id 
-                + "\nNome: " + nome  
-                + "\nDescrição: " + descricao  
-                + "\nPreço: " + "R$" +String.format("%.2f", preco)
-                + "\nEstoque: " + estoque 
-                + "\nTipo: " + tipo 
-                + "\nCategoria: " + categoria 
-                + "\nGênero: " + genero 
-                + "\nImagens do produto: "
-                + "\nStatus: " + status;
-    }
 }

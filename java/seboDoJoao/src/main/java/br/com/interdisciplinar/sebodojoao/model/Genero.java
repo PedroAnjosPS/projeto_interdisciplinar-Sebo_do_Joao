@@ -1,13 +1,13 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "generos")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Genero {
     // Atributos
     @Id
@@ -18,16 +18,4 @@ public class Genero {
 
     @Column(name = "nome", nullable = false)
     private String nome;
-
-    // Construtores
-    public Genero() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "\n\t{" +
-                "\n\t\tid: " + id +
-                "\n\t\tnome: " + nome +
-                "\n\t}";
-    }
 }

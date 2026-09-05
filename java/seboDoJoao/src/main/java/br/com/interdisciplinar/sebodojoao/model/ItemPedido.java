@@ -1,15 +1,15 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "item_pedidos")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ItemPedido {
     // Atributos
     @EmbeddedId
@@ -30,18 +30,4 @@ public class ItemPedido {
 
     @Column(name = "preco_unitario", nullable = false, precision = 10, scale = 2)
     private BigDecimal precoUnitario;
-
-    // Construtores
-    public ItemPedido() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "\n\t{" +
-                "\n\t\tId do pedido: " + pedido.getId() +
-                "\n\t\tProduto: " + produto.getNome() +
-                "\n\t\tQuantidade: " + quantidade +
-                "\n\t\tPreço unitário: R$" + String.format("%.2f", precoUnitario) +
-                "\n\t}";
-    }
 }

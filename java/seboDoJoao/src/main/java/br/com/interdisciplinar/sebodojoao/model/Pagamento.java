@@ -1,17 +1,25 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.*;
 
 @Entity
 @Table(name = "pagamentos")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Pagamento {
     // Atributos
     @Id
@@ -41,22 +49,4 @@ public class Pagamento {
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
-
-    // Construtores
-    public Pagamento() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "\n\t{"
-                + "\n\t\tId: " + id
-                + "\n\t\tValor: R$" + String.format("%.2f", valor)
-                + "\n\t\tNúmero da parcela: " + numeroParcela
-                + "\n\t\tQuantidade de parcelas: " + quantidadeParcelas
-                + "\n\t\tData de pagamento: " + dataPagamento
-                + "\n\t\tData de vencimento: " + dataVencimento
-                + "\n\t\tStatus: " + status
-                + "\n\t\tId do pedido: " + pedido.getId()
-                + "\n\t}";
-    }
 }

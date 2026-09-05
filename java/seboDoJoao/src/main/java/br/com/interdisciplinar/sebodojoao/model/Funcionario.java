@@ -1,17 +1,21 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.*;
 
 @Entity
 @Table(name = "funcionarios")
+@PrimaryKeyJoinColumn(name = "usuario_id")
 @Getter
 @Setter
-@PrimaryKeyJoinColumn(name = "usuario_id")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Funcionario extends Usuario {
     // Atributos
     @Column(name = "funcionario_cod", nullable = false)
@@ -22,7 +26,4 @@ public class Funcionario extends Usuario {
 
     @OneToMany(mappedBy = "funcionario")
     private List<Produto> produtos;
-
-    // Construtores
-    public Funcionario() {}
 }

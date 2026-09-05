@@ -1,13 +1,21 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.*;
 
 @Entity
 @Table(name = "categorias")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Categoria {
     // Atributos
     @Id
@@ -19,15 +27,6 @@ public class Categoria {
     @Column(name = "nome", nullable = false)
     private String nome;
 
-    // Construtores
-    public Categoria() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "\n\t{" +
-                "\n\t\tid: " + id +
-                "\n\t\tnome:" + nome +
-                "\n\t}";
-    }
+    @OneToMany(mappedBy = "categoria")
+    private List<Produto> produtos;
 }

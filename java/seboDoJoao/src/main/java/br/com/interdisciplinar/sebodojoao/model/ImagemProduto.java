@@ -1,13 +1,13 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "imagem_produtos")
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ImagemProduto {
     // Atributos
     @Id
@@ -21,17 +21,4 @@ public class ImagemProduto {
     @ManyToOne
     @JoinColumn(name = "produto_id", nullable = false)
     private Produto produto;
-
-    // Construtores
-    public ImagemProduto() {}
-
-    // toString
-    @Override
-    public String toString() {
-        return "\n\t{"
-        + "\n\t\tId: " + id
-        + "\n\t\tCaminho: " + caminho
-        + "\n\t\tId do produto: " + produto.getId()
-        + "\n\t}";
-    }
 }

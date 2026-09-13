@@ -2,6 +2,8 @@ spring:
   application:
     name: sebodojoao
   datasource:
+  #Comando Docker para criar o contêiner SQL serve
+  #docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Fatec@2026" -p 1433:1433 --name meu_sql_server -d mcr.microsoft.com/mssql/server:2022-latest
     url: jdbc:sqlserver://localhost:1433;databaseName=Sebo_Do_Joao;encrypt=false;trustServerCertificate=true
     username: sa
     password: Fatec@2026

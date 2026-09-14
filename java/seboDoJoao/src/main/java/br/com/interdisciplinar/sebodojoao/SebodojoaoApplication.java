@@ -11,6 +11,7 @@ public class SebodojoaoApplication {
 
 		SpringApplication.run(SebodojoaoApplication.class, args);
 
+
 		System.out.println("Sim, funcionou!");
 	}
 

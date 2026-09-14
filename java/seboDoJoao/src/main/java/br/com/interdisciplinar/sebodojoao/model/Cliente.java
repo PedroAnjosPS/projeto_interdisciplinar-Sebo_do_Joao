@@ -12,7 +12,8 @@ import java.util.ArrayList;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cliente {
+public class Cliente extends Usuario{
+
     @Column(name = "cpf", nullable = false)
     private String cpf;
 

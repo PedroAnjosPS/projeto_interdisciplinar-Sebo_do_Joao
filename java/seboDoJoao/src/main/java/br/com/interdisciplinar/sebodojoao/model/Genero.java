@@ -12,7 +12,7 @@ public class Genero {
     // Atributos
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @OneToMany
+
     @Column(name = "id", nullable = false)
     private Integer id;
 

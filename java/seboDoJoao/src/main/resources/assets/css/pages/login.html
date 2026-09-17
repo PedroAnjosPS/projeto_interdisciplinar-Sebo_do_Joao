@@ -1,70 +1,147 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - E-commerce</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <!-- FontAwesome for icons (e.g., mail, lock, close) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom standardized style -->
     <link rel="stylesheet" href="../style.css">
 </head>
+
 <body class="ec-page-base">
 
-<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
-    <!-- Main standardized Login Card component -->
-    <!-- Repare que tiramos o col-md-10 e col-lg-8, adicionamos mx-auto para centralizar e a classe ec-login-card -->
-    <div class="ec-card ec-card-shadow row overflow-hidden g-0 ec-login-card col-11 mx-auto">
+    <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+        <!-- Main standardized Login Card component -->
+        <!-- Repare que tiramos o col-md-10 e col-lg-8, adicionamos mx-auto para centralizar e a classe ec-login-card -->
+        <div class="ec-card ec-card-shadow row overflow-hidden g-0 ec-login-card col-11 mx-auto ec-auth-card"
+            id="ecAuthCard">
 
-        <!-- Ajustamos o padding para p-4 (celular) e p-md-5 (PC) -->
-        <div
-            class="ec-card-panel-dark col-12 col-md-6 d-flex flex-column justify-content-center p-4 p-md-5 text-center text-md-start">
-            <h1 class="ec-heading-light fw-bold mb-3">Que bom te ver novamente!</h1>
-            <p class="ec-text-light mb-0">Entre com o seus dados para acessar a sua conta</p>
-        </div>
+            <!-- ^FORM: LOGIN -->
+            <div class="ec-form-panel" id="ec-form-login">
+                <h2 class="ec-heading-dark fw-bold mb-4">Fazer Login</h2>
 
-        <!-- Ajustamos o padding para p-4 (celular) e p-md-5 (PC) -->
-        <div
-            class="ec-card-panel-light col-12 col-md-6 d-flex flex-column justify-content-center p-4 p-md-5 position-relative">
-            <!-- Restante do conteúdo do formulário continua igual -->
+                <form action="#" method="POST" class="w-100 ec-form">
 
-            <h2 class="ec-heading-dark fw-bold mb-4">Fazer Login</h2>
+                    <!-- &Div para o e-mail -->
+                    <div class="input-group mb-4">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-envelope ec-icon-accent"></i>
+                        </span>
+                        <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
+                            required>
+                    </div>
 
-            <form action="#" method="POST" class="w-100 ec-form">
+                    <!-- &Div para a senha -->
+                    <div class="input-group mb-4">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-lock ec-icon-accent"></i>
+                        </span>
+                        <input type="password" class="form-control ec-form-control" placeholder="Digite sua senha"
+                            required>
+                    </div>
 
-                <!-- Standardized Input Group with Icons -->
-                <div class="input-group mb-4">
-                    <span class="input-group-text ec-input-icon-text">
-                        <i class="fas fa-envelope ec-icon-accent"></i>
-                    </span>
-                    <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail" required>
+                    <!-- &Div para o botão de entrar -->
+                    <div class="text-center mb-4">
+                        <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">ENTRAR</button>
+                    </div>
+
+                    <!-- &Div para o link de cadastro -->
+                    <div class="ec-form-footer text-center">
+                        <span class="ec-text-muted">Novo por aqui?</span>
+                        <button type="button" class="btn btn-link p-0 fw-medium ec-link-accent text-decoration-none"
+                            onclick="ecToggleAuth()">Crie uma conta</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ^FORM: CADASTRO -->
+            <div class="ec-form-panel" id="ec-form-signup">
+                <h2 class="ec-heading-dark fw-bold mb-4">Criar Conta</h2>
+
+                <form action="#" method="POST" class="w-100 ec-form">
+
+                    <!-- &Div para o nome completo -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-user ec-icon-accent"></i>
+                        </span>
+                        <input type="text" class="form-control ec-form-control" placeholder="Seu nome completo"
+                            required>
+                    </div>
+
+                    <!-- &Div para o e-mail -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-envelope ec-icon-accent"></i>
+                        </span>
+                        <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
+                            required>
+                    </div>
+
+                    <!-- &Div para a senha -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-lock ec-icon-accent"></i>
+                        </span>
+                        <input type="password" class="form-control ec-form-control" placeholder="Crie uma senha"
+                            required>
+                    </div>
+
+                    <!-- &Div para confirmar a senha -->
+                    <div class="input-group mb-4">
+                        <span class="input-group-text ec-input-icon-text">
+                            <i class="fas fa-check-circle ec-icon-accent"></i>
+                        </span>
+                        <input type="password" class="form-control ec-form-control" placeholder="Confirme sua senha"
+                            required>
+                    </div>
+
+                    <!-- &Div para o botão de cadastrar -->
+                    <div class="text-center mb-4">
+                        <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">CADASTRAR</button>
+                    </div>
+
+                    <!-- &Div para o link de login -->
+                    <div class="ec-form-footer text-center">
+                        <span class="ec-text-muted">Já tem uma conta?</span>
+                        <button type="button" class="btn btn-link p-0 fw-medium ec-link-accent text-decoration-none"
+                            onclick="ecToggleAuth()">Fazer Login</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- *PAINEL ESCURO QUE DESLIZA -->
+            <div class="ec-overlay-wrap">
+                <div class="ec-overlay">
+                    <div class="ec-overlay-panel" id="ec-overlay-login">
+                        <h1 class="ec-heading-light fw-bold mb-3">Que bom te ver novamente!</h1>
+                        <p class="ec-text-light mb-0">Entre com o seus dados para acessar a sua conta</p>
+                    </div>
+                    <div class="ec-overlay-panel" id="ec-overlay-signup">
+                        <h1 class="ec-heading-light fw-bold mb-3">Junte-se a nós!</h1>
+                        <p class="ec-text-light">Crie sua conta e aproveite as melhores ofertas do nosso e-commerce.</p>
+                    </div>
                 </div>
+            </div>
 
-                <div class="input-group mb-4">
-                    <span class="input-group-text ec-input-icon-text">
-                        <i class="fas fa-lock ec-icon-accent"></i>
-                    </span>
-                    <input type="password" class="form-control ec-form-control" placeholder="Digite sua senha" required>
-                </div>
-
-                <!-- Standardized Primary Button (matching the outline style) -->
-                <div class="text-center mb-4">
-                    <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">ENTRAR</button>
-                </div>
-
-                <!-- Standardized Footer Text -->
-                <div class="ec-form-footer text-center">
-                    <span class="ec-text-muted">Novo por aqui?</span>
-                    <a href="signup.html" class="ec-link-accent text-decoration-none fw-medium">Crie uma conta</a>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
-<!-- Bootstrap JS Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <script>
+        function ecToggleAuth() {
+            document.getElementById('ecAuthCard').classList.toggle('ec-active');
+        }
+    </script>
 </body>
+
 </html>

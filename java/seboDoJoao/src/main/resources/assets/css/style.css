@@ -192,10 +192,14 @@ h3,
 /* COMPONENTES DE PÁGINA ESPECÍFICA (Ex: Tela de Login) */
 /* Tamanho e centralização exatos da tela de login */
 .ec-login-card {
-    max-width: 800px; /* Impede que o card estique no PC, deixando-o menor e quadrado */
-    width: 90%; /* Em telas menores, ele ocupa 90% da tela, deixando uma margem bonita nas bordas */
-    min-height: 480px; /* Mantém uma altura equilibrada */
-    margin: auto; /* Força a centralização absoluta */
+    max-width: 800px;
+    /* Impede que o card estique no PC, deixando-o menor e quadrado */
+    width: 90%;
+    /* Em telas menores, ele ocupa 90% da tela, deixando uma margem bonita nas bordas */
+    min-height: 480px;
+    /* Mantém uma altura equilibrada */
+    margin: auto;
+    /* Força a centralização absoluta */
 }
 
 /* =========================================
@@ -342,4 +346,144 @@ h3,
     color: var(--ec-color-taupe);
     font-size: 1.4rem;
     font-weight: 800;
+}
+
+/* =========================================
+   9. TELA DE LOGIN/CADASTRO COM PAINEL DESLIZANTE
+   Os dois formulários ficam na mesma página,
+   dentro do mesmo card, e o JS só alterna uma
+   classe (.ec-active) pra trocar entre eles.
+   ========================================= */
+
+/* O card vira a "moldura" da animação */
+.ec-auth-card {
+    position: relative;
+    overflow: hidden;
+    display: block !important;
+    /* anula o "row" flex do Bootstrap que vinha antes */
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Os dois formulários ocupam a mesma área (60% da
+   largura, do lado direito por padrão) */
+.ec-form-panel {
+    position: absolute;
+    top: 0;
+    left: 40%;
+    width: 60%;
+    height: 100%;
+    padding: 3rem 3.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+}
+
+#ec-form-login {
+    opacity: 1;
+    z-index: 5;
+    transform: translateX(0);
+}
+
+#ec-form-signup {
+    left: 0;
+    opacity: 0;
+    z-index: 1;
+    transform: translateX(4%);
+    pointer-events: none;
+}
+
+.ec-auth-card.ec-active #ec-form-login {
+    opacity: 0;
+    z-index: 1;
+    transform: translateX(4%);
+    pointer-events: none;
+}
+
+.ec-auth-card.ec-active #ec-form-signup {
+    opacity: 1;
+    z-index: 5;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* Painel escuro que desliza de um lado pro outro */
+.ec-overlay-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40%;
+    height: 100%;
+    z-index: 10;
+    overflow: hidden;
+    transition: transform 0.6s ease-in-out;
+}
+
+.ec-auth-card.ec-active .ec-overlay-wrap {
+    transform: translateX(150%);
+    /* 40% * 2.5 = 100% -> vai pro lado direito */
+}
+
+.ec-overlay {
+    width: 100%;
+    height: 100%;
+    background-color: var(--ec-color-coffee);
+}
+
+.ec-overlay-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 3rem 2.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: opacity 0.6s ease-in-out;
+}
+
+#ec-overlay-login {
+    opacity: 1;
+}
+
+#ec-overlay-signup {
+    opacity: 0;
+}
+
+.ec-auth-card.ec-active #ec-overlay-login {
+    opacity: 0;
+}
+
+.ec-auth-card.ec-active #ec-overlay-signup {
+    opacity: 1;
+}
+
+/* No celular a área é estreita demais pro slide lateral
+   ficar legível, então empilha tudo normalmente */
+@media (max-width: 767px) {
+    .ec-overlay-wrap {
+        display: none;
+    }
+
+    .ec-form-panel {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 2.5rem 1.5rem;
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
+    }
+
+    .ec-auth-card:not(.ec-active) #ec-form-signup {
+        display: none;
+    }
+
+    .ec-auth-card.ec-active #ec-form-login {
+        display: none;
+    }
 }

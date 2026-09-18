@@ -1,5 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.model;
 import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,5 +26,5 @@ public class Uf {
     private String nome;
 
     @OneToMany(mappedBy = "uf")
-    private ArrayList<Cidade> cidades;
+    private List<Cidade> cidades = new ArrayList<>();
 }

@@ -29,7 +29,7 @@ public class Cidade {
     
     @ManyToOne
     @JoinColumn(name = "uf_sigla", nullable = false)
-    private UF uf;
+    private Uf uf;
 
     @OneToMany(mappedBy = "cidade")
     private List<CEP> ceps;

@@ -15,7 +15,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UF {
+public class Uf {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sigla", nullable = false)

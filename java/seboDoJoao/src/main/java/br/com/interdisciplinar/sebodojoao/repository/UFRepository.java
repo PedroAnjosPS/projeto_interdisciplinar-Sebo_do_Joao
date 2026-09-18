@@ -1,8 +1,8 @@
 package br.com.interdisciplinar.sebodojoao.repository;
 
-import br.com.interdisciplinar.sebodojoao.model.UF;
+import br.com.interdisciplinar.sebodojoao.model.Uf;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UFRepository extends JpaRepository<UF, Integer> {
+public interface UFRepository extends JpaRepository<Uf, String> {
 
 }

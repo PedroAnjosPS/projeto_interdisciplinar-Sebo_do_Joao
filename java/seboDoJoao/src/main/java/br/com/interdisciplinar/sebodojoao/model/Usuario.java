@@ -36,7 +36,7 @@ public class Usuario {
 
     @ManyToOne()
     @JoinColumn(name = "cep_nr", nullable = false)
-    private CEP cep;
+    private Cep cep;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "status", nullable = false)

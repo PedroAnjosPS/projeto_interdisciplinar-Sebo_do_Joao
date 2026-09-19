@@ -32,5 +32,5 @@ public class Cidade {
     private Uf uf;
 
     @OneToMany(mappedBy = "cidade")
-    private List<CEP> ceps;
+    private List<Cep> ceps;
 }

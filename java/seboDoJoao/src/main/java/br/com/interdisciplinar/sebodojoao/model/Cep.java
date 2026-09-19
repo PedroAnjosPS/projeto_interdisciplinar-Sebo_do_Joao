@@ -18,9 +18,8 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CEP {
+public class Cep {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nr", nullable = false)
     private String nr;
 

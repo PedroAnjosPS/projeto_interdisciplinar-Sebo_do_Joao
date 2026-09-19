@@ -3,6 +3,7 @@ package br.com.interdisciplinar.sebodojoao.service;
 import br.com.interdisciplinar.sebodojoao.model.Uf;
 import br.com.interdisciplinar.sebodojoao.repository.UFRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,9 +25,12 @@ public class UfService {
         return ufRepository.save(uf);
     }
 
-    public Uf atualizar(String sigla, Uf uf) {
-        uf.setSigla(sigla);
-        return ufRepository.save(uf);
+    public Uf atualizar(String sigla, @NonNull Uf uf) {
+        Uf ufExistente = ufRepository.findById(sigla).orElseThrow();
+
+        ufExistente.setNome(uf.getNome());
+
+        return ufRepository.save(ufExistente);
     }
 
     public void excluir(String sigla) {

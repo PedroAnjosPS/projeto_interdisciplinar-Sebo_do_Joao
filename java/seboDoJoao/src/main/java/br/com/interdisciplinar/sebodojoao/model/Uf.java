@@ -18,7 +18,6 @@ import lombok.*;
 @AllArgsConstructor
 public class Uf {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sigla", nullable = false)
     private String sigla;
 

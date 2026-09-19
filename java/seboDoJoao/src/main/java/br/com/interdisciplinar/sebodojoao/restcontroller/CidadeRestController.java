@@ -19,7 +19,7 @@ public class CidadeRestController {
     }
 
     @GetMapping("/{id}")
-    public Cidade buscarPorId(@PathVariable Integer id) {
+    public Cidade buscarPorId(@PathVariable Long id) {
         return cidadeService.buscarPorId(id);
     }
 
@@ -30,14 +30,14 @@ public class CidadeRestController {
 
     @PutMapping("/{id}")
     public Cidade atualizar(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestBody Cidade cidade) {
 
         return cidadeService.atualizar(id, cidade);
     }
 
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Integer id) {
+    public void excluir(@PathVariable Long id) {
         cidadeService.excluir(id);
     }
 }

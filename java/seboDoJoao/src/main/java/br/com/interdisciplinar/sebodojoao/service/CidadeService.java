@@ -15,11 +15,11 @@ public class CidadeService {
 
     public List<Cidade> listarTodos() { return cidadeRepository.findAll(); }
 
-    public Cidade buscarPorId(Integer id) { return cidadeRepository.findById(id).orElseThrow(); }
+    public Cidade buscarPorId(Long id) { return cidadeRepository.findById(id).orElseThrow(); }
 
     public Cidade cadastrar(Cidade cidade) { return cidadeRepository.save(cidade); }
 
-    public Cidade atualizar(Integer id, @NonNull Cidade cidade) {
+    public Cidade atualizar(Long id, @NonNull Cidade cidade) {
         Cidade cidadeExistente = cidadeRepository.findById(id).orElseThrow();
 
         cidadeExistente.setNome(cidade.getNome());
@@ -29,5 +29,5 @@ public class CidadeService {
         return cidadeRepository.save(cidadeExistente);
     }
 
-    public void excluir(Integer id) { cidadeRepository.deleteById(id); }
+    public void excluir(Long id) { cidadeRepository.deleteById(id); }
 }

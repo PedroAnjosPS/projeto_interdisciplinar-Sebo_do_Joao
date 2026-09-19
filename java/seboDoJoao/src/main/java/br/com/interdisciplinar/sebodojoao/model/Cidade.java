@@ -2,6 +2,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,5 +33,6 @@ public class Cidade {
     private Uf uf;
 
     @OneToMany(mappedBy = "cidade")
+    @JsonIgnore
     private List<Cep> ceps;
 }

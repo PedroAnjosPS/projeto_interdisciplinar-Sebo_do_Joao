@@ -16,7 +16,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "cidades")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cidade {

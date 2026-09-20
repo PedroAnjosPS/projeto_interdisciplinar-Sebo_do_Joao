@@ -7,12 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SebodojoaoApplication {
 
 	public static void main(String[] args) {
-		System.out.println("Funcionou?");
+		System.out.print("Funcionou?");
 
 		SpringApplication.run(SebodojoaoApplication.class, args);
 
-
-		System.out.println("Sim, funcionou!");
+		System.out.print("Sim, funcionou!");
 	}
 
 }

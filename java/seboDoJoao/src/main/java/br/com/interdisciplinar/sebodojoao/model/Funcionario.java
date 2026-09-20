@@ -2,6 +2,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -17,13 +18,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Funcionario extends Usuario {
-    // Atributos
     @Column(name = "funcionario_cod", nullable = false)
     private String codigoFuncionario;
 
     @OneToMany(mappedBy = "funcionario")
+    @JsonIgnore
     private List<Pedido> pedidos;
 
     @OneToMany(mappedBy = "funcionario")
+    @JsonIgnore
     private List<Produto> produtos;
 }

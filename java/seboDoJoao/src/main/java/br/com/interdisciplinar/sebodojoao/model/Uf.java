@@ -12,7 +12,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "ufs")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Uf {
@@ -25,5 +26,5 @@ public class Uf {
 
     @OneToMany(mappedBy = "uf")
     @JsonIgnore
-    private List<Cidade> cidades = new ArrayList<>();
+    private List<Cidade> cidades;
 }

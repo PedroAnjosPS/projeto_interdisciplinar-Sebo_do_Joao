@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -15,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cliente extends Usuario{
-    @Column(name = "cpf", nullable = false)
+    @Column(name = "cpf", nullable = false, length = 14, unique = true)
     private String cpf;
 
     @Column(name = "data_nascimento", nullable = false)
@@ -23,6 +24,6 @@ public class Cliente extends Usuario{
 
     @OneToMany(mappedBy = "cliente")
     @JsonIgnore
-    private List<Pedido> pedidos;
+    private List<Pedido> pedidos = new ArrayList<>();
 }
 

@@ -1,8 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Cliente;
 import br.com.interdisciplinar.sebodojoao.model.Funcionario;
-import br.com.interdisciplinar.sebodojoao.service.ClienteService;
 import br.com.interdisciplinar.sebodojoao.service.FuncionarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

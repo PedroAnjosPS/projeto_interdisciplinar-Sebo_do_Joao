@@ -17,29 +17,29 @@ public abstract class Usuario {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "nome", nullable = false)
+    @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, length = 100, unique = true)
     private String email;
 
-    @Column(name = "senha", nullable = false)
+    @Column(name = "senha", nullable = false, length = 255)
     private String senha;
 
-    @Column(name = "telefone", nullable = false)
+    @Column(name = "telefone", nullable = false, length = 20)
     private String telefone;
 
-    @Column(name = "bairro", nullable = false)
+    @Column(name = "bairro", nullable = false, length = 100)
     private String bairro;
 
-    @Column(name = "logradouro", nullable = false)
+    @Column(name = "logradouro", nullable = false, length = 255)
     private String logradouro;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cep_nr", nullable = false)
     private Cep cep;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Convert(converter = StatusUsuarioConverter.class)
     @Column(name = "status", nullable = false)
-    private StatusUsuario status;
+    private StatusUsuario status = StatusUsuario.ATIVO;
 }

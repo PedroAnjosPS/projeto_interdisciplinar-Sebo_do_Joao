@@ -1,5 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +19,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Funcionario extends Usuario {
-    @Column(name = "funcionario_cod", nullable = false)
+    @Column(name = "funcionario_cod", nullable = false, length = 50, unique = true)
     private String codigoFuncionario;
 
     @OneToMany(mappedBy = "funcionario")
@@ -27,5 +28,5 @@ public class Funcionario extends Usuario {
 
     @OneToMany(mappedBy = "funcionario")
     @JsonIgnore
-    private List<Produto> produtos;
+    private List<Produto> produtos = new ArrayList<>();
 }

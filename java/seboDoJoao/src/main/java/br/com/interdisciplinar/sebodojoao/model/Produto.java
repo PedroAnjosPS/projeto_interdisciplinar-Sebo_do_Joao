@@ -1,5 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,13 +18,10 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "nome", nullable = false)
     private String nome;
-
-    @Column(name = "tipo", nullable = false)
-    private String tipo;
 
     @Column(name = "descricao", nullable = false)
     private String descricao;
@@ -36,20 +34,23 @@ public class Produto {
 
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
+    @JsonIgnore
     private Categoria categoria;
 
     @ManyToOne
     @JoinColumn(name = "genero_id", nullable = false)
+    @JsonIgnore
     private Genero genero;
 
     @ManyToOne
     @JoinColumn(name = "funcionario_id", nullable = false)
+    @JsonIgnore
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "produto")
     private List<ImagemProduto> imagens = new ArrayList<>();
 
-    @Enumerated(EnumType.ORDINAL)
+    @Convert(converter = StatusProdutoConverter.class)
     @Column(name = "status", nullable = false)
-    private StatusProduto status;
+    private StatusProduto status = StatusProduto.DISPONIVEL;
 }

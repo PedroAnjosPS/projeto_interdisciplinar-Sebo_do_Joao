@@ -1,7 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Produto;
-import br.com.interdisciplinar.sebodojoao.service.ProdutoService;
+import br.com.interdisciplinar.sebodojoao.dto.ProdutoRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.ProdutoResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.ProdutoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,26 +15,26 @@ public class ProdutoRestController {
     private final ProdutoService produtoService;
 
     @GetMapping
-    public List<Produto> listarTodos() {
+    public List<ProdutoResponseDTO> listarTodos() {
         return produtoService.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public Produto buscarPorId(@PathVariable Long id) {
+    public ProdutoResponseDTO buscarPorId(@PathVariable Long id) {
         return produtoService.buscarPorId(id);
     }
 
     @PostMapping
-    public Produto cadastrar(@RequestBody Produto produto) {
-        return produtoService.cadastrar(produto);
+    public ProdutoResponseDTO cadastrar(@RequestBody ProdutoRequestDTO dto) {
+        return produtoService.cadastrar(dto);
     }
 
     @PutMapping("/{id}")
-    public Produto atualizar(
+    public ProdutoResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody Produto produto) {
+            @RequestBody ProdutoRequestDTO dto) {
 
-        return produtoService.atualizar(id, produto);
+        return produtoService.atualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")

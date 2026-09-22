@@ -34,17 +34,14 @@ public class Produto {
 
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
-    @JsonIgnore
     private Categoria categoria;
 
     @ManyToOne
     @JoinColumn(name = "genero_id", nullable = false)
-    @JsonIgnore
     private Genero genero;
 
     @ManyToOne
     @JoinColumn(name = "funcionario_id", nullable = false)
-    @JsonIgnore
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "produto")

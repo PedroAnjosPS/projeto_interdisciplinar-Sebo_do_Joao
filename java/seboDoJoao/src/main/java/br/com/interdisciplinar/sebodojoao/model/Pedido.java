@@ -1,10 +1,12 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
@@ -14,7 +16,8 @@ import java.util.ArrayList;
 public class Pedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "data", nullable = false)
     private LocalDateTime data;
@@ -22,23 +25,25 @@ public class Pedido {
     @Column(name = "total", nullable = false)
     private double total;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Convert(converter = StatusPedidoConverter.class)
     @Column(name = "status", nullable = false)
     private StatusPedido status;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
+    @JsonIgnore
     private Cliente cliente;
 
     @ManyToOne
     @JoinColumn(name = "funcionario_id", nullable = false)
+    @JsonIgnore
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "pedido")
-    private ArrayList<Pagamento> pagamentos = new ArrayList<>();
+    private List<Pagamento> pagamentos = new ArrayList<>();
 
     @OneToMany(mappedBy = "pedido")
-    private ArrayList<ItemPedido> itensPedido = new ArrayList<>();
+    private List<ItemPedido> itensPedido = new ArrayList<>();
 
     @OneToOne
     @JoinColumn(name = "entrega_id", unique = true, nullable = false)

@@ -16,6 +16,6 @@ public enum StatusUsuario {
                 return status;
             }
         }
-        throw new IllegalArgumentException("Status do usuário inválido: " + codigo);
+        throw new IllegalArgumentException("Status de usuário inválido: " + codigo);
     }
 }

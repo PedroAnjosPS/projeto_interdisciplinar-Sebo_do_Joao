@@ -45,6 +45,7 @@ public class Produto {
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "produto")
+    @JsonIgnore
     private List<ImagemProduto> imagens = new ArrayList<>();
 
     @Convert(converter = StatusProdutoConverter.class)

@@ -3,6 +3,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,7 +15,7 @@ public class Entrega {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "transportadora", nullable = false)
     private String transportadora;
@@ -28,12 +29,13 @@ public class Entrega {
     @Column(name = "data_postagem", nullable = false)
     private LocalDateTime dataPostagem;
 
+    @Column(name = "data_previsao_entrega", nullable = false)
+    private LocalDate dataPrevisaoEntrega;
+
     @Column(name = "data_entrega", nullable = false)
     private LocalDateTime dataEntrega;
 
-    @Column(name = "data_previsao_entrega", nullable = false)
-    private LocalDateTime dataPrevisaoEntrega;
-
+    @Convert(converter = StatusEntregaConverter.class)
     @Column(name = "status", nullable = false)
     private StatusEntrega status;
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ public class Pedido {
     @Column(name = "data", nullable = false)
     private LocalDateTime data;
 
-    @Column(name = "total", nullable = false)
-    private double total;
+    @Column(name = "total", nullable = false, precision = 10, scale = 2)
+    private BigDecimal total;
 
     @Convert(converter = StatusPedidoConverter.class)
     @Column(name = "status", nullable = false)
@@ -31,18 +32,18 @@ public class Pedido {
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
-    @JsonIgnore
     private Cliente cliente;
 
     @ManyToOne
     @JoinColumn(name = "funcionario_id", nullable = false)
-    @JsonIgnore
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "pedido")
+    @JsonIgnore
     private List<Pagamento> pagamentos = new ArrayList<>();
 
     @OneToMany(mappedBy = "pedido")
+    @JsonIgnore
     private List<ItemPedido> itensPedido = new ArrayList<>();
 
     @OneToOne

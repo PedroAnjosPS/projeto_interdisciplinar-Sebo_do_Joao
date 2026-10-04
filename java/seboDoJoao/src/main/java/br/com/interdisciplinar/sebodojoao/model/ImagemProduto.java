@@ -13,7 +13,7 @@ public class ImagemProduto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "caminho", nullable = false)
     private String caminho;

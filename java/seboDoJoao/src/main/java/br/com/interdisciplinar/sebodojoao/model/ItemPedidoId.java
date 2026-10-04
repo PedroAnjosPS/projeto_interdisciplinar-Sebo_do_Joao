@@ -15,8 +15,8 @@ import java.io.Serializable;
 public class ItemPedidoId implements Serializable {
     // Atributos
     @Column(name = "pedido_id")
-    private Integer pedidoId;
+    private Long pedidoId;
 
     @Column(name = "produto_id")
-    private Integer produtoId;
+    private Long produtoId;
 }

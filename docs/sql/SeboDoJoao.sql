@@ -6,20 +6,17 @@ GO
 
 CREATE TABLE ufs
 (
-    sigla VARCHAR(2) NOT NULL,
-    nome VARCHAR(100) NOT NULL,
-
-    CONSTRAINT pk_ufs PRIMARY KEY (sigla)
+    sigla VARCHAR(2) PRIMARY KEY NOT NULL,
+    nome VARCHAR(100) NOT NULL
 )
 GO
 
 CREATE TABLE cidades
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     nome VARCHAR(100) NOT NULL,
     uf_sigla VARCHAR(2) NOT NULL,
 
-    CONSTRAINT pk_cidades PRIMARY KEY (id),
     CONSTRAINT fk_cidades_ufs FOREIGN KEY (uf_sigla)
     REFERENCES ufs(sigla)
 )
@@ -27,10 +24,9 @@ GO
 
 CREATE TABLE ceps
 (
-    nr VARCHAR(10) NOT NULL,
+    nr VARCHAR(10) PRIMARY KEY NOT NULL,
     cidade_id INT NOT NULL,
 
-    CONSTRAINT pk_ceps PRIMARY KEY (nr),
     CONSTRAINT fk_ceps_cidades FOREIGN KEY (cidade_id)
     REFERENCES cidades(id)
 )
@@ -38,8 +34,8 @@ GO
 
 CREATE TABLE usuarios
 (
-    id INT NOT NULL IDENTITY,
-    nome VARCHAR(100) NOT NULL,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
+    nome VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(100) NOT NULL,
     senha VARCHAR(255) NOT NULL,
     status INT NOT NULL DEFAULT 1,
@@ -47,9 +43,6 @@ CREATE TABLE usuarios
     bairro VARCHAR(100),
     telefone VARCHAR(20),
     cep_nr VARCHAR(10) NOT NULL,
-
-    CONSTRAINT pk_usuarios PRIMARY KEY (id),
-    CONSTRAINT uq_usuarios_email UNIQUE (email),
 
     CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_nr)
         REFERENCES ceps(nr),
@@ -61,13 +54,10 @@ GO
 
 CREATE TABLE clientes
 (
-    usuario_id INT NOT NULL,
+    usuario_id INT PRIMARY KEY NOT NULL,
     data_nascimento DATE NOT NULL,
-    cpf VARCHAR(14) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
 
-    CONSTRAINT pk_clientes PRIMARY KEY (usuario_id),
-    CONSTRAINT uq_clientes_cpf
-        UNIQUE (cpf),
     CONSTRAINT fk_clientes_usuarios
         FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id)
@@ -76,12 +66,9 @@ GO
 
 CREATE TABLE funcionarios
 (
-    usuario_id INT NOT NULL,
-    funcionario_cod VARCHAR(50) NOT NULL,
+    usuario_id INT PRIMARY KEY NOT NULL,
+    funcionario_cod VARCHAR(50) UNIQUE  NOT NULL,
 
-    CONSTRAINT pk_funcionarios PRIMARY KEY (usuario_id),
-    CONSTRAINT uq_funcionarios_codigo
-        UNIQUE (funcionario_cod),
     CONSTRAINT fk_funcionarios_usuarios
         FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id)
@@ -90,28 +77,22 @@ GO
 
 CREATE TABLE categorias
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     nome VARCHAR(100) NOT NULL,
-
-    CONSTRAINT pk_categorias PRIMARY KEY (id)
 )
 GO
 
 CREATE TABLE generos
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     nome VARCHAR(100) NOT NULL,
-
-    CONSTRAINT pk_generos PRIMARY KEY (id)
 )
 GO
 
 CREATE TABLE produtos
 (
-    id INT NOT NULL IDENTITY,
-
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     nome VARCHAR(100) NOT NULL,
-    tipo VARCHAR(50),
     descricao VARCHAR(MAX),
     estoque INT NOT NULL DEFAULT 0,
     preco DECIMAL(10,2) NOT NULL,
@@ -119,10 +100,7 @@ CREATE TABLE produtos
     categoria_id INT NOT NULL,
     genero_id INT NOT NULL,
     funcionario_id INT NOT NULL,
-
-    created_at DATETIME DEFAULT GETDATE(),
-
-    CONSTRAINT pk_produtos PRIMARY KEY (id),
+    data_cadastro DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT ck_produtos_preco
         CHECK (preco > 0),
@@ -149,11 +127,9 @@ GO
 
 CREATE TABLE imagem_produtos
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     caminho VARCHAR(255) NOT NULL,
     produto_id INT NOT NULL,
-
-    CONSTRAINT pk_imagem_produtos PRIMARY KEY (id),
 
     CONSTRAINT fk_imagem_produtos_produtos
         FOREIGN KEY (produto_id)
@@ -163,19 +139,15 @@ GO
 
 CREATE TABLE entregas
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
 
     transportadora VARCHAR(100),
     status INT DEFAULT 1,
-
     link_rastreio VARCHAR(255),
     codigo_rastreio VARCHAR(100),
-
     data_postagem DATETIME DEFAULT GETDATE(),
-    data_entrega DATETIME,
-    data_previsao_entrega DATETIME,
-
-    CONSTRAINT pk_entregas PRIMARY KEY (id),
+    data_previsao_entrega DATE,
+    data_entrega DATETIME,    
 
     CONSTRAINT ck_entregas_status
         CHECK (status IN (1,2,3,4,5,6))
@@ -184,15 +156,13 @@ GO
 
 CREATE TABLE pedidos
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     data DATETIME NOT NULL DEFAULT GETDATE(),
     total DECIMAL(10,2) NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
     entrega_id INT UNIQUE,
     cliente_id INT NOT NULL,
     funcionario_id INT NOT NULL,
-
-    CONSTRAINT pk_pedidos PRIMARY KEY (id),
 
     CONSTRAINT ck_pedidos_total
         CHECK (total >= 0),
@@ -232,7 +202,8 @@ CREATE TABLE item_pedidos
 
     CONSTRAINT fk_item_pedidos_pedidos
         FOREIGN KEY (pedido_id)
-        REFERENCES pedidos(id),
+        REFERENCES pedidos(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT fk_item_pedidos_produtos
         FOREIGN KEY (produto_id)
@@ -242,7 +213,7 @@ GO
 
 CREATE TABLE pagamentos
 (
-    id INT NOT NULL IDENTITY,
+    id INT NOT NULL PRIMARY KEY IDENTITY,
     numero_parcela INT NOT NULL,
     status INT NOT NULL DEFAULT 1,
     valor DECIMAL(10,2) NOT NULL,
@@ -250,8 +221,6 @@ CREATE TABLE pagamentos
     data_vencimento DATE NOT NULL,
     data_pagamento DATE,
     pedido_id INT NOT NULL,
-
-    CONSTRAINT pk_pagamentos PRIMARY KEY (id),
 
     CONSTRAINT ck_pagamentos_valor
         CHECK (valor > 0),
@@ -267,8 +236,6 @@ CREATE TABLE pagamentos
         REFERENCES pedidos(id)
 )
 GO
-
-
 
 -- 10 INSERTS PARA CADA TABELA --
 -- Tabela UFs --
@@ -348,19 +315,8 @@ INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (2, '1985-08-22',
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (3, '1992-11-10', '333.444.555-66');
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (4, '1978-03-30', '444.555.666-77');
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (5, '2000-01-25', '555.666.777-88');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (6, '1995-07-12', '666.777.888-99');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (7, '1988-09-05', '777.888.999-00');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (8, '1982-12-18', '888.999.000-11');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (9, '1998-04-02', '999.000.111-22');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (10, '1993-06-20', '000.111.222-33');
-GO
 
 -- Tabela Funcionarios --
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (1, 'FUNC-2026-001');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (2, 'FUNC-2026-002');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (3, 'FUNC-2026-003');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (4, 'FUNC-2026-004');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (5, 'FUNC-2026-005');
 INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (6, 'FUNC-2026-006');
 INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (7, 'FUNC-2026-007');
 INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (8, 'FUNC-2026-008');
@@ -395,36 +351,38 @@ INSERT INTO generos (nome) VALUES ('Biografia');
 GO
 
 -- Tabela Produtos --
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Jantar Secreto', 'Novo', 'Romance instigante e perturbador com reviravoltas chocantes.', 5, 45.90, 1, 4, 3, 1); -- Livros / Suspense
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Jantar Secreto', 'Romance instigante e perturbador com reviravoltas chocantes.', 5, 45.90, 1, 4, 3, 6); -- Livros / Suspense
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('CD Metallica - Master of Puppets', 'Usado', 'Clássico absoluto do thrash metal em excelente estado de conservação.', 2, 35.00, 1, 7, 5, 2); -- CDs / Heavy Metal
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('CD Metallica - Master of Puppets', 'Clássico absoluto do thrash metal em excelente estado de conservação.', 2, 35.00, 1, 7, 5, 6); -- CDs / Heavy Metal
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Vinil Guns N'' Roses - Appetite for Destruction', 'Usado', 'Disco de vinil original da época. Capa apresenta leves desgastes.', 1, 150.00, 2, 8, 4, 3); -- Discos de Vinil / Rock
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Vinil Guns N'' Roses - Appetite for Destruction', 'Disco de vinil original da época. Capa apresenta leves desgastes.', 1, 150.00, 2, 8, 4, 7); -- Discos de Vinil / Rock
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Alien: A História Ilustrada', 'Usado', 'Adaptação em quadrinhos do clássico do cinema, mídia física rara.', 3, 60.00, 1, 3, 1, 4); -- HQ (Ocidente) / Ficção Científica
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Alien: A História Ilustrada', 'Adaptação em quadrinhos do clássico do cinema, mídia física rara.', 3, 60.00, 1, 3, 1, 7); -- HQ (Ocidente) / Ficção Científica
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Spring Boot em Ação', 'Usado', 'Livro essencial para desenvolvimento de APIs e backend.', 4, 85.50, 1, 10, 9, 5); -- Apostilas e Didáticos / Didático
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Spring Boot em Ação', 'Livro essencial para desenvolvimento de APIs e backend.', 4, 85.50, 1, 10, 9, 8); -- Apostilas e Didáticos / Didático
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('HQ Homem-Aranha: A Última Caçada de Kraven', 'Usado', 'Edição encadernada em capa dura. Item de colecionador.', 2, 75.00, 3, 3, 6, 6); -- HQ (Ocidente) / Ação
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('HQ Homem-Aranha: A Última Caçada de Kraven', 'Edição encadernada em capa dura. Item de colecionador.', 2, 75.00, 3, 3, 6, 8); -- HQ (Ocidente) / Ação
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Mangá One Piece Vol. 1', 'Novo', 'Primeiro volume da aclamada série dos mares.', 10, 29.90, 1, 1, 7, 7); -- Mangás / Aventura
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Mangá One Piece Vol. 1', 'Primeiro volume da aclamada série dos mares.', 10, 29.90, 1, 1, 7, 8); -- Mangás / Aventura
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('DVD The Babadook', 'Usado', 'Filme de terror psicológico em edição especial (ótimo para quem não acha no streaming).', 1, 25.00, 1, 6, 2, 8); -- DVDs / Terror
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('DVD The Babadook', 'Filme de terror psicológico em edição especial (ótimo para quem não acha no streaming).', 1, 25.00, 1, 6, 2, 9); -- DVDs / Terror
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Dungeons & Dragons: Livro do Jogador', 'Usado', 'Manual básico e regras para iniciar no RPG de mesa.', 2, 120.00, 2, 4, 7, 9); -- Livros / Aventura (substituindo RPG)
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Dungeons & Dragons: Livro do Jogador', 'Manual básico e regras para iniciar no RPG de mesa.', 2, 120.00, 2, 4, 7, 9); -- Livros / Aventura (substituindo RPG)
 
-INSERT INTO produtos (nome, tipo, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Autobiografia Rita Lee', 'Novo', 'Edição com fotos exclusivas da rainha do rock nacional.', 3, 55.00, 1, 4, 10, 10); -- Livros / Biografia
+INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
+VALUES ('Autobiografia Rita Lee', 'Edição com fotos exclusivas da rainha do rock nacional.', 3, 55.00, 1, 4, 10, 10); -- Livros / Biografia
 GO
+
+SELECT * FROM Produtos
 
 -- Tabela Imagem_Produtos --
 INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/livros/jantar_secreto_capa.jpg', 1);
@@ -473,35 +431,38 @@ GO
 
 -- Tabela Pedidos --
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-09 14:20:00', 45.90, 5, 1, 1, 2);
+VALUES ('2026-05-09 14:20:00', 45.90, 5, 1, 1, 6);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-24 10:15:00', 150.00, 3, 2, 2, 3);
+VALUES ('2026-05-24 10:15:00', 150.00, 3, 2, 2, 7);
 
 INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES (60.00, 1, 3, 3, 4);
+VALUES (60.00, 1, 3, 3, 8);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-04-30 11:10:00', 85.50, 5, 4, 4, 5);
+VALUES ('2026-04-30 11:10:00', 85.50, 5, 4, 4, 9);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-14 16:45:00', 75.00, 4, 5, 5, 6);
+VALUES ('2026-05-14 16:45:00', 75.00, 4, 5, 5, 10);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-25 09:00:00', 29.90, 3, 6, 6, 7);
+VALUES ('2026-05-25 09:00:00', 29.90, 3, 6, 5, 9);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-26 15:30:00', 25.00, 2, 7, 7, 8);
+VALUES ('2026-05-26 15:30:00', 25.00, 2, 7, 4, 8);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-04-19 14:20:00', 120.00, 5, 8, 8, 9);
+VALUES ('2026-04-19 14:20:00', 120.00, 5, 8, 3, 7);
 
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-23 11:11:00', 55.00, 3, 9, 9, 10);
+VALUES ('2026-05-23 11:11:00', 55.00, 3, 9, 2, 6);
 
 INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES (35.00, 5, 10, 10, 1);
+VALUES (35.00, 5, 10, 1, 10);
 GO
+
+select * from pedidos
+select * from produtos
 
 -- Tabela Item_Pedidos --
 -- Pedido 1: Livro Jantar Secreto

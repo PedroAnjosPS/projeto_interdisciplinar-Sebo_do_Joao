@@ -1,5 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.service;
 
+import br.com.interdisciplinar.sebodojoao.dto.UfRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.UfResponseDTO;
 import br.com.interdisciplinar.sebodojoao.model.Uf;
 import br.com.interdisciplinar.sebodojoao.repository.UFRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,24 +15,51 @@ import java.util.List;
 public class UfService {
     private final UFRepository ufRepository;
 
-    public List<Uf> listarTodos() {
-        return ufRepository.findAll();
+    public List<UfResponseDTO> listarTodos() {
+        return ufRepository.findAll()
+                .stream()
+                .map(Uf -> new UfResponseDTO(
+                        Uf.getSigla(),
+                        Uf.getNome()
+                ))
+                .toList();
     }
 
-    public Uf buscarPorId(String sigla) {
-        return ufRepository.findById(sigla).orElseThrow();
+    public UfResponseDTO buscarPorId(String sigla) {
+        Uf uf = ufRepository.findById(sigla).orElseThrow();
+
+        return new UfResponseDTO(
+                uf.getSigla(),
+                uf.getNome()
+        );
     }
 
-    public Uf cadastrar(Uf uf) {
-        return ufRepository.save(uf);
+    public UfResponseDTO cadastrar(UfRequestDTO dto) {
+        Uf uf = new Uf();
+
+        uf.setSigla(dto.sigla());
+        uf.setNome(dto.nome());
+
+        Uf salvo = ufRepository.save(uf);
+
+        return new UfResponseDTO(
+                salvo.getSigla(),
+                salvo.getNome()
+        );
     }
 
-    public Uf atualizar(String sigla, @NonNull Uf uf) {
+    public UfResponseDTO atualizar(String sigla, UfRequestDTO dto) {
         Uf ufExistente = ufRepository.findById(sigla).orElseThrow();
 
-        ufExistente.setNome(uf.getNome());
+        ufExistente.setSigla(dto.sigla());
+        ufExistente.setNome(dto.nome());
 
-        return ufRepository.save(ufExistente);
+        Uf atualizado = ufRepository.save(ufExistente);
+
+        return new UfResponseDTO(
+                atualizado.getSigla(),
+                atualizado.getNome()
+        );
     }
 
     public void excluir(String sigla) {

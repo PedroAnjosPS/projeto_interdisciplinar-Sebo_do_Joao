@@ -25,9 +25,7 @@ public class CategoriaService {
     }
 
     public CategoriaResponseDTO buscarPorId(Long id) {
-        Categoria categoria = categoriaRepository
-                .findById(id)
-                .orElseThrow();
+        Categoria categoria = categoriaRepository.findById(id).orElseThrow();
 
         return new CategoriaResponseDTO(
                 categoria.getId(),
@@ -36,7 +34,6 @@ public class CategoriaService {
     }
 
     public CategoriaResponseDTO cadastrar(CategoriaRequestDTO dto) {
-
         Categoria categoria = new Categoria();
 
         categoria.setNome(dto.nome());

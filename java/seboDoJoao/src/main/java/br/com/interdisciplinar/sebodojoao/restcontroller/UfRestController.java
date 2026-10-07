@@ -1,7 +1,8 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Uf;
-import br.com.interdisciplinar.sebodojoao.service.*;
+import br.com.interdisciplinar.sebodojoao.dto.UfRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.UfResponseDTO;
+import br.com.interdisciplinar.sebodojoao.service.UfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,26 +15,26 @@ public class UfRestController {
     private final UfService ufService;
 
     @GetMapping
-    public List<Uf> listarTodos() {
+    public List<UfResponseDTO> listarTodos() {
         return ufService.listarTodos();
     }
 
     @GetMapping("/{sigla}")
-    public Uf buscarPorId(@PathVariable String sigla) {
+    public UfResponseDTO buscarPorId(@PathVariable String sigla) {
         return ufService.buscarPorId(sigla);
     }
 
     @PostMapping
-    public Uf cadastrar(@RequestBody Uf uf) {
-        return ufService.cadastrar(uf);
+    public UfResponseDTO cadastrar(@RequestBody UfRequestDTO dto) {
+        return ufService.cadastrar(dto);
     }
 
     @PutMapping("/{sigla}")
-    public Uf atualizar(
+    public UfResponseDTO atualizar(
             @PathVariable String sigla,
-            @RequestBody Uf uf) {
+            @RequestBody UfRequestDTO dto) {
 
-        return ufService.atualizar(sigla, uf);
+        return ufService.atualizar(sigla, dto);
     }
 
     @DeleteMapping("/{sigla}")

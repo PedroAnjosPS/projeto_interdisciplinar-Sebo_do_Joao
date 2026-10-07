@@ -1,6 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Cliente;
+import br.com.interdisciplinar.sebodojoao.dto.ClienteRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.ClienteResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,26 +15,26 @@ public class ClienteRestController {
     private final ClienteService clienteService;
 
     @GetMapping
-    public List<Cliente> listarTodos() {
+    public List<ClienteResponseDTO> listarTodos() {
         return clienteService.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public Cliente buscarPorId(@PathVariable Long id) {
+    public ClienteResponseDTO buscarPorId(@PathVariable Long id) {
         return clienteService.buscarPorId(id);
     }
 
     @PostMapping
-    public Cliente cadastrar(@RequestBody Cliente cliente) {
-        return clienteService.cadastrar(cliente);
+    public ClienteResponseDTO cadastrar(@RequestBody ClienteRequestDTO dto) {
+        return clienteService.cadastrar(dto);
     }
 
     @PutMapping("/{id}")
-    public Cliente atualizar(
+    public ClienteResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody Cliente cliente) {
+            @RequestBody ClienteRequestDTO dto) {
 
-        return clienteService.atualizar(id, cliente);
+        return clienteService.atualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")

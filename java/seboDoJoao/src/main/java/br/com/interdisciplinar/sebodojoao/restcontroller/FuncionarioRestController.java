@@ -1,6 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Funcionario;
+import br.com.interdisciplinar.sebodojoao.dto.FuncionarioRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.FuncionarioResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.FuncionarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,26 +15,26 @@ public class FuncionarioRestController {
     private final FuncionarioService funcionarioService;
 
     @GetMapping
-    public List<Funcionario> listarTodos() {
+    public List<FuncionarioResponseDTO> listarTodos() {
         return funcionarioService.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public Funcionario buscarPorId(@PathVariable Long id) {
+    public FuncionarioResponseDTO buscarPorId(@PathVariable Long id) {
         return funcionarioService.buscarPorId(id);
     }
 
     @PostMapping
-    public Funcionario cadastrar(@RequestBody Funcionario funcionario) {
-        return funcionarioService.cadastrar(funcionario);
+    public FuncionarioResponseDTO cadastrar(@RequestBody FuncionarioRequestDTO dto) {
+        return funcionarioService.cadastrar(dto);
     }
 
     @PutMapping("/{id}")
-    public Funcionario atualizar(
+    public FuncionarioResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody Funcionario funcionario) {
+            @RequestBody FuncionarioRequestDTO dto) {
 
-        return funcionarioService.atualizar(id, funcionario);
+        return funcionarioService.atualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")

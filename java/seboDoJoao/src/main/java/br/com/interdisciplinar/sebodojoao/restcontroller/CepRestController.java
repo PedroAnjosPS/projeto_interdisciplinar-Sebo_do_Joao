@@ -1,6 +1,7 @@
 package br.com.interdisciplinar.sebodojoao.restcontroller;
 
-import br.com.interdisciplinar.sebodojoao.model.Cep;
+import br.com.interdisciplinar.sebodojoao.dto.CepRequestDTO;
+import br.com.interdisciplinar.sebodojoao.dto.CepResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.CepService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,26 +15,26 @@ public class CepRestController {
     private final CepService cepService;
 
     @GetMapping
-    public List<Cep> listarTodos() {
+    public List<CepResponseDTO> listarTodos() {
         return cepService.listarTodos();
     }
 
     @GetMapping("/{nr}")
-    public Cep buscarPorId(@PathVariable String nr) {
+    public CepResponseDTO buscarPorId(@PathVariable String nr) {
         return cepService.buscarPorId(nr);
     }
 
     @PostMapping
-    public Cep cadastrar(@RequestBody Cep cep) {
-        return cepService.cadastrar(cep);
+    public CepResponseDTO cadastrar(@RequestBody CepRequestDTO dto) {
+        return cepService.cadastrar(dto);
     }
 
     @PutMapping("/{nr}")
-    public Cep atualizar(
+    public CepResponseDTO atualizar(
             @PathVariable String nr,
-            @RequestBody Cep cep) {
+            @RequestBody CepRequestDTO dto) {
 
-        return cepService.atualizar(nr, cep);
+        return cepService.atualizar(nr, dto);
     }
 
     @DeleteMapping("/{nr}")

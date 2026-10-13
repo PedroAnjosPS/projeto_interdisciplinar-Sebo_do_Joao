@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu Carrinho - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes novas dessa tela estão na seção 12 dele) -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine d-flex flex-column">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5 flex-grow-1">
+        <h2 class="ec-admin-title fw-bold mb-4">SEU CARRINHO</h2>
+
+        <div id="aviso-indisponivel" class="alert alert-warning d-none" role="alert">
+            Alguns itens não estão mais disponíveis. Remova eles para poder confirmar a compra.
+        </div>
+
+        <div id="lista-carrinho" class="d-flex flex-column gap-3"></div>
+    </main>
+
+    <!-- Rodapé fixo com o total e o botão de confirmar -->
+    <footer class="ec-cart-footer">
+        <div class="ec-cart-total">
+            <span>Total</span>
+            <span id="total-carrinho">R$ 0,00</span>
+        </div>
+        <div class="text-center">
+            <button id="botao-confirmar" type="button" class="btn ec-btn-dark ec-btn-pill px-5 py-2" disabled>
+                CONFIRMAR COMPRA
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal de pedido confirmado -->
+    <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalPedidoTitulo" aria-hidden="true"
+        data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ec-card ec-card-shadow border-0">
+                <div class="modal-body text-center p-4 p-md-5">
+                    <i class="fas fa-circle-check fs-1 mb-3" style="color: var(--ec-color-sand);"></i>
+                    <h5 id="modalPedidoTitulo" class="ec-heading-dark fw-bold mb-2">Pedido confirmado!</h5>
+                    <p id="modalPedidoResumo" class="mb-4" style="color: var(--ec-color-mocha);"></p>
+                    <a href="index.html" class="btn ec-btn-dark ec-btn-pill px-4">Voltar à loja</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        // ===== Tela do carrinho =====
+        const listaCarrinho = document.getElementById('lista-carrinho');
+        const botaoConfirmar = document.getElementById('botao-confirmar');
+        const modalPedido = new bootstrap.Modal(document.getElementById('modalPedido'));
+
+        // Junta cada item do carrinho ({ id, quantidade }) com os dados do produto
+        async function carregarItensDetalhados() {
+            const itens = await CarrinhoStore.listar();
+            return Promise.all(itens.map(async (item) => ({
+                ...item,
+                produto: await ProdutosStore.obterPorId(item.id)
+            })));
+        }
+
+        function montarLinhaCarrinho(item) {
+            const { produto, quantidade } = item;
+
+            // Produto apagado do catálogo, inativo ou sem estoque
+            if (!produto || !CarrinhoStore.disponivel(produto)) {
+                const nome = produto ? escaparHtml(produto.titulo) : 'Produto removido do catálogo';
+                return `
+                    <div class="ec-cart-item ec-cart-indisponivel d-flex align-items-center gap-3 p-3" data-id="${escaparHtml(item.id)}">
+                        <div class="ec-cart-thumb"><i class="fas fa-box fa-2x opacity-50"></i></div>
+                        <div class="flex-grow-1">
+                            <p class="ec-cart-item-nome mb-1">${nome}</p>
+                            <span class="ec-admin-status-badge ec-admin-status-esgotado">Indisponível</span>
+                        </div>
+                        <button type="button" class="ec-cart-remover" data-acao="remover" aria-label="Remover do carrinho">
+                            <i class="far fa-trash-can"></i>
+                        </button>
+                    </div>`;
+            }
+
+            const titulo = escaparHtml(produto.titulo);
+            const limite = CarrinhoStore.limiteDeEstoque(produto);
+            const detalhes = [produto.categoria, produto.genero].filter(Boolean).map(escaparHtml).join(' · ');
+
+            const miniatura = produto.imagem
+                ? `<img src="${escaparHtml(produto.imagem)}" alt="${titulo}">`
+                : `<i class="fas ${escaparHtml(produto.icone || 'fa-box')} fa-2x opacity-50"></i>`;
+
+            return `
+                <div class="ec-cart-item d-flex align-items-center flex-wrap gap-3 p-3" data-id="${escaparHtml(item.id)}">
+                    <div class="ec-cart-thumb">${miniatura}</div>
+                    <div class="flex-grow-1">
+                        <a href="produto.html?id=${encodeURIComponent(produto.id)}" class="ec-cart-item-nome">${titulo}</a>
+                        <div class="ec-cart-item-detalhes">${detalhes}${detalhes ? ' · ' : ''}${formatarPreco(produto.preco)} cada</div>
+                    </div>
+                    <div class="ec-qty d-flex align-items-center gap-2">
+                        <button type="button" class="ec-qty-btn" data-acao="menos" aria-label="Diminuir quantidade" ${quantidade <= 1 ? 'disabled' : ''}>
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="ec-qty-valor">${quantidade} un.</span>
+                        <button type="button" class="ec-qty-btn" data-acao="mais" aria-label="Aumentar quantidade" ${quantidade >= limite ? 'disabled' : ''}>
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="ec-cart-subtotal">${formatarPreco(produto.preco * quantidade)}</div>
+                    <button type="button" class="ec-cart-remover" data-acao="remover" aria-label="Remover do carrinho">
+                        <i class="far fa-trash-can"></i>
+                    </button>
+                </div>`;
+        }
+
+        async function renderizarCarrinho() {
+            const itens = await carregarItensDetalhados();
+
+            // Se o estoque diminuiu depois que o item foi pro carrinho, ajusta a quantidade
+            for (const item of itens) {
+                if (item.produto && CarrinhoStore.disponivel(item.produto)) {
+                    const limite = CarrinhoStore.limiteDeEstoque(item.produto);
+                    if (item.quantidade > limite) {
+                        item.quantidade = limite;
+                        await CarrinhoStore.definirQuantidade(item.id, limite);
+                    }
+                }
+            }
+
+            const disponiveis = itens.filter((item) => item.produto && CarrinhoStore.disponivel(item.produto));
+            const temIndisponivel = disponiveis.length !== itens.length;
+            const total = disponiveis.reduce((soma, item) => soma + item.produto.preco * item.quantidade, 0);
+
+            document.getElementById('total-carrinho').textContent = formatarPreco(total);
+            document.getElementById('aviso-indisponivel').classList.toggle('d-none', !temIndisponivel);
+            botaoConfirmar.disabled = !disponiveis.length || temIndisponivel;
+
+            if (!itens.length) {
+                listaCarrinho.innerHTML = `
+                    <p class="ec-admin-empty text-center mt-4">
+                        Seu carrinho está vazio.
+                        <a href="index.html" class="ec-link-accent">Ver produtos</a>.
+                    </p>`;
+            } else {
+                listaCarrinho.innerHTML = itens.map(montarLinhaCarrinho).join('');
+            }
+
+            atualizarBadgeCarrinho();
+        }
+
+        // Um único "ouvinte" cuida dos botões de mais, menos e remover de todas as linhas
+        listaCarrinho.addEventListener('click', async (evento) => {
+            const botao = evento.target.closest('[data-acao]');
+            if (!botao) return;
+
+            const id = botao.closest('[data-id]').dataset.id;
+            const itemAtual = (await CarrinhoStore.listar()).find((i) => String(i.id) === String(id));
+            if (!itemAtual) return;
+
+            if (botao.dataset.acao === 'remover') {
+                await CarrinhoStore.remover(id);
+            } else if (botao.dataset.acao === 'mais') {
+                const produto = await ProdutosStore.obterPorId(id);
+                if (produto) await CarrinhoStore.adicionar(produto, 1);
+            } else if (botao.dataset.acao === 'menos') {
+                await CarrinhoStore.definirQuantidade(id, itemAtual.quantidade - 1);
+            }
+
+            renderizarCarrinho();
+        });
+
+        // Ainda não existe pagamento nem pedido de verdade: confirmar só mostra o
+        // resumo e esvazia o carrinho. (Quando o backend existir, é aqui que a
+        // tela vai chamar a API de pedidos — ex: POST /pedidos.)
+        botaoConfirmar.addEventListener('click', async () => {
+            const itens = await carregarItensDetalhados();
+            const disponiveis = itens.filter((item) => item.produto && CarrinhoStore.disponivel(item.produto));
+            if (!disponiveis.length) return;
+
+            const quantidadeTotal = disponiveis.reduce((soma, item) => soma + item.quantidade, 0);
+            const total = disponiveis.reduce((soma, item) => soma + item.produto.preco * item.quantidade, 0);
+
+            await CarrinhoStore.limpar();
+            document.getElementById('modalPedidoResumo').textContent =
+                `${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'} no valor de ${formatarPreco(total)}. Obrigado pela compra!`;
+
+            await renderizarCarrinho();
+            modalPedido.show();
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            atualizarCabecalhoConta();
+
+            // O carrinho é uma tela de conta: sem login, vai pro login e volta pra cá depois
+            if (!(await exigirLogin())) return;
+
+            renderizarCarrinho().catch((erro) => {
+                console.error('Erro ao carregar o carrinho:', erro);
+                listaCarrinho.innerHTML = '<p class="text-center mt-4">Erro ao carregar o carrinho. Tente novamente mais tarde.</p>';
+            });
+        });
+    </script>
+</body>
+
+</html>

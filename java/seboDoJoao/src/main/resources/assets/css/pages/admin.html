@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Painel do administrador - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes da área do administrador estão na seção 14) -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <!-- Cabeçalho da área do administrador -->
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
+        <a href="admin.html" class="ec-admin-logo text-decoration-none">
+            <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+        <span class="ec-admin-header-titulo d-none d-lg-inline">Área do administrador</span>
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu do administrador">
+            <a href="admin.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="mb-5">
+            <h2 class="ec-admin-title fw-bold mb-1">PAINEL DO ADMINISTRADOR</h2>
+            <p id="admin-logado-como" class="ec-conta-email mb-0">&nbsp;</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col">
+                <a href="cadastro-produto.html" class="ec-conta-card text-decoration-none h-100">
+                    <i class="fas fa-circle-plus ec-conta-card-icone"></i>
+                    <h3 class="ec-conta-card-titulo">Cadastrar produto</h3>
+                    <p class="ec-conta-card-descricao">Adicionar um novo item à loja</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="produtos-cadastrados.html" class="ec-conta-card text-decoration-none h-100">
+                    <i class="fas fa-boxes-stacked ec-conta-card-icone"></i>
+                    <h3 class="ec-conta-card-titulo">Produtos cadastrados</h3>
+                    <p id="admin-total-produtos" class="ec-conta-card-descricao">Editar ou remover itens</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="admin-senha.html" class="ec-conta-card text-decoration-none h-100">
+                    <i class="fas fa-key ec-conta-card-icone"></i>
+                    <h3 class="ec-conta-card-titulo">Alterar senha</h3>
+                    <p class="ec-conta-card-descricao">Trocar a senha do administrador</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Sem login de administrador, vai pro admin-login.html
+            if (!(await exigirAdmin())) return;
+
+            const admin = await UsuarioStore.obter();
+            document.getElementById('admin-logado-como').textContent = 'Logado como ' + admin.email;
+
+            // Mostra no card quantos produtos a loja tem
+            const produtos = await ProdutosStore.listar();
+            const ativos = produtos.filter((produto) => !produto.status || produto.status === 'Ativo').length;
+            document.getElementById('admin-total-produtos').textContent =
+                `${produtos.length} cadastrado${produtos.length === 1 ? '' : 's'} (${ativos} à venda)`;
+        });
+    </script>
+</body>
+
+</html>

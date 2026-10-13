@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="titulo-pagina">Cadastro de Produto - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes ec-admin-* usadas aqui estão na seção 10 dele) -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <!-- Cabeçalho da área do administrador -->
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
+        <a href="admin.html" class="ec-admin-logo text-decoration-none">
+            <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+        <span class="ec-admin-header-titulo d-none d-lg-inline">Área do administrador</span>
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu do administrador">
+            <a href="admin.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5" style="max-width: 900px;">
+        <div class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-2">
+            <h2 id="titulo-form" class="ec-admin-title fw-bold mb-0">CADASTRO DE PRODUTO</h2>
+            <a href="produtos-cadastrados.html" class="ec-link-accent text-decoration-none">
+                <i class="fas fa-list me-1"></i>Ver produtos cadastrados
+            </a>
+        </div>
+
+        <div class="ec-admin-card">
+            <form id="form-cadastro-produto" novalidate>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="ec-admin-label">Código ID</label>
+                        <!-- Preenchido automaticamente por JS assim que a página carrega -->
+                        <input id="campo-id" type="text" class="form-control ec-admin-input" value="..." disabled>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ec-admin-label">Categoria</label>
+                        <select id="campo-categoria" class="form-select ec-admin-input" required>
+                            <option value="" selected disabled>Selecione a categoria</option>
+                            <option>Livros</option>
+                            <option>Discos de Vinil</option>
+                            <option>Blu-rays</option>
+                            <option>Dvds</option>
+                            <option>HQs</option>
+                            <option>Cds</option>
+                            <option>Fitas Cassetes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="ec-admin-label">Nome</label>
+                        <input id="campo-nome" type="text" class="form-control ec-admin-input"
+                            placeholder="Digite o nome do produto..." required>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="ec-admin-label">Gênero</label>
+                        <!-- As opções aqui mudam de acordo com a Categoria escolhida
+                             (ver GENEROS_POR_CATEGORIA no script) -->
+                        <select id="campo-genero" class="form-select ec-admin-input" disabled>
+                            <option value="" selected disabled>Escolha a categoria primeiro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ec-admin-label">Preço (R$)</label>
+                        <!-- Não estava no mockup original, mas a vitrine precisa
+                             de um preço pra mostrar no card do produto -->
+                        <input id="campo-preco" type="number" min="0" step="0.01" class="form-control ec-admin-input"
+                            placeholder="0,00" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ec-admin-label">Estoque</label>
+                        <input id="campo-estoque" type="number" min="0" step="1" class="form-control ec-admin-input"
+                            placeholder="Número de estoque" required>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="ec-admin-label">Status</label>
+                        <select id="campo-status" class="form-select ec-admin-input" required>
+                            <option value="" selected disabled>Selecione o status</option>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                            <option value="Esgotado">Esgotado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="ec-admin-label">Descrição</label>
+                    <textarea id="campo-descricao" class="form-control ec-admin-input" rows="4"
+                        placeholder="Digite a descrição do produto..."></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="ec-admin-label d-block">Faça upload da(s) imagem(s) do produto</label>
+                    <label class="ec-upload-box d-inline-flex align-items-center gap-2">
+                        <i class="fas fa-upload"></i>
+                        <span id="texto-upload">Selecione um arquivo</span>
+                        <input id="campo-imagem" type="file" accept="image/*">
+                    </label>
+                    <br>
+                    <img id="preview-imagem" class="ec-preview-imagem d-none" alt="Pré-visualização">
+                </div>
+
+                <div id="mensagem-cadastro" class="mb-3"></div>
+
+                <div class="text-center">
+                    <button id="botao-enviar" type="submit"
+                        class="btn ec-btn-outline-primary ec-btn-pill px-5">CADASTRAR</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        // Tela só do administrador: sem login dele, vai pro admin-login.html
+        // (e volta pra cá depois de entrar). A página fica escondida até a conferência.
+        exigirAdmin();
+
+        // Quais gêneros fazem sentido pra cada categoria — é isso que faz o
+        // select de Gênero só mostrar opções relevantes (ex: escolhendo
+        // "Livros" não aparece "Rock").
+        const GENEROS_POR_CATEGORIA = {
+            'Livros': ['Ficção', 'Romance', 'Terror', 'Fantasia', 'Biografia', 'Autoajuda', 'Outro'],
+            'Discos de Vinil': ['Rock', 'MPB', 'Jazz', 'Pop', 'Samba', 'Outro'],
+            'Blu-rays': ['Ação', 'Drama', 'Comédia', 'Terror', 'Animação', 'Outro'],
+            'Dvds': ['Ação', 'Drama', 'Comédia', 'Terror', 'Animação', 'Outro'],
+            'HQs': ['Super-heróis', 'Mangá', 'Quadrinhos Nacionais', 'Outro'],
+            'Cds': ['Rock', 'MPB', 'Jazz', 'Pop', 'Samba', 'Outro'],
+            'Fitas Cassetes': ['Rock', 'MPB', 'Pop', 'Outro']
+        };
+
+        const campoImagem = document.getElementById('campo-imagem');
+        const textoUpload = document.getElementById('texto-upload');
+        const previewImagem = document.getElementById('preview-imagem');
+        const formulario = document.getElementById('form-cadastro-produto');
+        const campoCategoria = document.getElementById('campo-categoria');
+        const campoGenero = document.getElementById('campo-genero');
+        const campoId = document.getElementById('campo-id');
+
+        // Se a URL tiver ?id=123, estamos editando um produto que já existe
+        // em vez de cadastrar um novo.
+        const idParaEditar = new URLSearchParams(location.search).get('id');
+        let imagemAtual = null; // imagem que já estava salva (modo edição)
+        let imagemProcessada = null; // imagem nova, já redimensionada, pronta pra salvar
+
+        // Troca as opções do select de Gênero de acordo com a categoria
+        // escolhida. Se a categoria ainda não tem gêneros definidos aqui,
+        // o campo fica desabilitado.
+        function atualizarOpcoesDeGenero(categoriaEscolhida, generoParaManter = '') {
+            const opcoes = GENEROS_POR_CATEGORIA[categoriaEscolhida] || [];
+
+            if (!opcoes.length) {
+                campoGenero.innerHTML = '<option value="" selected disabled>Escolha a categoria primeiro</option>';
+                campoGenero.disabled = true;
+                return;
+            }
+
+            campoGenero.disabled = false;
+            campoGenero.innerHTML =
+                '<option value="" disabled' + (generoParaManter ? '' : ' selected') + '>Selecione o gênero</option>' +
+                opcoes.map((opcao) => {
+                    const selecionado = opcao === generoParaManter ? ' selected' : '';
+                    return `<option${selecionado}>${opcao}</option>`;
+                }).join('');
+        }
+
+        campoCategoria.addEventListener('change', () => atualizarOpcoesDeGenero(campoCategoria.value));
+
+        // Mostra pro usuário qual vai ser o próximo Código ID assim que a
+        // página abre (só quando é cadastro novo — no modo edição quem
+        // define o valor é carregarProdutoParaEdicao()).
+        async function mostrarProximoId() {
+            campoId.value = await ProdutosStore.proximoId();
+        }
+
+        // Fotos de celular costumam vir com vários MB — como o localStorage
+        // só tem uns 5-10MB no TOTAL pra guardar todos os produtos, salvar a
+        // imagem "crua" estoura esse limite rapidinho. Por isso a gente
+        // redimensiona (e comprime como JPEG) antes de guardar.
+        function redimensionarImagem(arquivo, larguraMaxima = 700, qualidade = 0.7) {
+            return new Promise((resolve, reject) => {
+                const leitorOriginal = new FileReader();
+                leitorOriginal.onload = (evento) => {
+                    const imagem = new Image();
+                    imagem.onload = () => {
+                        const escala = Math.min(1, larguraMaxima / imagem.width);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = imagem.width * escala;
+                        canvas.height = imagem.height * escala;
+                        canvas.getContext('2d').drawImage(imagem, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', qualidade));
+                    };
+                    imagem.onerror = () => reject(new Error('Não consegui ler essa imagem.'));
+                    imagem.src = evento.target.result;
+                };
+                leitorOriginal.onerror = () => reject(new Error('Não consegui ler esse arquivo.'));
+                leitorOriginal.readAsDataURL(arquivo);
+            });
+        }
+
+        campoImagem.addEventListener('change', async () => {
+            const arquivo = campoImagem.files[0];
+            if (!arquivo) return;
+
+            textoUpload.textContent = 'Processando imagem...';
+
+            try {
+                imagemProcessada = await redimensionarImagem(arquivo);
+                previewImagem.src = imagemProcessada;
+                previewImagem.classList.remove('d-none');
+                textoUpload.textContent = arquivo.name;
+            } catch (erro) {
+                console.error('Erro ao processar imagem:', erro);
+                imagemProcessada = null;
+                textoUpload.textContent = 'Não consegui ler essa imagem, tente outra.';
+            }
+        });
+
+        function mostrarMensagem(texto, tipo) {
+            const area = document.getElementById('mensagem-cadastro');
+            area.innerHTML = `<div class="alert alert-${tipo} mb-0">${texto}</div>`;
+        }
+
+        async function carregarProdutoParaEdicao() {
+            const produto = await ProdutosStore.obterPorId(idParaEditar);
+            if (!produto) {
+                mostrarMensagem('Não encontrei esse produto pra editar — talvez ele já tenha sido removido.', 'warning');
+                return;
+            }
+
+            document.getElementById('titulo-pagina').textContent = 'Editar Produto - Sebo do João';
+            document.getElementById('titulo-form').textContent = 'EDITAR PRODUTO';
+            document.getElementById('botao-enviar').textContent = 'ATUALIZAR';
+
+            document.getElementById('campo-id').value = produto.id;
+            document.getElementById('campo-nome').value = produto.titulo || '';
+            campoCategoria.value = produto.categoria || '';
+            atualizarOpcoesDeGenero(produto.categoria, produto.genero || '');
+            document.getElementById('campo-preco').value = produto.preco || '';
+            document.getElementById('campo-estoque').value = produto.estoque || '';
+            document.getElementById('campo-status').value = produto.status || '';
+            document.getElementById('campo-descricao').value = produto.descricao || '';
+
+            if (produto.imagem) {
+                imagemAtual = produto.imagem;
+                previewImagem.src = produto.imagem;
+                previewImagem.classList.remove('d-none');
+                textoUpload.textContent = 'Imagem atual (escolha outra pra trocar)';
+            }
+        }
+
+        if (idParaEditar) {
+            carregarProdutoParaEdicao();
+        } else {
+            mostrarProximoId();
+        }
+
+        formulario.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+
+            // Se o usuário escolheu uma imagem nova, ela já foi redimensionada
+            // no momento da seleção (evento 'change' lá em cima). Senão, mantém
+            // a imagem que já existia (modo edição) ou fica sem imagem mesmo.
+            const imagemBase64 = imagemProcessada || imagemAtual;
+
+            const dadosDoProduto = {
+                titulo: document.getElementById('campo-nome').value,
+                categoria: campoCategoria.value,
+                genero: campoGenero.value,
+                preco: Number(document.getElementById('campo-preco').value) || 0,
+                estoque: Number(document.getElementById('campo-estoque').value) || 0,
+                status: document.getElementById('campo-status').value,
+                descricao: document.getElementById('campo-descricao').value,
+                imagem: imagemBase64,
+                icone: 'fa-box' // usado como placeholder quando não há imagem
+            };
+
+            try {
+                if (idParaEditar) {
+                    const produtoAtualizado = await ProdutosStore.atualizar(idParaEditar, dadosDoProduto);
+                    mostrarMensagem(`Produto "${produtoAtualizado.titulo}" atualizado com sucesso!`, 'success');
+                } else {
+                    const produtoSalvo = await ProdutosStore.salvar(dadosDoProduto);
+                    mostrarMensagem(`Produto "${produtoSalvo.titulo}" cadastrado com sucesso! (Código ID: ${produtoSalvo.id})`, 'success');
+                    formulario.reset();
+                    previewImagem.classList.add('d-none');
+                    textoUpload.textContent = 'Selecione um arquivo';
+                    imagemProcessada = null;
+                    atualizarOpcoesDeGenero(''); // volta o gênero pro estado "escolha a categoria primeiro"
+                    mostrarProximoId(); // já mostra o próximo id, pro caso de cadastrar outro em seguida
+                }
+            } catch (erro) {
+                console.error('Erro ao salvar produto:', erro);
+                mostrarMensagem(erro.message || 'Não foi possível salvar o produto. Tente novamente.', 'danger');
+            }
+        });
+    </script>
+</body>
+
+</html>

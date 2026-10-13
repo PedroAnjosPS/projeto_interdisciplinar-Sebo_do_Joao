@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informações do Perfil - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes novas dessa tela estão na seção 12 dele) -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link" href="index.html">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="ec-page-title-bar">
+            <h2 class="ec-page-title">Informações do Perfil</h2>
+            <div class="d-flex align-items-center gap-3">
+                <a href="menu-conta.html" class="ec-link-voltar"><i class="fas fa-rotate-left me-1"></i>Voltar</a>
+                <i class="fas fa-user-pen fs-4 ec-page-title-icone"></i>
+            </div>
+        </div>
+
+        <div class="ec-profile-card">
+            <form id="form-perfil" novalidate>
+                <div class="row g-4 align-items-start">
+                    <div class="col-md-9 order-2 order-md-1">
+                        <!-- Preenchido por JS (renderizarPerfil) -->
+                        <div id="campos-perfil"></div>
+                    </div>
+                    <div class="col-md-3 order-1 order-md-2 d-flex flex-column align-items-center gap-2">
+                        <!-- Foto de perfil: clicar na câmera abre o seletor de arquivo -->
+                        <div class="ec-profile-avatar-wrap">
+                            <div id="avatar-perfil" class="ec-profile-avatar"><i class="fas fa-user"></i></div>
+                            <label class="ec-avatar-edit" for="campo-foto" title="Alterar foto">
+                                <i class="fas fa-camera"></i>
+                                <span class="visually-hidden">Alterar foto de perfil</span>
+                            </label>
+                            <input id="campo-foto" type="file" accept="image/*" class="d-none">
+                        </div>
+                        <button id="botao-remover-foto" type="button"
+                            class="btn btn-link p-0 ec-link-accent text-decoration-none d-none">Remover foto</button>
+                    </div>
+                </div>
+
+                <hr class="ec-profile-divider">
+
+                <div id="mensagem-perfil"></div>
+
+                <div id="botoes-perfil" class="d-flex justify-content-end gap-2 flex-wrap"></div>
+            </form>
+        </div>
+    </main>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        // ===== Tela de informações do perfil =====
+        // Os campos ficam numa lista só: dá pra mostrar como texto (modo normal)
+        // ou como inputs (modo edição, depois de clicar em "Editar").
+        const CAMPOS_PERFIL = [
+            // "validar" devolve a mensagem de erro (ou '') — vem do vitrine.js.
+            // "mascara" formata enquanto a pessoa digita (CPF e telefone).
+            { chave: 'nome', rotulo: 'Nome', icone: 'fa-user', tipo: 'text', placeholder: 'Seu nome completo',
+              atributos: 'autocomplete="name" maxlength="100"', validar: erroDoNome },
+            { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', tipo: 'email', placeholder: 'seuemail@exemplo.com',
+              atributos: 'autocomplete="email" maxlength="120"', validar: erroDoEmail },
+            { chave: 'cpf', rotulo: 'CPF', icone: 'fa-id-card', tipo: 'text', placeholder: '000.000.000-00',
+              atributos: 'inputmode="numeric" maxlength="14" autocomplete="off"', mascara: formatarCpf, validar: erroDoCpf },
+            { chave: 'telefone', rotulo: 'Telefone', icone: 'fa-phone', tipo: 'tel', placeholder: '(00) 00000-0000',
+              atributos: 'inputmode="numeric" autocomplete="tel"', mascara: formatarTelefone, validar: erroDoTelefone },
+            { chave: 'nascimento', rotulo: 'Data de Nascimento', icone: 'fa-calendar', tipo: 'date',
+              atributos: 'min="1900-01-01" max="' + new Date().toISOString().slice(0, 10) + '"', validar: erroDaDataNascimento }
+        ];
+
+        const formularioPerfil = document.getElementById('form-perfil');
+        const camposPerfil = document.getElementById('campos-perfil');
+        const botoesPerfil = document.getElementById('botoes-perfil');
+        let usuarioAtual = null;
+
+        // "2007-01-30" -> "30/01/2007" (sem passar por Date, pra não bagunçar o fuso)
+        function formatarDataBR(dataISO) {
+            const [ano, mes, dia] = String(dataISO || '').split('-');
+            return ano && mes && dia ? `${dia}/${mes}/${ano}` : '';
+        }
+
+        function mostrarMensagem(texto, tipo) {
+            document.getElementById('mensagem-perfil').innerHTML = texto
+                ? `<div class="alert alert-${tipo} mb-3">${texto}</div>`
+                : '';
+        }
+
+        // ----- Validação campo a campo -----
+        // Mostra (ou limpa) a mensagem de erro embaixo do campo e pinta a borda de vermelho.
+        // Devolve true se o campo está ok.
+        function validarCampo(campo) {
+            const input = document.getElementById(`campo-${campo.chave}`);
+            const erro = campo.validar(input.value.trim());
+
+            input.classList.toggle('is-invalid', Boolean(erro));
+            input.setAttribute('aria-invalid', erro ? 'true' : 'false');
+            document.getElementById(`erro-campo-${campo.chave}`).textContent = erro;
+            return !erro;
+        }
+
+        function ligarMascarasEValidacao() {
+            CAMPOS_PERFIL.forEach((campo) => {
+                const input = document.getElementById(`campo-${campo.chave}`);
+                if (campo.mascara) ligarMascara(input, campo.mascara);
+
+                // Ao sair do campo, confere. Se já estava com erro, vai conferindo
+                // enquanto digita (o aviso some assim que a pessoa corrige).
+                input.addEventListener('blur', () => validarCampo(campo));
+                input.addEventListener('input', () => {
+                    if (input.classList.contains('is-invalid')) validarCampo(campo);
+                });
+            });
+        }
+
+        function renderizarPerfil(modoEdicao) {
+            camposPerfil.innerHTML = CAMPOS_PERFIL.map((campo) => {
+                const valorGuardado = usuarioAtual[campo.chave] || '';
+                const valor = campo.mascara ? campo.mascara(valorGuardado) : valorGuardado;
+
+                if (!modoEdicao) {
+                    const exibicao = campo.chave === 'nascimento' ? formatarDataBR(valor) : valor;
+                    return `
+                        <div class="ec-profile-row">
+                            <i class="fas ${campo.icone}"></i>
+                            <span class="ec-profile-label">${campo.rotulo}:</span>
+                            <span class="ec-profile-value">${escaparHtml(exibicao) || '—'}</span>
+                        </div>`;
+                }
+
+                return `
+                    <div class="ec-profile-campo">
+                        <label class="ec-profile-row" for="campo-${campo.chave}">
+                            <i class="fas ${campo.icone}"></i>
+                            <span class="ec-profile-label">${campo.rotulo}:</span>
+                            <input id="campo-${campo.chave}" name="${campo.chave}" type="${campo.tipo}"
+                                class="form-control ec-admin-input ec-profile-input" value="${escaparHtml(valor)}"
+                                placeholder="${campo.placeholder || ''}" aria-describedby="erro-campo-${campo.chave}"
+                                ${campo.atributos || ''}>
+                        </label>
+                        <div id="erro-campo-${campo.chave}" class="ec-profile-erro" role="alert"></div>
+                    </div>`;
+            }).join('');
+
+            botoesPerfil.innerHTML = modoEdicao
+                ? `<button type="button" id="botao-cancelar" class="btn ec-btn-outline-primary ec-btn-pill px-4">Cancelar</button>
+                   <button type="submit" class="btn ec-btn-dark ec-btn-pill px-4">Salvar</button>`
+                : `<button type="button" id="botao-editar" class="btn ec-btn-dark ec-btn-pill px-4">Editar</button>`;
+
+            if (modoEdicao) {
+                ligarMascarasEValidacao();
+                document.getElementById('campo-nome').focus();
+                document.getElementById('botao-cancelar').addEventListener('click', () => {
+                    mostrarMensagem('', '');
+                    renderizarPerfil(false);
+                });
+            } else {
+                document.getElementById('botao-editar').addEventListener('click', () => {
+                    mostrarMensagem('', '');
+                    renderizarPerfil(true);
+                });
+            }
+        }
+
+        formularioPerfil.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+
+            // Só chega aqui no modo edição (o botão Salvar é o único "submit").
+            // Confere todos os campos de uma vez, assim aparecem todos os erros juntos.
+            const camposComErro = CAMPOS_PERFIL.filter((campo) => !validarCampo(campo));
+            if (camposComErro.length) {
+                mostrarMensagem('Corrija os campos destacados em vermelho para salvar.', 'danger');
+                document.getElementById(`campo-${camposComErro[0].chave}`).focus();
+                return;
+            }
+            mostrarMensagem('', '');
+
+            const dados = {};
+            CAMPOS_PERFIL.forEach((campo) => {
+                dados[campo.chave] = document.getElementById(`campo-${campo.chave}`).value.trim();
+            });
+
+            try {
+                usuarioAtual = await UsuarioStore.salvar(dados);
+                renderizarPerfil(false);
+                mostrarMensagem('Dados atualizados com sucesso!', 'success');
+            } catch (erro) {
+                console.error('Erro ao salvar o perfil:', erro);
+                mostrarMensagem(escaparHtml(erro.message || 'Não foi possível salvar os dados. Tente novamente.'), 'danger');
+            }
+        });
+
+        // ===== Foto de perfil =====
+        // Fotos de celular vêm com vários MB e o localStorage tem pouco espaço,
+        // então a gente recorta no centro (quadrado), reduz e comprime como JPEG
+        // antes de guardar.
+        function prepararFoto(arquivo, ladoMaximo = 320, qualidade = 0.85) {
+            return new Promise((resolve, reject) => {
+                const leitor = new FileReader();
+                leitor.onload = (evento) => {
+                    const imagem = new Image();
+                    imagem.onload = () => {
+                        const menorLado = Math.min(imagem.width, imagem.height);
+                        const lado = Math.min(ladoMaximo, menorLado);
+                        const origemX = (imagem.width - menorLado) / 2;
+                        const origemY = (imagem.height - menorLado) / 2;
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = lado;
+                        canvas.height = lado;
+                        const contexto = canvas.getContext('2d');
+                        contexto.fillStyle = '#FFFFFF'; // PNG transparente vira fundo branco (JPEG não tem transparência)
+                        contexto.fillRect(0, 0, lado, lado);
+                        contexto.drawImage(imagem, origemX, origemY, menorLado, menorLado, 0, 0, lado, lado);
+                        resolve(canvas.toDataURL('image/jpeg', qualidade));
+                    };
+                    imagem.onerror = () => reject(new Error('Não consegui ler essa imagem.'));
+                    imagem.src = evento.target.result;
+                };
+                leitor.onerror = () => reject(new Error('Não consegui ler esse arquivo.'));
+                leitor.readAsDataURL(arquivo);
+            });
+        }
+
+        // Mostra a foto (ou o ícone, se não tiver) no avatar grande e no cabeçalho
+        function renderizarFoto() {
+            const avatar = document.getElementById('avatar-perfil');
+            avatar.innerHTML = usuarioAtual.foto
+                ? `<img src="${escaparHtml(usuarioAtual.foto)}" alt="Foto de ${escaparHtml(usuarioAtual.nome)}">`
+                : '<i class="fas fa-user"></i>';
+            document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.foto);
+            atualizarCabecalhoConta();
+        }
+
+        document.getElementById('campo-foto').addEventListener('change', async (evento) => {
+            const arquivo = evento.target.files[0];
+            evento.target.value = ''; // permite escolher o mesmo arquivo de novo depois
+            if (!arquivo) return;
+
+            if (!arquivo.type.startsWith('image/')) {
+                mostrarMensagem('Escolha um arquivo de imagem (JPG, PNG...).', 'warning');
+                return;
+            }
+
+            try {
+                const foto = await prepararFoto(arquivo);
+                usuarioAtual = await UsuarioStore.salvar({ foto });
+                renderizarFoto();
+                mostrarMensagem('Foto de perfil atualizada!', 'success');
+            } catch (erro) {
+                console.error('Erro ao salvar a foto:', erro);
+                mostrarMensagem(erro.message || 'Não foi possível salvar a foto. Tente novamente.', 'danger');
+            }
+        });
+
+        document.getElementById('botao-remover-foto').addEventListener('click', async () => {
+            usuarioAtual = await UsuarioStore.salvar({ foto: '' });
+            renderizarFoto();
+            mostrarMensagem('Foto removida.', 'success');
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            usuarioAtual = await exigirLogin();
+            if (!usuarioAtual) return;
+
+            renderizarPerfil(false);
+            renderizarFoto();
+            atualizarBadgeCarrinho();
+        });
+    </script>
+</body>
+
+</html>

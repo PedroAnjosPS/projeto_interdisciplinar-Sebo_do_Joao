@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos Cadastrados - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <!-- Cabeçalho padrão das telas de admin (igual ao de cadastro-produto.html) -->
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3" style="position: relative">
+        <a href="admin.html" class="ec-admin-logo text-decoration-none">
+            <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+
+        <div class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden"
+            style="max-width: 500px; width: 90%;">
+            <input type="text" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+            <button class="btn ec-search-btn" type="button"><i class="fas fa-search"></i></button>
+        </div>
+
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu do administrador">
+            <a href="admin.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-2">
+            <h2 class="ec-admin-title fw-bold mb-0">PRODUTOS CADASTRADOS</h2>
+            <a href="cadastro-produto.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">
+                <i class="fas fa-plus me-2"></i>Cadastrar novo produto
+            </a>
+        </div>
+
+        <div id="lista-produtos" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+    </main>
+
+    <!-- Modal de confirmação (substitui o confirm() nativo do navegador) -->
+    <div class="modal fade" id="modalConfirmarRemocao" tabindex="-1" aria-labelledby="modalConfirmarRemocaoTitulo"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ec-card ec-card-shadow border-0">
+                <div class="modal-body text-center p-4 p-md-5">
+                    <i class="fas fa-trash-alt fs-1 mb-3" style="color: var(--ec-color-sand);"></i>
+                    <h5 id="modalConfirmarRemocaoTitulo" class="ec-heading-dark fw-bold mb-2">Remover este produto?</h5>
+                    <p class="mb-4" style="color: var(--ec-color-mocha);">Essa ação não pode ser desfeita.</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-4"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" id="botaoConfirmarRemocao"
+                            class="btn btn-danger ec-btn-pill px-4">Remover</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        // Tela só do administrador: sem login dele, vai pro admin-login.html
+        // (e volta pra cá depois de entrar). A página fica escondida até a conferência.
+        exigirAdmin();
+
+        const CLASSE_POR_STATUS = {
+            'Ativo': 'ec-admin-status-ativo',
+            'Inativo': 'ec-admin-status-inativo',
+            'Esgotado': 'ec-admin-status-esgotado'
+        };
+
+        function montarCardProduto(produto) {
+            const precoFormatado = (produto.preco || 0).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+
+            const conteudoImagem = produto.imagem
+                ? `<img src="${produto.imagem}" alt="${produto.titulo}" class="w-100 h-100" style="object-fit: cover;">`
+                : `<i class="fas ${produto.icone || 'fa-box'} fa-4x opacity-50"></i>`;
+
+            const classeStatus = CLASSE_POR_STATUS[produto.status] || 'ec-admin-status-inativo';
+
+            return `
+                <div class="col">
+                    <div class="ec-card ec-product-card h-100 d-flex flex-column ec-card-shadow">
+                        <div class="ec-product-img-wrapper position-relative">
+                            <div class="ec-product-placeholder">
+                                ${conteudoImagem}
+                            </div>
+                            <span class="position-absolute top-0 start-0 m-3 badge bg-dark rounded-pill">${produto.categoria || ''}</span>
+                            <span class="position-absolute top-0 end-0 m-3 ec-admin-status-badge ${classeStatus}">${produto.status || '—'}</span>
+                        </div>
+                        <div class="ec-product-body d-flex flex-column flex-grow-1 p-4">
+                            <h5 class="ec-product-title mb-2">${produto.titulo}</h5>
+                            <p class="mb-3" style="color: var(--ec-color-mocha); font-size: 0.9rem;">
+                                Estoque: ${produto.estoque ?? 0} un.
+                            </p>
+                            <div class="mt-auto">
+                                <p class="ec-product-price mb-3">${precoFormatado}</p>
+                                <div class="d-flex gap-2">
+                                    <a href="cadastro-produto.html?id=${produto.id}" class="btn ec-btn-outline-primary ec-btn-pill flex-grow-1">
+                                        <i class="fas fa-pen me-1"></i>Editar
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger ec-btn-pill flex-grow-1" onclick="removerProduto(${produto.id})">
+                                        <i class="fas fa-trash me-1"></i>Remover
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderizarLista() {
+            const container = document.getElementById('lista-produtos');
+            const produtos = await ProdutosStore.listar();
+
+            if (!produtos.length) {
+                container.innerHTML = `
+                    <p class="ec-admin-empty text-center w-100 mt-4">
+                        Nenhum produto cadastrado ainda.
+                        <a href="cadastro-produto.html" class="ec-link-accent">Cadastrar o primeiro</a>.
+                    </p>`;
+                return;
+            }
+
+            container.innerHTML = produtos.map(montarCardProduto).join('');
+        }
+
+        // Modal de confirmação de remoção (em vez do confirm() do navegador)
+        const elementoModalRemocao = document.getElementById('modalConfirmarRemocao');
+        const modalRemocao = new bootstrap.Modal(elementoModalRemocao);
+        const botaoConfirmarRemocao = document.getElementById('botaoConfirmarRemocao');
+        let idPendenteDeRemocao = null;
+
+        function removerProduto(id) {
+            idPendenteDeRemocao = id;
+            modalRemocao.show();
+        }
+
+        botaoConfirmarRemocao.addEventListener('click', async () => {
+            if (idPendenteDeRemocao == null) return;
+
+            await ProdutosStore.remover(idPendenteDeRemocao);
+            idPendenteDeRemocao = null;
+            modalRemocao.hide();
+            renderizarLista();
+        });
+
+        // Se o modal for fechado sem confirmar (Cancelar, X, clique fora, Esc),
+        // esquece qual produto estava pendente
+        elementoModalRemocao.addEventListener('hidden.bs.modal', () => {
+            idPendenteDeRemocao = null;
+        });
+
+        document.addEventListener('DOMContentLoaded', renderizarLista);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho: logo + busca (centralizada de verdade) + carrinho/login,
+         e embaixo a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden"
+                style="max-width: 500px; width: 90%;">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link ec-ativo" href="index.html" aria-current="page">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Carrossel de destaque -->
+        <div id="carrosselPrincipal" class="carousel slide ec-banner-shadow" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#carrosselPrincipal" data-bs-slide-to="0" class="active"
+                    aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#carrosselPrincipal" data-bs-slide-to="1"
+                    aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#carrosselPrincipal" data-bs-slide-to="2"
+                    aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="ec-carousel-slide d-flex align-items-center justify-content-center text-center px-3">
+                        <div>
+                            <h2 class="ec-heading-light fw-bold">Achados de sebo, histórias pra contar</h2>
+                            <p class="ec-text-light mb-0">Livros, discos e HQs raros esperando por você</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="ec-carousel-slide d-flex align-items-center justify-content-center text-center px-3">
+                        <div>
+                            <h2 class="ec-heading-light fw-bold">Vinis clássicos em bom estado</h2>
+                            <p class="ec-text-light mb-0">Confira nossa seleção de discos de vinil</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="ec-carousel-slide d-flex align-items-center justify-content-center text-center px-3">
+                        <div>
+                            <h2 class="ec-heading-light fw-bold">Novidades toda semana</h2>
+                            <p class="ec-text-light mb-0">Sempre chegam itens novos ao acervo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#carrosselPrincipal"
+                data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carrosselPrincipal"
+                data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Próximo</span>
+            </button>
+        </div>
+
+        <!-- Grade de produtos (puxa do ProdutosStore, igual às outras telas) -->
+        <div class="container py-5">
+            <h3 class="ec-admin-title fw-bold mb-4">NOSSOS PRODUTOS</h3>
+            <div id="product-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4"></div>
+        </div>
+    </main>
+
+    <!-- Botão flutuante do carrinho: some no topo, aparece no canto
+         inferior direito quando rola pra baixo (ver JS lá embaixo) -->
+    <a href="carrinho.html" id="carrinhoFlutuante" class="ec-carrinho-flutuante" aria-label="Ver carrinho">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+    </a>
+
+    <!-- Aviso rápido (aparece no canto inferior esquerdo, ver avisar() no script) -->
+    <div class="toast-container position-fixed bottom-0 start-0 p-3">
+        <div id="avisoToast" class="toast ec-toast" role="status" aria-live="polite" aria-atomic="true">
+            <div class="d-flex align-items-center">
+                <div id="avisoToastTexto" class="toast-body"></div>
+                <a id="avisoToastLink" href="carrinho.html" class="ec-link-accent fw-semibold text-decoration-none me-2">Ver carrinho</a>
+                <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
+    <script>
+        // ===== Renderização da grade de produtos =====
+        document.addEventListener('DOMContentLoaded', () => {
+            const productGrid = document.getElementById('product-grid');
+            if (!productGrid) return;
+
+            ligarBotoesComprar(productGrid);
+            atualizarBadgeCarrinho();
+            atualizarCabecalhoConta();
+
+            ProdutosStore.listar()
+                .then((listaDeProdutos) => {
+                    // Produtos "Inativos" ficam escondidos da vitrine
+                    const produtosVisiveis = listaDeProdutos.filter((produto) => produto.status !== 'Inativo');
+
+                    if (!produtosVisiveis.length) {
+                        productGrid.innerHTML = '<p class="text-center w-100 mt-4">Nenhum produto cadastrado ainda.</p>';
+                        return;
+                    }
+
+                    productGrid.innerHTML = produtosVisiveis.map(montarCardProduto).join('');
+                })
+                .catch((erro) => {
+                    console.error('Erro ao carregar os produtos:', erro);
+                    productGrid.innerHTML = '<p class="text-center w-100 mt-4">Erro ao carregar a vitrine. Tente novamente mais tarde.</p>';
+                });
+        });
+
+        // ===== Botão flutuante do carrinho =====
+        // Enquanto o cabeçalho (que já tem o ícone do carrinho normal)
+        // ainda está visível no topo, o botão flutuante fica escondido.
+        // Assim que o usuário rola pra baixo o suficiente pra passar do
+        // cabeçalho, ele aparece no canto inferior direito.
+        (() => {
+            const botaoCarrinhoFlutuante = document.getElementById('carrinhoFlutuante');
+            const cabecalho = document.querySelector('.ec-admin-header');
+
+            function alternarCarrinhoFlutuante() {
+                const alturaCabecalho = cabecalho ? cabecalho.offsetHeight : 200;
+                const passouDoCabecalho = window.scrollY > alturaCabecalho;
+                botaoCarrinhoFlutuante.classList.toggle('ec-visivel', passouDoCabecalho);
+            }
+
+            window.addEventListener('scroll', alternarCarrinhoFlutuante);
+            alternarCarrinhoFlutuante(); // já ajusta certo se a página abrir rolada
+        })();
+    </script>
+</body>
+
+</html>

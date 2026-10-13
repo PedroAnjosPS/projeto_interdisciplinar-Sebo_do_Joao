@@ -22,17 +22,25 @@
         <div class="ec-card ec-card-shadow row overflow-hidden g-0 ec-login-card ec-auth-card ec-active"
             id="ecAuthCard">
 
+            <!-- Botão X: fecha a tela e volta pra home (fica no card, então
+                 aparece tanto no login quanto no cadastro). O w-auto é necessário
+                 porque filhos diretos de uma .row do Bootstrap ocupam 100% da largura -->
+            <a href="index.html" class="ec-btn-close position-absolute top-0 end-0 m-4 w-auto text-decoration-none"
+                style="z-index: 20;" aria-label="Fechar e voltar para a página inicial">
+                <i class="fas fa-times"></i>
+            </a>
+
             <!-- FORM: LOGIN -->
             <div class="ec-form-panel" id="ec-form-login">
                 <h2 class="ec-heading-dark fw-bold mb-4">Fazer Login</h2>
 
-                <form action="#" method="POST" class="w-100 ec-form">
+                <form id="form-login" class="w-100 ec-form">
 
                     <div class="input-group mb-4">
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-envelope ec-icon-accent"></i>
                         </span>
-                        <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
+                        <input id="login-email" type="email" autocomplete="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
                             required>
                     </div>
 
@@ -40,9 +48,11 @@
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-lock ec-icon-accent"></i>
                         </span>
-                        <input type="password" class="form-control ec-form-control" placeholder="Digite sua senha"
+                        <input id="login-senha" type="password" autocomplete="current-password" class="form-control ec-form-control" placeholder="Digite sua senha"
                             required>
                     </div>
+
+                    <div id="mensagem-login"></div>
 
                     <div class="text-center mb-4">
                         <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">ENTRAR</button>
@@ -59,20 +69,15 @@
             <!-- FORM: CADASTRO -->
             <div class="ec-form-panel" id="ec-form-signup">
 
-                <!-- Botão de Voltar -->
-                <a href="index.html" class="text-decoration-none position-absolute top-0 end-0 m-4">
-                    <i class="fas fa-times" style="color: var(--ec-color-sand); font-size: 1.2rem; opacity: 0.6;"></i>
-                </a>
-
                 <h2 class="ec-heading-dark fw-bold mb-4">Criar Conta</h2>
 
-                <form action="#" method="POST" class="w-100 ec-form">
+                <form id="form-signup" class="w-100 ec-form">
 
                     <div class="input-group mb-3">
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-user ec-icon-accent"></i>
                         </span>
-                        <input type="text" class="form-control ec-form-control" placeholder="Seu nome completo"
+                        <input id="signup-nome" type="text" autocomplete="name" class="form-control ec-form-control" placeholder="Seu nome completo"
                             required>
                     </div>
 
@@ -80,7 +85,7 @@
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-envelope ec-icon-accent"></i>
                         </span>
-                        <input type="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
+                        <input id="signup-email" type="email" autocomplete="email" class="form-control ec-form-control" placeholder="Digite seu e-mail"
                             required>
                     </div>
 
@@ -88,7 +93,7 @@
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-lock ec-icon-accent"></i>
                         </span>
-                        <input type="password" class="form-control ec-form-control" placeholder="Crie uma senha"
+                        <input id="signup-senha" type="password" autocomplete="new-password" class="form-control ec-form-control" placeholder="Crie uma senha"
                             required>
                     </div>
 
@@ -96,9 +101,11 @@
                         <span class="input-group-text ec-input-icon-text">
                             <i class="fas fa-check-circle ec-icon-accent"></i>
                         </span>
-                        <input type="password" class="form-control ec-form-control" placeholder="Confirme sua senha"
+                        <input id="signup-confirmar" type="password" autocomplete="new-password" class="form-control ec-form-control" placeholder="Confirme sua senha"
                             required>
                     </div>
+
+                    <div id="mensagem-signup"></div>
 
                     <div class="text-center mb-4">
                         <button type="submit" class="btn ec-btn-outline-primary ec-btn-pill px-5">CADASTRAR</button>
@@ -133,10 +140,83 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
+    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="../../js/vitrine.js"></script>
     <script>
+        // ===== Login e cadastro =====
+        const parametrosUrl = new URLSearchParams(location.search);
+
+        // Quando a pessoa foi mandada pro login por uma tela que exige conta (ex: perfil),
+        // a URL traz ?voltar=perfil.html. Só aceitamos páginas .html do próprio site, pra
+        // ninguém conseguir usar o link pra redirecionar a pessoa pra outro endereço.
+        // Sem ?voltar: administrador vai pro painel dele, cliente vai pra loja.
+        function destinoDepoisDoLogin(usuario) {
+            const voltar = parametrosUrl.get('voltar') || '';
+            if (/^[A-Za-z0-9_-]+\.html(\?[^#\s]*)?$/.test(voltar)) return voltar;
+            return UsuarioStore.ehAdmin(usuario) ? 'admin.html' : 'index.html';
+        }
+
+        function mostrarMensagemAuth(idDaArea, texto) {
+            const area = document.getElementById(idDaArea);
+            area.innerHTML = '';
+            if (!texto) return;
+
+            const alerta = document.createElement('div');
+            alerta.className = 'alert alert-danger py-2 mb-3 small';
+            alerta.textContent = texto;
+            area.appendChild(alerta);
+        }
+
         function ecToggleAuth() {
+            mostrarMensagemAuth('mensagem-login', '');
+            mostrarMensagemAuth('mensagem-signup', '');
             document.getElementById('ecAuthCard').classList.toggle('ec-active');
         }
+
+        // Roda a ação (entrar ou cadastrar); se der certo vai pra próxima tela,
+        // se não, mostra o motivo no próprio formulário.
+        async function enviarFormulario(evento, idDaMensagem, acao) {
+            evento.preventDefault();
+
+            const botao = evento.target.querySelector('button[type="submit"]');
+            mostrarMensagemAuth(idDaMensagem, '');
+            botao.disabled = true;
+
+            try {
+                const usuario = await acao();
+                location.href = destinoDepoisDoLogin(usuario);
+            } catch (erro) {
+                mostrarMensagemAuth(idDaMensagem, erro.message || 'Algo deu errado. Tente novamente.');
+                botao.disabled = false;
+            }
+        }
+
+        document.getElementById('form-login').addEventListener('submit', (evento) => {
+            enviarFormulario(evento, 'mensagem-login', () => UsuarioStore.entrar(
+                document.getElementById('login-email').value,
+                document.getElementById('login-senha').value
+            ));
+        });
+
+        document.getElementById('form-signup').addEventListener('submit', (evento) => {
+            enviarFormulario(evento, 'mensagem-signup', async () => {
+                const senha = document.getElementById('signup-senha').value;
+
+                if (senha.length < 6) throw new Error('A senha precisa ter pelo menos 6 caracteres.');
+                if (senha !== document.getElementById('signup-confirmar').value) throw new Error('As senhas não conferem.');
+
+                return UsuarioStore.cadastrar({
+                    nome: document.getElementById('signup-nome').value,
+                    email: document.getElementById('signup-email').value,
+                    senha
+                });
+            });
+        });
+
+        // Quem já está logado não precisa ver essa tela
+        UsuarioStore.obter().then((usuario) => {
+            if (usuario) location.replace(destinoDepoisDoLogin(usuario));
+        });
     </script>
 </body>
 

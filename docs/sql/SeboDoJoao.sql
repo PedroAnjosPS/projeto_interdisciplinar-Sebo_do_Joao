@@ -24,7 +24,7 @@ GO
 
 CREATE TABLE ceps
 (
-    nr VARCHAR(10) PRIMARY KEY NOT NULL,
+    numero_cep VARCHAR(10) PRIMARY KEY NOT NULL,
     cidade_id INT NOT NULL,
 
     CONSTRAINT fk_ceps_cidades FOREIGN KEY (cidade_id)
@@ -42,10 +42,11 @@ CREATE TABLE usuarios
     logradouro VARCHAR(255),
     bairro VARCHAR(100),
     telefone VARCHAR(20),
-    cep_nr VARCHAR(10) NOT NULL,
+    cep_numero VARCHAR(10) NOT NULL,
+    data_cadastro DATETIME DEFAULT GETDATE(),
 
-    CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_nr)
-        REFERENCES ceps(nr),
+    CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_numero)
+        REFERENCES ceps(numero_cep),
 
     CONSTRAINT ck_usuarios_status
         CHECK (status IN (1,2,3,4))
@@ -67,7 +68,8 @@ GO
 CREATE TABLE funcionarios
 (
     usuario_id INT PRIMARY KEY NOT NULL,
-    funcionario_cod VARCHAR(50) UNIQUE  NOT NULL,
+    codigo_funcionario VARCHAR(50) UNIQUE  NOT NULL,
+    admin BIT NOT NULL DEFAULT 0 -- 0 será padrão (assim, admitindo que nem todo funcionário será um administrador)
 
     CONSTRAINT fk_funcionarios_usuarios
         FOREIGN KEY (usuario_id)
@@ -100,7 +102,6 @@ CREATE TABLE produtos
     categoria_id INT NOT NULL,
     genero_id INT NOT NULL,
     funcionario_id INT NOT NULL,
-    data_cadastro DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT ck_produtos_preco
         CHECK (preco > 0),
@@ -218,6 +219,7 @@ CREATE TABLE pagamentos
     status INT NOT NULL DEFAULT 1,
     valor DECIMAL(10,2) NOT NULL,
     quantidade_parcelas INT NOT NULL,
+    forma_pagamento VARCHAR(50) NOT NULL,
     data_vencimento DATE NOT NULL,
     data_pagamento DATE,
     pedido_id INT NOT NULL,
@@ -237,317 +239,6 @@ CREATE TABLE pagamentos
 )
 GO
 
--- 10 INSERTS PARA CADA TABELA --
--- Tabela UFs --
-INSERT INTO ufs (sigla, nome) VALUES ('SP', 'São Paulo');
-INSERT INTO ufs (sigla, nome) VALUES ('RJ', 'Rio de Janeiro');
-INSERT INTO ufs (sigla, nome) VALUES ('MG', 'Minas Gerais');
-INSERT INTO ufs (sigla, nome) VALUES ('ES', 'Espírito Santo');
-INSERT INTO ufs (sigla, nome) VALUES ('PR', 'Paraná');
-INSERT INTO ufs (sigla, nome) VALUES ('SC', 'Santa Catarina');
-INSERT INTO ufs (sigla, nome) VALUES ('RS', 'Rio Grande do Sul');
-INSERT INTO ufs (sigla, nome) VALUES ('BA', 'Bahia');
-INSERT INTO ufs (sigla, nome) VALUES ('PE', 'Pernambuco');
-INSERT INTO ufs (sigla, nome) VALUES ('CE', 'Ceará');
-GO
-
--- Tabela Cidades -- 
-INSERT INTO cidades (nome, uf_sigla) VALUES ('São Paulo', 'SP');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Campinas', 'SP');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Rio de Janeiro', 'RJ');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Niterói', 'RJ');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Belo Horizonte', 'MG');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Curitiba', 'PR');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Florianópolis', 'SC');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Porto Alegre', 'RS');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Salvador', 'BA');
-INSERT INTO cidades (nome, uf_sigla) VALUES ('Recife', 'PE');
-GO
-
--- Tabela Ceps --
-INSERT INTO ceps (nr, cidade_id) VALUES ('01001-000', 1); -- São Paulo
-INSERT INTO ceps (nr, cidade_id) VALUES ('13010-000', 2); -- Campinas
-INSERT INTO ceps (nr, cidade_id) VALUES ('20040-000', 3); -- Rio de Janeiro
-INSERT INTO ceps (nr, cidade_id) VALUES ('24020-000', 4); -- Niterói
-INSERT INTO ceps (nr, cidade_id) VALUES ('30130-000', 5); -- Belo Horizonte
-INSERT INTO ceps (nr, cidade_id) VALUES ('80010-000', 6); -- Curitiba
-INSERT INTO ceps (nr, cidade_id) VALUES ('88010-000', 7); -- Florianópolis
-INSERT INTO ceps (nr, cidade_id) VALUES ('90010-000', 8); -- Porto Alegre
-INSERT INTO ceps (nr, cidade_id) VALUES ('40010-000', 9); -- Salvador
-INSERT INTO ceps (nr, cidade_id) VALUES ('50010-000', 10); -- Recife
-GO
-
--- Tabela Usuarios --
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('João Silva', 'joao.silva@email.com', 'hash_senha_1', 1, 'Praça da Sé, 1', 'Sé', '(11) 98765-0001', '01001-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Maria Santos', 'maria.santos@email.com', 'hash_senha_2', 2, 'Avenida Francisco Glicério, 100', 'Centro', '(19) 98765-0002', '13010-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Carlos Oliveira', 'carlos.oliveira@email.com', 'hash_senha_3', 1, 'Avenida Rio Branco, 200', 'Centro', '(21) 98765-0003', '20040-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Ana Costa', 'ana.costa@email.com', 'hash_senha_4', 3, 'Rua da Conceição, 50', 'Centro', '(21) 98765-0004', '24020-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Pedro Souza', 'pedro.souza@email.com', 'hash_senha_5', 1, 'Praça Sete de Setembro, 300', 'Centro', '(31) 98765-0005', '30130-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Lucas Pereira', 'lucas.pereira@email.com', 'hash_senha_6', 4, 'Rua XV de Novembro, 400', 'Centro', '(41) 98765-0006', '80010-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Mariana Alves', 'mariana.alves@email.com', 'hash_senha_7', 1, 'Rua Felipe Schmidt, 500', 'Centro', '(48) 98765-0007', '88010-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Juliana Lima', 'juliana.lima@email.com', 'hash_senha_8', 2, 'Rua dos Andradas, 600', 'Centro', '(51) 98765-0008', '90010-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Roberto Carvalho', 'roberto.carvalho@email.com', 'hash_senha_9', 1, 'Avenida Sete de Setembro, 700', 'Dois de Julho', '(71) 98765-0009', '40010-000');
-
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_nr) 
-VALUES ('Fernanda Gomes', 'fernanda.gomes@email.com', 'hash_senha_0', 3, 'Avenida Conde da Boa Vista, 800', 'Boa Vista', '(81) 98765-0010', '50010-000');
-GO
-
--- Tabela Clientes --
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (1, '1990-05-14', '111.222.333-44');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (2, '1985-08-22', '222.333.444-55');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (3, '1992-11-10', '333.444.555-66');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (4, '1978-03-30', '444.555.666-77');
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES (5, '2000-01-25', '555.666.777-88');
-
--- Tabela Funcionarios --
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (6, 'FUNC-2026-006');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (7, 'FUNC-2026-007');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (8, 'FUNC-2026-008');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (9, 'FUNC-2026-009');
-INSERT INTO funcionarios (usuario_id, funcionario_cod) VALUES (10, 'FUNC-2026-010');
-GO
-
--- Tabela Categorias --
-INSERT INTO categorias (nome) VALUES ('Mangás');
-INSERT INTO categorias (nome) VALUES ('Fitas Cassete');
-INSERT INTO categorias (nome) VALUES ('Histórias em Quadrinhos (Ocidente)');
-INSERT INTO categorias (nome) VALUES ('Livros');
-INSERT INTO categorias (nome) VALUES ('Blu-rays');
-INSERT INTO categorias (nome) VALUES ('DVDs');
-INSERT INTO categorias (nome) VALUES ('CDs');
-INSERT INTO categorias (nome) VALUES ('Discos de Vinil');
-INSERT INTO categorias (nome) VALUES ('Revistas');
-INSERT INTO categorias (nome) VALUES ('Apostilas e Didáticos');
-GO
-
--- Tabela Generos --
-INSERT INTO generos (nome) VALUES ('Ficção Científica');
-INSERT INTO generos (nome) VALUES ('Terror');
-INSERT INTO generos (nome) VALUES ('Suspense');
-INSERT INTO generos (nome) VALUES ('Rock');
-INSERT INTO generos (nome) VALUES ('Heavy Metal');
-INSERT INTO generos (nome) VALUES ('Ação');
-INSERT INTO generos (nome) VALUES ('Aventura');
-INSERT INTO generos (nome) VALUES ('Rap');
-INSERT INTO generos (nome) VALUES ('Didático');
-INSERT INTO generos (nome) VALUES ('Biografia');
-GO
-
--- Tabela Produtos --
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Jantar Secreto', 'Romance instigante e perturbador com reviravoltas chocantes.', 5, 45.90, 1, 4, 3, 6); -- Livros / Suspense
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('CD Metallica - Master of Puppets', 'Clássico absoluto do thrash metal em excelente estado de conservação.', 2, 35.00, 1, 7, 5, 6); -- CDs / Heavy Metal
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Vinil Guns N'' Roses - Appetite for Destruction', 'Disco de vinil original da época. Capa apresenta leves desgastes.', 1, 150.00, 2, 8, 4, 7); -- Discos de Vinil / Rock
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Alien: A História Ilustrada', 'Adaptação em quadrinhos do clássico do cinema, mídia física rara.', 3, 60.00, 1, 3, 1, 7); -- HQ (Ocidente) / Ficção Científica
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Spring Boot em Ação', 'Livro essencial para desenvolvimento de APIs e backend.', 4, 85.50, 1, 10, 9, 8); -- Apostilas e Didáticos / Didático
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('HQ Homem-Aranha: A Última Caçada de Kraven', 'Edição encadernada em capa dura. Item de colecionador.', 2, 75.00, 3, 3, 6, 8); -- HQ (Ocidente) / Ação
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Mangá One Piece Vol. 1', 'Primeiro volume da aclamada série dos mares.', 10, 29.90, 1, 1, 7, 8); -- Mangás / Aventura
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('DVD The Babadook', 'Filme de terror psicológico em edição especial (ótimo para quem não acha no streaming).', 1, 25.00, 1, 6, 2, 9); -- DVDs / Terror
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Dungeons & Dragons: Livro do Jogador', 'Manual básico e regras para iniciar no RPG de mesa.', 2, 120.00, 2, 4, 7, 9); -- Livros / Aventura (substituindo RPG)
-
-INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) 
-VALUES ('Autobiografia Rita Lee', 'Edição com fotos exclusivas da rainha do rock nacional.', 3, 55.00, 1, 4, 10, 10); -- Livros / Biografia
-GO
-
-SELECT * FROM Produtos
-
--- Tabela Imagem_Produtos --
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/livros/jantar_secreto_capa.jpg', 1);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/cds/metallica_master_puppets.png', 2);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/vinil/gnr_appetite_destruction.jpg', 3);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/hqs/alien_ilustrada_frente.jpg', 4);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/didaticos/spring_boot_acao_2ed.png', 5);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/hqs/homem_aranha_kraven.jpg', 6);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/mangas/one_piece_v1_br.jpg', 7);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/dvds/the_babadook_dvd_br.jpg', 8);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/livros/dnd_livro_jogador_5e.png', 9);
-INSERT INTO imagem_produtos (caminho, produto_id) VALUES ('/assets/images/produtos/livros/rita_lee_autobiografia.jpg', 10);
-GO
-
--- Tabela Entregas --
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Correios - SEDEX', 5, 'https://rastreamento.correios.com.br', 'BR123456789BR', '2026-05-10 10:00:00', '2026-05-12 14:30:00', '2026-05-14 23:59:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Loggi', 3, 'https://www.loggi.com/rastreador/', 'LOGGI987654321', '2026-05-25 09:15:00', NULL, '2026-05-29 18:00:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_previsao_entrega) 
-VALUES ('Jadlog', 1, NULL, NULL, '2026-06-02 18:00:00'); 
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Correios - PAC', 5, 'https://rastreamento.correios.com.br', 'BR987654321BR', '2026-05-01 11:20:00', '2026-05-08 16:45:00', '2026-05-10 23:59:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Total Express', 6, 'https://tracking.totalexpress.com.br/', 'TX123456', '2026-05-15 14:00:00', NULL, '2026-05-20 18:00:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Loggi', 4, 'https://www.loggi.com/rastreador/', 'LOGGI11223344', '2026-05-26 08:30:00', NULL, '2026-05-28 18:00:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Jadlog', 2, 'https://www.jadlog.com.br/tracking', 'JAD55667788', '2026-05-27 10:00:00', NULL, '2026-06-05 18:00:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Correios - SEDEX', 5, 'https://rastreamento.correios.com.br', 'BR555444333BR', '2026-04-20 09:00:00', '2026-04-22 11:15:00', '2026-04-25 23:59:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Azul Cargo', 3, 'https://www.azulcargoexpress.com.br/', 'AZUL998877', '2026-05-24 16:20:00', NULL, '2026-05-30 18:00:00');
-
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_entrega, data_previsao_entrega) 
-VALUES ('Correios - PAC', 5, 'https://rastreamento.correios.com.br', 'BR111222333BR', '2026-05-05 13:40:00', '2026-05-15 15:10:00', '2026-05-18 23:59:00');
-GO
-
--- Tabela Pedidos --
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-09 14:20:00', 45.90, 5, 1, 1, 6);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-24 10:15:00', 150.00, 3, 2, 2, 7);
-
-INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES (60.00, 1, 3, 3, 8);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-04-30 11:10:00', 85.50, 5, 4, 4, 9);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-14 16:45:00', 75.00, 4, 5, 5, 10);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-25 09:00:00', 29.90, 3, 6, 5, 9);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-26 15:30:00', 25.00, 2, 7, 4, 8);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-04-19 14:20:00', 120.00, 5, 8, 3, 7);
-
-INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES ('2026-05-23 11:11:00', 55.00, 3, 9, 2, 6);
-
-INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) 
-VALUES (35.00, 5, 10, 1, 10);
-GO
-
-select * from pedidos
-select * from produtos
-
--- Tabela Item_Pedidos --
--- Pedido 1: Livro Jantar Secreto
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (1, 1, 1, 45.90);
-
--- Pedido 2: Vinil Guns N' Roses
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (2, 3, 1, 150.00);
-
--- Pedido 3: HQ Alien: A História Ilustrada
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (3, 4, 1, 60.00);
-
--- Pedido 4: Livro Spring Boot em Ação
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (4, 5, 1, 85.50);
-
--- Pedido 5: HQ Homem-Aranha: A Última Caçada de Kraven
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (5, 6, 1, 75.00);
-
--- Pedido 6: Mangá One Piece Vol. 1
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (6, 7, 1, 29.90);
-
--- Pedido 7: DVD The Babadook
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (7, 8, 1, 25.00);
-
--- Pedido 8: Dungeons & Dragons: Livro do Jogador
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (8, 9, 1, 120.00);
-
--- Pedido 9: Autobiografia Rita Lee
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (9, 10, 1, 55.00);
-
--- Pedido 10: CD Metallica - Master of Puppets
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) 
-VALUES (10, 2, 1, 35.00);
-GO
-
--- Tabela Pagamentos --
--- Pedido 1 (R$ 45,90) - Pago à vista (1 parcela)
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 45.90, 1, '2026-05-12', '2026-05-09', 1);
-
--- Pedido 2 (R$ 150,00) - Dividido em 2 parcelas (Parcela 1 Paga, Parcela 2 Pendente)
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 75.00, 2, '2026-05-24', '2026-05-24', 2);
-
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (2, 1, 75.00, 2, '2026-06-24', NULL, 2);
-
--- Pedido 3 (R$ 60,00) - Pendente (Aguardando pagamento)
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 1, 60.00, 1, '2026-06-05', NULL, 3);
-
--- Pedido 4 (R$ 85,50) - Pago à vista
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 85.50, 1, '2026-05-05', '2026-04-30', 4);
-
--- Pedido 5 (R$ 75,00) - Pago à vista
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 75.00, 1, '2026-05-17', '2026-05-15', 5);
-
--- Pedido 6 (R$ 29,90) - Pendente
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 1, 29.90, 1, '2026-05-28', NULL, 6);
-
--- Pedido 8 (R$ 120,00) - Pago à vista
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 120.00, 1, '2026-04-22', '2026-04-19', 8);
-
--- Pedido 9 (R$ 55,00) - Status 3 (Simulando um pagamento Cancelado/Não Aprovado)
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 3, 55.00, 1, '2026-05-26', NULL, 9);
-
--- Pedido 10 (R$ 35,00) - Pago à vista (usando a função GETDATE() para registrar o pagamento no momento da inserção)
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, data_vencimento, data_pagamento, pedido_id) 
-VALUES (1, 2, 35.00, 1, '2026-06-05', GETDATE(), 10);
-GO
-
-
 -- SELECT DE CONFIRMAÇÃO -- 
 -- Tabela UFs -- 
 SELECT * FROM ufs uf ORDER BY uf.nome;
@@ -556,7 +247,7 @@ SELECT * FROM ufs uf ORDER BY uf.nome;
 SELECT * FROM cidades cid ORDER BY cid.nome;
 
 -- Tabela Ceps --
-SELECT * FROM ceps cep ORDER BY cep.nr;
+SELECT * FROM ceps cep ORDER BY cep.numero_cep;
 
 -- Tabela Usuarios --
 SELECT * FROM usuarios usu ORDER BY usu.nome;
@@ -565,7 +256,7 @@ SELECT * FROM usuarios usu ORDER BY usu.nome;
 SELECT * FROM clientes cli ORDER BY cli.data_nascimento;
 
 -- Tabela Funcionarios --
-SELECT * FROM funcionarios func ORDER BY func.funcionario_cod;
+SELECT * FROM funcionarios func ORDER BY func.codigo_funcionario;
 
 -- Tabela Categorias --
 SELECT * FROM categorias cat ORDER BY cat.nome;

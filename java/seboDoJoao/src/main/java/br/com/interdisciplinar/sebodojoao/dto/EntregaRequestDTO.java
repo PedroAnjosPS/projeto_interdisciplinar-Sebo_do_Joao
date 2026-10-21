@@ -1,9 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.dto;
 
 import br.com.interdisciplinar.sebodojoao.model.StatusEntrega;
-import br.com.interdisciplinar.sebodojoao.model.StatusProduto;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 

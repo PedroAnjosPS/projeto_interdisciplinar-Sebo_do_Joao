@@ -35,15 +35,15 @@ GO
 CREATE TABLE usuarios
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     status INT NOT NULL DEFAULT 1,
     logradouro VARCHAR(255),
     bairro VARCHAR(100),
     telefone VARCHAR(20),
-    cep_numero VARCHAR(10) NOT NULL,
     data_cadastro DATETIME DEFAULT GETDATE(),
+    cep_numero VARCHAR(10) NOT NULL,
 
     CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_numero)
         REFERENCES ceps(numero_cep),

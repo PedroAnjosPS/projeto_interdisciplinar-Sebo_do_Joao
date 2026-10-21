@@ -31,6 +31,9 @@ public class Pagamento {
     @Column(name = "quantidade_parcelas", nullable = false)
     private Integer quantidadeParcelas;
 
+    @Column(name = "forma_pagamento", length = 50, nullable = false)
+    private String formaPagamento;
+
     @Column(name = "data_vencimento", nullable = false)
     private LocalDate dataVencimento;
 

@@ -26,7 +26,7 @@ public class Cidade {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "nome")
+    @Column(name = "nome", length = 100, nullable = false)
     private String nome;
     
     @ManyToOne

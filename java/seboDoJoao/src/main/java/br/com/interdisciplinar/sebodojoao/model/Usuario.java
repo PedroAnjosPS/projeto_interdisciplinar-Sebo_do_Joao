@@ -1,6 +1,8 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,20 +28,23 @@ public abstract class Usuario {
     @Column(name = "senha", nullable = false, length = 255)
     private String senha;
 
-    @Column(name = "telefone", nullable = false, length = 20)
-    private String telefone;
-
-    @Column(name = "bairro", nullable = false, length = 100)
-    private String bairro;
+    @Convert(converter = StatusUsuarioConverter.class)
+    @Column(name = "status", nullable = false)
+    private StatusUsuario status = StatusUsuario.ATIVO;
 
     @Column(name = "logradouro", nullable = false, length = 255)
     private String logradouro;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cep_nr", nullable = false)
-    private Cep cep;
+    @Column(name = "bairro", nullable = false, length = 100)
+    private String bairro;
+    
+    @Column(name = "telefone", nullable = false, length = 20)
+    private String telefone;
 
-    @Convert(converter = StatusUsuarioConverter.class)
-    @Column(name = "status", nullable = false)
-    private StatusUsuario status = StatusUsuario.ATIVO;
+    @Column(name = "data_cadastro", nullable = false, insertable = false, updatable = false)
+    private LocalDateTime dataCadastro;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cep_numero", nullable = false)
+    private Cep cep;
 }

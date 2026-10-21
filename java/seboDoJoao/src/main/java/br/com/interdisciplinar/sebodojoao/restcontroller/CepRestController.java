@@ -19,9 +19,9 @@ public class CepRestController {
         return cepService.listarTodos();
     }
 
-    @GetMapping("/{nr}")
-    public CepResponseDTO buscarPorId(@PathVariable String nr) {
-        return cepService.buscarPorId(nr);
+    @GetMapping("/{numeroCep}")
+    public CepResponseDTO buscarPorId(@PathVariable String numeroCep) {
+        return cepService.buscarPorId(numeroCep);
     }
 
     @PostMapping

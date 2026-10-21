@@ -1,6 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.dto;
 
 public record CepResponseDTO(
-        String nr,
+        String numeroCep,
         Long cidadeId
 ) { }

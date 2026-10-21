@@ -28,7 +28,7 @@ public class FuncionarioService {
                         funcionario.getTelefone(),
                         funcionario.getBairro(),
                         funcionario.getLogradouro(),
-                        funcionario.getCep() != null ? funcionario.getCep().getNr() : null,
+                        funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                         funcionario.getStatus(),
                         funcionario.getCodigoFuncionario()
                 ))
@@ -48,7 +48,7 @@ public class FuncionarioService {
                 funcionario.getTelefone(),
                 funcionario.getBairro(),
                 funcionario.getLogradouro(),
-                funcionario.getCep() != null ? funcionario.getCep().getNr() : null,
+                funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                 funcionario.getStatus(),
                 funcionario.getCodigoFuncionario()
         );
@@ -56,7 +56,7 @@ public class FuncionarioService {
 
     public FuncionarioResponseDTO cadastrar(FuncionarioRequestDTO dto) {
         Cep cep = cepRepository
-                .findById(dto.cepNr())
+                .findById(dto.cepNumero())
                 .orElseThrow();
 
         Funcionario funcionario = new Funcionario();
@@ -80,7 +80,7 @@ public class FuncionarioService {
                 salvo.getTelefone(),
                 salvo.getBairro(),
                 salvo.getLogradouro(),
-                salvo.getCep() != null ? salvo.getCep().getNr() : null,
+                salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
                 salvo.getCodigoFuncionario()
         );
@@ -92,7 +92,7 @@ public class FuncionarioService {
                 .orElseThrow();
 
         Cep cep = cepRepository
-                .findById(dto.cepNr())
+                .findById(dto.cepNumero())
                 .orElseThrow();
 
         funcionarioExistente.setNome(dto.nome());
@@ -115,7 +115,7 @@ public class FuncionarioService {
                 atualizado.getTelefone(),
                 atualizado.getBairro(),
                 atualizado.getLogradouro(),
-                atualizado.getCep() != null ? atualizado.getCep().getNr() : null,
+                atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
                 atualizado.getCodigoFuncionario()
         );

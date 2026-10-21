@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -20,8 +19,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Funcionario extends Usuario {
-    @Column(name = "funcionario_cod", nullable = false, length = 50, unique = true)
+    @Column(name = "codigo_funcionario", nullable = false, length = 50, unique = true)
     private String codigoFuncionario;
+
+    @Column(name = "admin", nullable = false, insertable = false, updatable = false)
+    private Boolean admin = false;
 
     @OneToMany(mappedBy = "funcionario")
     @JsonIgnore

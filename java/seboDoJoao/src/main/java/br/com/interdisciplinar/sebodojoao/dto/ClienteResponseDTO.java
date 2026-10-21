@@ -12,7 +12,7 @@ public record ClienteResponseDTO(
         String telefone,
         String bairro,
         String logradouro,
-        String cepNr,
+        String cepNumero,
         StatusUsuario status,
         String cpf,
         LocalDate dataNascimento

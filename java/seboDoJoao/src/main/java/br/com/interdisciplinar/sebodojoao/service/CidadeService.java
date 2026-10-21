@@ -7,7 +7,6 @@ import br.com.interdisciplinar.sebodojoao.model.Uf;
 import br.com.interdisciplinar.sebodojoao.repository.CidadeRepository;
 import br.com.interdisciplinar.sebodojoao.repository.UFRepository;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

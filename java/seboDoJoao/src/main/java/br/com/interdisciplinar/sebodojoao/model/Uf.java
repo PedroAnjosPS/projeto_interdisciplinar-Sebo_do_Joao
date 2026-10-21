@@ -1,5 +1,4 @@
 package br.com.interdisciplinar.sebodojoao.model;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,10 +17,10 @@ import lombok.*;
 @AllArgsConstructor
 public class Uf {
     @Id
-    @Column(name = "sigla", nullable = false)
+    @Column(name = "sigla", nullable = false, length = 2)
     private String sigla;
 
-    @Column(name = "nome", nullable = false)
+    @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
     @OneToMany(mappedBy = "uf")

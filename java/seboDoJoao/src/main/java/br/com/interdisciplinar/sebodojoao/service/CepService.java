@@ -7,7 +7,6 @@ import br.com.interdisciplinar.sebodojoao.model.Cidade;
 import br.com.interdisciplinar.sebodojoao.repository.CepRepository;
 import br.com.interdisciplinar.sebodojoao.repository.CidadeRepository;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +21,7 @@ public class CepService {
         return cepRepository.findAll()
                 .stream()
                 .map(Cep -> new CepResponseDTO(
-                        Cep.getNr(),
+                        Cep.getNumeroCep(),
                         Cep.getCidade().getId()
                 ))
                 .toList();
@@ -32,7 +31,7 @@ public class CepService {
         Cep cep = cepRepository.findById(nr).orElseThrow();
 
         return new CepResponseDTO(
-                cep.getNr(),
+                cep.getNumeroCep(),
                 cep.getCidade().getId()
         );
     }
@@ -42,13 +41,13 @@ public class CepService {
 
         Cidade cidade = cidadeRepository.findById(dto.cidadeId()).orElseThrow();
 
-        cep.setNr(dto.nr());
+        cep.setNumeroCep(dto.numeroCep());
         cep.setCidade(cidade);
 
         Cep salvo = cepRepository.save(cep);
 
         return new CepResponseDTO(
-                salvo.getNr(),
+                salvo.getNumeroCep(),
                 salvo.getCidade().getId()
         );
     }
@@ -58,13 +57,13 @@ public class CepService {
 
         Cidade cidade = cidadeRepository.findById(dto.cidadeId()).orElseThrow();
 
-        cepExistente.setNr(dto.nr());
+        cepExistente.setNumeroCep(dto.numeroCep());
         cepExistente.setCidade(cidade);
 
         Cep atualizado = cepRepository.save(cepExistente);
 
         return new CepResponseDTO(
-                atualizado.getNr(),
+                atualizado.getNumeroCep(),
                 atualizado.getCidade().getId()
         );
     }

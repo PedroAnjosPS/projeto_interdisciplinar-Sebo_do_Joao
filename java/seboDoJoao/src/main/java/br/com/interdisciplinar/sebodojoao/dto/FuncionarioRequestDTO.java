@@ -2,8 +2,6 @@ package br.com.interdisciplinar.sebodojoao.dto;
 
 import br.com.interdisciplinar.sebodojoao.model.StatusUsuario;
 
-import java.time.LocalDate;
-
 public record FuncionarioRequestDTO(
         String nome,
         String email,
@@ -11,7 +9,7 @@ public record FuncionarioRequestDTO(
         String telefone,
         String bairro,
         String logradouro,
-        String cepNr,
+        String cepNumero,
         StatusUsuario status,
         String codigoFuncionario
 ) { }

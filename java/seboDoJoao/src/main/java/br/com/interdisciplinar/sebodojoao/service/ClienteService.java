@@ -28,7 +28,7 @@ public class ClienteService {
                         cliente.getTelefone(),
                         cliente.getBairro(),
                         cliente.getLogradouro(),
-                        cliente.getCep() != null ? cliente.getCep().getNr() : null, // Ajuste conforme o tipo do ID da classe Cep
+                        cliente.getCep() != null ? cliente.getCep().getNumeroCep() : null, // Ajuste conforme o tipo do ID da classe Cep
                         cliente.getStatus(),
                         cliente.getCpf(),
                         cliente.getDataNascimento()
@@ -49,7 +49,7 @@ public class ClienteService {
                 cliente.getTelefone(),
                 cliente.getBairro(),
                 cliente.getLogradouro(),
-                cliente.getCep() != null ? cliente.getCep().getNr() : null,
+                cliente.getCep() != null ? cliente.getCep().getNumeroCep() : null,
                 cliente.getStatus(),
                 cliente.getCpf(),
                 cliente.getDataNascimento()
@@ -58,7 +58,7 @@ public class ClienteService {
 
     public ClienteResponseDTO cadastrar(ClienteRequestDTO dto) {
         Cep cep = cepRepository
-                .findById(dto.cepNr())
+                .findById(dto.cepNumero())
                 .orElseThrow();
 
         Cliente cliente = new Cliente();
@@ -83,7 +83,7 @@ public class ClienteService {
                 salvo.getTelefone(),
                 salvo.getBairro(),
                 salvo.getLogradouro(),
-                salvo.getCep() != null ? salvo.getCep().getNr() : null,
+                salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
                 salvo.getCpf(),
                 salvo.getDataNascimento()
@@ -96,7 +96,7 @@ public class ClienteService {
                 .orElseThrow();
 
         Cep cep = cepRepository
-                .findById(dto.cepNr())
+                .findById(dto.cepNumero())
                 .orElseThrow();
 
         clienteExistente.setNome(dto.nome());
@@ -120,7 +120,7 @@ public class ClienteService {
                 atualizado.getTelefone(),
                 atualizado.getBairro(),
                 atualizado.getLogradouro(),
-                atualizado.getCep() != null ? atualizado.getCep().getNr() : null,
+                atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
                 atualizado.getCpf(),
                 atualizado.getDataNascimento()

@@ -5,8 +5,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -22,8 +20,8 @@ import lombok.*;
 @AllArgsConstructor
 public class Cep {
     @Id
-    @Column(name = "nr", nullable = false)
-    private String nr;
+    @Column(name = "numero_cep", length = 10, nullable = false)
+    private String numeroCep;
 
     @ManyToOne
     @JoinColumn(name = "cidade_id", nullable = false)

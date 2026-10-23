@@ -49,7 +49,7 @@ CREATE TABLE usuarios
         REFERENCES ceps(numero_cep),
 
     CONSTRAINT ck_usuarios_status
-        CHECK (status IN (1,2,3,4))
+        CHECK (status IN (1,2))
 )
 GO
 
@@ -98,7 +98,7 @@ CREATE TABLE produtos
     descricao VARCHAR(MAX),
     estoque INT NOT NULL DEFAULT 0,
     preco DECIMAL(10,2) NOT NULL,
-    status INT NOT NULL DEFAULT 1,
+    status INT NULL DEFAULT 1,
     categoria_id INT NOT NULL,
     genero_id INT NOT NULL,
     funcionario_id INT NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE produtos
         CHECK (estoque >= 0),
 
     CONSTRAINT ck_produtos_status
-        CHECK (status IN (1,2,3,4)),
+        CHECK (status IN (1,2)),
 
     CONSTRAINT fk_produtos_categorias
         FOREIGN KEY (categoria_id)
@@ -141,7 +141,6 @@ GO
 CREATE TABLE entregas
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,
-
     transportadora VARCHAR(100),
     status INT DEFAULT 1,
     link_rastreio VARCHAR(255),
@@ -151,7 +150,7 @@ CREATE TABLE entregas
     data_entrega DATETIME,    
 
     CONSTRAINT ck_entregas_status
-        CHECK (status IN (1,2,3,4,5,6))
+        CHECK (status IN (1,2,3,4,5))
 )
 GO
 
@@ -160,7 +159,7 @@ CREATE TABLE pedidos
     id INT NOT NULL PRIMARY KEY IDENTITY,
     data DATETIME NOT NULL DEFAULT GETDATE(),
     total DECIMAL(10,2) NOT NULL DEFAULT 0,
-    status INT NOT NULL DEFAULT 1,
+    status INT NULL DEFAULT 1,
     entrega_id INT UNIQUE,
     cliente_id INT NOT NULL,
     funcionario_id INT NOT NULL,
@@ -169,7 +168,7 @@ CREATE TABLE pedidos
         CHECK (total >= 0),
 
     CONSTRAINT ck_pedidos_status
-        CHECK (status IN (1,2,3,4,5)),
+        CHECK (status IN (1,2,3,4)),
 
     CONSTRAINT fk_pedidos_entregas
         FOREIGN KEY (entrega_id)
@@ -216,7 +215,7 @@ CREATE TABLE pagamentos
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,
     numero_parcela INT NOT NULL,
-    status INT NOT NULL DEFAULT 1,
+    status INT NULL DEFAULT 1,
     valor DECIMAL(10,2) NOT NULL,
     quantidade_parcelas INT NOT NULL,
     forma_pagamento VARCHAR(50) NOT NULL,
@@ -231,58 +230,10 @@ CREATE TABLE pagamentos
         CHECK (quantidade_parcelas > 0),
 
     CONSTRAINT ck_pagamentos_status
-        CHECK (status IN (1,2,3,4,5)),
+        CHECK (status IN (1,2,3)),
 
     CONSTRAINT fk_pagamentos_pedidos
         FOREIGN KEY (pedido_id)
         REFERENCES pedidos(id)
 )
 GO
-
--- SELECT DE CONFIRMAÇÃO -- 
--- Tabela UFs -- 
-SELECT * FROM ufs uf ORDER BY uf.nome;
-
--- Tabela Cidades --
-SELECT * FROM cidades cid ORDER BY cid.nome;
-
--- Tabela Ceps --
-SELECT * FROM ceps cep ORDER BY cep.numero_cep;
-
--- Tabela Usuarios --
-SELECT * FROM usuarios usu ORDER BY usu.nome;
-
--- Tabela Clientes --
-SELECT * FROM clientes cli ORDER BY cli.data_nascimento;
-
--- Tabela Funcionarios --
-SELECT * FROM funcionarios func ORDER BY func.codigo_funcionario;
-
--- Tabela Categorias --
-SELECT * FROM categorias cat ORDER BY cat.nome;
-
--- Tabela Generos --
-SELECT * FROM generos gen ORDER BY gen.nome;
-
--- Tabela Produtos --
-SELECT * FROM produtos prod ORDER BY prod.nome;
-
--- Tabela Imagem_Produtos --
-SELECT * FROM imagem_produtos imag ORDER BY imag.produto_id;
-
--- Tabela Entregas --
-SELECT * FROM entregas ent ORDER BY ent.transportadora;
-
--- Tabela Pedidos --
-SELECT * FROM pedidos pe ORDER BY pe.total DESC;
-
--- Tabela Item_Pedidos --
-SELECT pe.id ID_Pedido, prod.nome Produto, pe.total Total_Pedido  
-FROM produtos prod, pedidos pe, item_pedidos item 
-WHERE 
-    item.pedido_id = pe.id AND
-    item.produto_id = prod.id 
-ORDER BY pe.id;
-
--- Tabela Pagamentos --
-SELECT * FROM pagamentos pag ORDER BY pag.pedido_id;

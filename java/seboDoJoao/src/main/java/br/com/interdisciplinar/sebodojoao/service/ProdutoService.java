@@ -5,10 +5,12 @@ import br.com.interdisciplinar.sebodojoao.dto.ProdutoResponseDTO;
 import br.com.interdisciplinar.sebodojoao.model.Categoria;
 import br.com.interdisciplinar.sebodojoao.model.Funcionario;
 import br.com.interdisciplinar.sebodojoao.model.Genero;
+import br.com.interdisciplinar.sebodojoao.model.ImagemProduto;
 import br.com.interdisciplinar.sebodojoao.model.Produto;
 import br.com.interdisciplinar.sebodojoao.repository.CategoriaRepository;
 import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
 import br.com.interdisciplinar.sebodojoao.repository.GeneroRepository;
+import br.com.interdisciplinar.sebodojoao.repository.ImagemProdutoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,21 +24,29 @@ public class ProdutoService {
     private final CategoriaRepository categoriaRepository;
     private final GeneroRepository generoRepository;
     private final FuncionarioRepository funcionarioRepository;
+    private final ImagemProdutoRepository imagemProdutoRepository;
 
     public List<ProdutoResponseDTO> listarTodos() {
         return produtoRepository.findAll()
                 .stream()
-                .map(produto -> new ProdutoResponseDTO(
-                        produto.getId(),
-                        produto.getNome(),
-                        produto.getDescricao(),
-                        produto.getPreco(),
-                        produto.getEstoque(),
-                        produto.getCategoria().getId(),
-                        produto.getGenero().getId(),
-                        produto.getFuncionario().getId(),
-                        produto.getStatus()
-                ))
+                .map(produto -> {
+                        // Pega o caminho da primeira imagem da lista (caso exista) ou null caso não tenha imagem
+                        String caminhoImagem = produto.getImagens().isEmpty() ?
+                                                        null : produto.getImagens().get(0).getCaminho();
+
+                        return new ProdutoResponseDTO(
+                                produto.getId(),
+                                produto.getNome(),
+                                produto.getDescricao(),
+                                produto.getPreco(),
+                                produto.getEstoque(),
+                                produto.getCategoria().getId(),
+                                produto.getGenero().getId(),
+                                produto.getFuncionario().getId(),
+                                produto.getStatus(),
+                                caminhoImagem
+                        );
+                })
                 .toList();
     }
 
@@ -44,6 +54,9 @@ public class ProdutoService {
         Produto produto = produtoRepository
                 .findById(id)
                 .orElseThrow();
+
+        String caminhoImagem = produto.getImagens().isEmpty() ?
+                                                        null : produto.getImagens().get(0).getCaminho();
 
         return new ProdutoResponseDTO(
                 produto.getId(),
@@ -54,7 +67,8 @@ public class ProdutoService {
                 produto.getCategoria().getId(),
                 produto.getGenero().getId(),
                 produto.getFuncionario().getId(),
-                produto.getStatus()
+                produto.getStatus(),
+                caminhoImagem
         );
     }
 
@@ -77,14 +91,23 @@ public class ProdutoService {
         produto.setDescricao(dto.descricao());
         produto.setPreco(dto.preco());
         produto.setEstoque(dto.estoque());
-
         produto.setCategoria(categoria);
         produto.setGenero(genero);
         produto.setFuncionario(funcionario);
-
         produto.setStatus(dto.status());
 
         Produto salvo = produtoRepository.save(produto);
+
+        String caminhoImagem = null;
+
+        // Se o front-end enviar uma imagem, salva na tabela imagem_produtos
+        if (dto.imagem() != null && !dto.imagem().trim().isEmpty()) {
+                ImagemProduto novaImagem = new ImagemProduto();
+                novaImagem.setCaminho(dto.imagem());
+                novaImagem.setProduto(salvo);
+                imagemProdutoRepository.save(novaImagem);
+                caminhoImagem = dto.imagem();
+        }
 
         return new ProdutoResponseDTO(
                 salvo.getId(),
@@ -95,7 +118,8 @@ public class ProdutoService {
                 salvo.getCategoria().getId(),
                 salvo.getGenero().getId(),
                 salvo.getFuncionario().getId(),
-                salvo.getStatus()
+                salvo.getStatus(),
+                caminhoImagem
         );
     }
 
@@ -120,14 +144,29 @@ public class ProdutoService {
         produtoExistente.setDescricao(dto.descricao());
         produtoExistente.setPreco(dto.preco());
         produtoExistente.setEstoque(dto.estoque());
-
         produtoExistente.setCategoria(categoria);
         produtoExistente.setGenero(genero);
         produtoExistente.setFuncionario(funcionario);
-
         produtoExistente.setStatus(dto.status());
 
         Produto atualizado = produtoRepository.save(produtoExistente);
+
+        String caminhoImagem = null;
+
+        if (dto.imagem() != null && !dto.imagem().trim().isEmpty()) {
+                if (atualizado.getImagens().isEmpty()) {
+                        ImagemProduto novaImagem = new ImagemProduto();
+                        novaImagem.setCaminho(dto.imagem());
+                        novaImagem.setProduto(atualizado);
+                        imagemProdutoRepository.save(novaImagem);
+                        caminhoImagem = dto.imagem();
+                } else {
+                        ImagemProduto imagemExistente = atualizado.getImagens().get(0);
+                        imagemExistente.setCaminho(dto.imagem());
+                        imagemProdutoRepository.save(imagemExistente);
+                        caminhoImagem = dto.imagem();
+                }
+        }
 
         return new ProdutoResponseDTO(
                 atualizado.getId(),
@@ -138,7 +177,8 @@ public class ProdutoService {
                 atualizado.getCategoria().getId(),
                 atualizado.getGenero().getId(),
                 atualizado.getFuncionario().getId(),
-                atualizado.getStatus()
+                atualizado.getStatus(),
+                caminhoImagem
         );
     }
 

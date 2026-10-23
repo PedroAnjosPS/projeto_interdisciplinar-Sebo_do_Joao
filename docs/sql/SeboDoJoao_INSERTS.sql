@@ -103,13 +103,13 @@ GO
 INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) VALUES 
 -- Categoria: Livros (1)
 ('Dom Casmurro', 'Edição clássica de Machado de Assis.', 5, 35.00, 1, 1, 9, 7),         -- Gênero: Didático (9)
-('Neuromancer', 'Obra-prima de William Gibson.', 3, 45.50, 1, 1, 1, 7),                -- Gênero: Ficção Científica (1)
-('Breve História do Tempo', 'Física por Stephen Hawking.', 2, 40.00, 1, 1, 9, 7),       -- Gênero: Didático (9)
+('2001: Uma Odisséia no Espaço', 'Obra-prima de Arthur C. Clarke.', 3, 45.50, 1, 1, 1, 7),                -- Gênero: Ficção Científica (1)
+('Uma Breve História do Tempo', 'Física por Stephen Hawking.', 2, 40.00, 1, 1, 9, 7),       -- Gênero: Didático (9)
 -- Categoria: HQs (2)
 ('Batman: O Cavaleiro das Trevas', 'HQ clássica da DC Comics.', 4, 55.00, 1, 2, 6, 7), -- Gênero: Ação (6)
 ('The Sandman Vol. 1', 'Obra de Neil Gaiman.', 6, 60.00, 1, 2, 7, 7),                  -- Gênero: Aventura (7)
 -- Categoria: Disco de Vinil (3)
-('Vinil Pink Floyd - The Dark Side', 'Disco de vinil original em bom estado.', 2, 150.00, 1, 3, 4, 7), -- Gênero: Rock (4)
+('Vinil Pink Floyd - The Dark Side Of the Moon', 'Disco de vinil original em bom estado.', 2, 150.00, 1, 3, 4, 7), -- Gênero: Rock (4)
 -- Categoria: Blu-rays (4)
 ('Blu-ray Matrix', 'Filme em alta definição.', 8, 45.00, 1, 4, 1, 7),                  -- Gênero: Ficção Científica (1)
 -- Categoria: DVDs (5)
@@ -124,16 +124,16 @@ SELECT * FROM Produtos
 
 -- Tabela Imagem_Produtos --
 INSERT INTO imagem_produtos (caminho, produto_id) VALUES 
-('/img/dom_casmurro.jpg', 1),
-('/img/neuromancer.jpg', 2),
-('/img/breve_historia.jpg', 3),
-('/img/o_principe.jpg', 4),
-('/img/pequeno_principe.jpg', 5),
-('/img/babadook.jpg', 6),
-('/img/minha_vida_ford.jpg', 7),
-('/img/antologia_drummond.jpg', 8),
-('/img/poder_habito.jpg', 9),
-('/img/1984_orwell.jpg', 10);
+('/imagens/produtos/imagemProduto1.jpg', 1),
+('/imagens/produtos/imagemProduto2.jpg', 2),
+('/imagens/produtos/imagemProduto3.jpg', 3),
+('/imagens/produtos/imagemProduto4.jpg', 4),
+('/imagens/produtos/imagemProduto5.jpg', 5),
+('/imagens/produtos/imagemProduto6.jpg', 6),
+('/imagens/produtos/imagemProduto7.jpg', 7),
+('/imagens/produtos/imagemProduto8.jpg', 8),
+('/imagens/produtos/imagemProduto9.jpg', 9),
+('/imagens/produtos/imagemProduto10.jpg', 10);
 GO
 
 -- Tabela Entregas --

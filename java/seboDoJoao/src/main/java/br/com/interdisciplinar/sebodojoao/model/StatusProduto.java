@@ -5,9 +5,7 @@ import lombok.Getter;
 @Getter
 public enum StatusProduto {
     DISPONIVEL(1),
-    INDISPONIVEL(2),
-    ESGOTADO(3),
-    DESATIVADO(4);
+    INATIVO(2);
 
     private final int codigo;
 

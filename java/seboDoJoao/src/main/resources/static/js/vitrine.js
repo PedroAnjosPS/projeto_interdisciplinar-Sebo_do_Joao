@@ -24,7 +24,7 @@
 // script está sendo carregado) — usado pra achar o assets/data/produtos.json
 const CAMINHO_DESTE_SCRIPT = document.currentScript
     ? document.currentScript.src
-    : new URL('../../js/vitrine.js', location.href).href;
+    : new URL('js/vitrine.js', location.href).href;
 
 // ===== INÍCIO: mascaras-e-validacoes =====
 // Máscaras (formatam enquanto a pessoa digita) e validações dos campos do perfil.
@@ -172,115 +172,7 @@ function erroDaSenhaNova(senha) {
 }
 // ===== FIM: mascaras-e-validacoes =====
 
-// ===== INÍCIO: js/produtos-store.js =====
-// Camada de acesso a dados dos produtos do Sebo do João.
-//
-// A IDEIA: nenhuma outra parte do site (a vitrine, o cadastro...)
-// deveria precisar saber ONDE os produtos estão guardados. Elas só
-// chamam ProdutosStore.listar(), ProdutosStore.salvar(produto), etc.
-//
-// Hoje isso é salvo no localStorage do navegador. Quando o backend
-// em Java + Spring Boot estiver pronto, a ideia é reescrever só as
-// funções aqui dentro pra fazerem fetch() na API — o resto do código
-// não precisa mudar.
-const ProdutosStore = (() => {
-    const CHAVE_LOCALSTORAGE = 'sebo_do_joao_produtos';
-    // O seed fica em assets/data/produtos.json. O caminho é calculado a partir do
-    // lugar deste arquivo (assets/js/vitrine.js), assim não depende da pasta da página.
-    const URL_SEED = new URL('../data/produtos.json', CAMINHO_DESTE_SCRIPT).href;
 
-    let seedGarantido = null;
-
-    function garantirSeed() {
-        if (seedGarantido) return seedGarantido;
-
-        seedGarantido = (async () => {
-            const jaTemDados = localStorage.getItem(CHAVE_LOCALSTORAGE);
-            if (jaTemDados) return;
-
-            try {
-                const resposta = await fetch(URL_SEED);
-                if (!resposta.ok) throw new Error('produtos.json não encontrado');
-                const produtosIniciais = await resposta.json();
-                localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(produtosIniciais));
-            } catch (erro) {
-                console.warn('Não achei o produtos.json original, começando com uma lista vazia.', erro);
-                localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify([]));
-            }
-        })();
-
-        return seedGarantido;
-    }
-
-    function lerTudo() {
-        return JSON.parse(localStorage.getItem(CHAVE_LOCALSTORAGE) || '[]');
-    }
-
-    function salvarTudo(listaDeProdutos) {
-        try {
-            localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(listaDeProdutos));
-        } catch (erro) {
-            if (erro.name === 'QuotaExceededError' || erro.code === 22) {
-                throw new Error('O navegador recusou salvar: os dados ficaram grandes demais pro localStorage (normalmente é a imagem). Tente uma imagem menor ou remova produtos antigos.');
-            }
-            throw erro;
-        }
-    }
-
-    async function listar() {
-        await garantirSeed();
-        return lerTudo();
-    }
-
-    async function obterPorId(id) {
-        const produtos = await listar();
-        return produtos.find((produto) => String(produto.id) === String(id));
-    }
-
-    function calcularProximoId(produtos) {
-        return produtos.length
-            ? Math.max(...produtos.map((produto) => Number(produto.id) || 0)) + 1
-            : 1;
-    }
-
-    // Mostra pra tela de cadastro qual vai ser o próximo id, antes
-    // mesmo de salvar (só pra exibição — quem realmente define o id
-    // definitivo é a função salvar() lá embaixo).
-    async function proximoId() {
-        await garantirSeed();
-        return calcularProximoId(lerTudo());
-    }
-
-    async function salvar(dadosDoProduto) {
-        await garantirSeed();
-        const produtos = lerTudo();
-
-        const novoProduto = {id: calcularProximoId(produtos), ...dadosDoProduto};
-        produtos.push(novoProduto);
-        salvarTudo(produtos);
-
-        return novoProduto;
-    }
-
-    async function atualizar(id, dadosAtualizados) {
-        const produtos = lerTudo();
-        const indice = produtos.findIndex((produto) => String(produto.id) === String(id));
-        if (indice === -1) return null;
-
-        produtos[indice] = {...produtos[indice], ...dadosAtualizados, id: produtos[indice].id};
-        salvarTudo(produtos);
-
-        return produtos[indice];
-    }
-
-    async function remover(id) {
-        const produtos = lerTudo().filter((produto) => String(produto.id) !== String(id));
-        salvarTudo(produtos);
-    }
-
-    return {listar, obterPorId, salvar, atualizar, remover, proximoId};
-})();
-// ===== FIM: js/produtos-store.js =====
 
 // ===== INÍCIO: carrinho-store =====
 // Camada de acesso ao carrinho de compras (mesma ideia do ProdutosStore).
@@ -311,9 +203,9 @@ const CarrinhoStore = (() => {
         return typeof produto.estoque === 'number' ? produto.estoque : Infinity;
     }
 
-    // Só dá pra comprar produto "Ativo" (ou sem status) e com estoque
+    // Só dá pra comprar produto "DISPONIVEL" (ou sem status) e com estoque
     function disponivel(produto) {
-        const statusOk = !produto.status || produto.status === 'Ativo';
+        const statusOk = !produto.status || produto.status === 'DISPONIVEL';
         return statusOk && limiteDeEstoque(produto) > 0;
     }
 
@@ -760,7 +652,7 @@ function ligarBotoesComprar(container) {
 
 // Card de produto da vitrine/busca (mesmo visual do index.html)
 function montarCardProduto(produto) {
-    const titulo = escaparHtml(produto.titulo);
+    const titulo = escaparHtml(produto.nome);
     const link = `produto.html?id=${encodeURIComponent(produto.id)}`;
     const disponivel = CarrinhoStore.disponivel(produto);
 

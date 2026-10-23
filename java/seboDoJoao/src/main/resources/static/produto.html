@@ -11,7 +11,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Nosso CSS padronizado (as classes novas dessa tela estão na seção 12 dele) -->
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body class="ec-page-vitrine">
@@ -21,7 +21,7 @@
     <header class="ec-admin-header py-3 px-4">
         <div class="ec-header-linha-principal d-flex align-items-center">
             <a href="index.html" class="ec-admin-logo text-decoration-none">
-                <img src="../imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
             </a>
 
             <form action="busca.html" method="get"
@@ -96,7 +96,8 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
-    <script src="../../js/vitrine.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script src="js/produtos-store.js"></script>
     <script>
         // ===== Página de produto =====
         const idProduto = new URLSearchParams(location.search).get('id');

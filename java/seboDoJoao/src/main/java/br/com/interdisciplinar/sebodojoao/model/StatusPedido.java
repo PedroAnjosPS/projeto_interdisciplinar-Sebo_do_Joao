@@ -4,11 +4,10 @@ import lombok.Getter;
 
 @Getter
 public enum StatusPedido {
-    PENDENTE(1),
-    PROCESSANDO(2),
-    ENVIADO(3),
-    ENTREGUE(4),
-    CANCELADO(5);
+    AGUARDANDO_PAGAMENTO(1),
+    PROCESSANDO(2), // Pagamento foi aprovado, mas o pedido ainda não foi enviado
+    CONCLUIDO(3), // Quando o pedido foi enviado e entregue com sucesso
+    CANCELADO(4);
 
     private final int codigo;
 

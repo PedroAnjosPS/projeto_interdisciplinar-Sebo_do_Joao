@@ -23,7 +23,7 @@ public class Pagamento {
 
     @Convert(converter = StatusPagamentoConverter.class)
     @Column(name = "status", nullable = false)
-    private StatusPagamento status;
+    private StatusPagamento status = StatusPagamento.PENDENTE;
 
     @Column(name = "valor", nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;

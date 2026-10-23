@@ -12,5 +12,6 @@ public record ProdutoRequestDTO(
         Long categoriaId,
         Long generoId,
         Long funcionarioId,
-        StatusProduto status
+        StatusProduto status,
+        String imagem
 ) { }

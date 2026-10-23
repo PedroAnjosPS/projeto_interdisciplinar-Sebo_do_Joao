@@ -6,9 +6,7 @@ import lombok.Getter;
 public enum StatusPagamento {
     PENDENTE(1),
     APROVADO(2),
-    RECUSADO(3),
-    ESTORNADO(4),
-    CANCELADO(5);
+    RECUSADO(3);
 
     private final int codigo;
 

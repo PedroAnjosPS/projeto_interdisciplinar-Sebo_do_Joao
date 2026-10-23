@@ -4,7 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum StatusUsuario {
-    ATIVO(1), INATIVO(2), BLOQUEADO(3), PENDENTE(4);
+    ATIVO(1), 
+    INATIVO(2);
 
     private final int codigo;
 

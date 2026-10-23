@@ -37,5 +37,5 @@ public class Entrega {
 
     @Convert(converter = StatusEntregaConverter.class)
     @Column(name = "status", nullable = false)
-    private StatusEntrega status;
+    private StatusEntrega status = StatusEntrega.PENDENTE;
 }

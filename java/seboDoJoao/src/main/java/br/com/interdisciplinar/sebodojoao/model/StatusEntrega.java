@@ -5,11 +5,10 @@ import lombok.Getter;
 @Getter
 public enum StatusEntrega {
     PENDENTE(1),
-    EM_PREPARACAO(2),
-    ENVIADO(3),
-    EM_TRANSITO(4),
-    ENTREGUE(5),
-    CANCELADO(6);
+    PREPARANDO(2),
+    EM_TRANSITO(3),
+    ENTREGUE(4),
+    CANCELADO(5);
 
     private final int codigo;
 

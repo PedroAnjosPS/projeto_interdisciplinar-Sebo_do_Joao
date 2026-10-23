@@ -1,0 +1,72 @@
+[
+    {
+        "id": 1,
+        "categoria": "Vinil",
+        "icone": "fa-record-vinyl",
+        "titulo": "The Dark Side of the Moon - Pink Floyd",
+        "preco": 250.00
+    },
+    {
+        "id": 2,
+        "categoria": "Livro",
+        "icone": "fa-book-open",
+        "titulo": "O Senhor dos Anéis: A Sociedade do Anel",
+        "preco": 65.90
+    },
+    {
+        "id": 3,
+        "categoria": "HQ",
+        "icone": "fa-mask",
+        "titulo": "Batman: A Piada Mortal (Capa Dura)",
+        "preco": 49.90
+    },
+    {
+        "id": 4,
+        "categoria": "CD",
+        "icone": "fa-compact-disc",
+        "titulo": "Nevermind (Remastered) - Nirvana",
+        "preco": 35.00
+    },
+    {
+        "id": 5,
+        "categoria": "Cassete",
+        "icone": "fa-tape",
+        "titulo": "Mixtape Anos 80 - Clássicos",
+        "preco": 25.50
+    },
+    {
+        "id": 6,
+        "categoria": "DVD",
+        "icone": "fa-compact-disc",
+        "titulo": "De Volta Para o Futuro - Trilogia",
+        "preco": 89.90
+    },
+    {
+        "id": 7,
+        "categoria": "Vinil",
+        "icone": "fa-record-vinyl",
+        "titulo": "Abbey Road - The Beatles",
+        "preco": 200.00
+    },
+    {
+        "id": 8,
+        "categoria": "Livro",
+        "icone": "fa-book-open",
+        "titulo": "1984 - George Orwell",
+        "preco": 39.90
+    },
+    {
+        "id": 9,
+        "categoria": "HQ",
+        "icone": "fa-mask",
+        "titulo": "Watchmen (Edição Definitiva)",
+        "preco": 79.90
+    },
+    {
+        "id": 10,
+        "categoria": "CD",
+        "icone": "fa-compact-disc",
+        "titulo": "Thriller - Michael Jackson",
+        "preco": 45.00
+    }
+]

@@ -28,7 +28,7 @@ public class Pedido {
 
     @Convert(converter = StatusPedidoConverter.class)
     @Column(name = "status", nullable = false)
-    private StatusPedido status;
+    private StatusPedido status = StatusPedido.AGUARDANDO_PAGAMENTO;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)

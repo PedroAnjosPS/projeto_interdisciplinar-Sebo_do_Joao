@@ -30,7 +30,8 @@ public class FuncionarioService {
                         funcionario.getLogradouro(),
                         funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                         funcionario.getStatus(),
-                        funcionario.getCodigoFuncionario()
+                        funcionario.getCodigoFuncionario(),
+                        funcionario.getAdmin()
                 ))
                 .toList();
     }
@@ -50,14 +51,18 @@ public class FuncionarioService {
                 funcionario.getLogradouro(),
                 funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                 funcionario.getStatus(),
-                funcionario.getCodigoFuncionario()
+                funcionario.getCodigoFuncionario(),
+                funcionario.getAdmin()
         );
     }
 
     public FuncionarioResponseDTO cadastrar(FuncionarioRequestDTO dto) {
-        Cep cep = cepRepository
-                .findById(dto.cepNumero())
-                .orElseThrow();
+        Cep cep = null;
+        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
+                cep = cepRepository
+                        .findById(dto.cepNumero())
+                        .orElseThrow();
+        }  
 
         Funcionario funcionario = new Funcionario();
         funcionario.setNome(dto.nome());
@@ -67,7 +72,11 @@ public class FuncionarioService {
         funcionario.setBairro(dto.bairro());
         funcionario.setLogradouro(dto.logradouro());
         funcionario.setCep(cep);
-        funcionario.setStatus(dto.status());
+
+        if (dto.status() != null) {
+                funcionario.setStatus(dto.status());
+        }
+
         funcionario.setCodigoFuncionario(dto.codigoFuncionario());
 
         Funcionario salvo = funcionarioRepository.save(funcionario);
@@ -82,7 +91,8 @@ public class FuncionarioService {
                 salvo.getLogradouro(),
                 salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
-                salvo.getCodigoFuncionario()
+                salvo.getCodigoFuncionario(),
+                salvo.getAdmin()
         );
     }
 
@@ -91,9 +101,12 @@ public class FuncionarioService {
                 .findById(id)
                 .orElseThrow();
 
-        Cep cep = cepRepository
-                .findById(dto.cepNumero())
-                .orElseThrow();
+        Cep cep = null;
+        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
+                cep = cepRepository
+                        .findById(dto.cepNumero())
+                        .orElseThrow();
+        }  
 
         funcionarioExistente.setNome(dto.nome());
         funcionarioExistente.setEmail(dto.email());
@@ -102,8 +115,16 @@ public class FuncionarioService {
         funcionarioExistente.setBairro(dto.bairro());
         funcionarioExistente.setLogradouro(dto.logradouro());
         funcionarioExistente.setCep(cep);
-        funcionarioExistente.setStatus(dto.status());
+        
+        if (dto.status() != null) {
+                funcionarioExistente.setStatus(dto.status());
+        }
+        
         funcionarioExistente.setCodigoFuncionario(dto.codigoFuncionario());
+
+        if (dto.admin() != null) {
+                funcionarioExistente.setAdmin(dto.admin());
+        }
 
         Funcionario atualizado = funcionarioRepository.save(funcionarioExistente);
 
@@ -117,7 +138,8 @@ public class FuncionarioService {
                 atualizado.getLogradouro(),
                 atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
-                atualizado.getCodigoFuncionario()
+                atualizado.getCodigoFuncionario(),
+                atualizado.getAdmin()
         );
     }
 

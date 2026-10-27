@@ -57,9 +57,13 @@ public class ClienteService {
     }
 
     public ClienteResponseDTO cadastrar(ClienteRequestDTO dto) {
-        Cep cep = cepRepository
-                .findById(dto.cepNumero())
-                .orElseThrow();
+        // Só busca o CEP se o front-end enviar algum número de CEP. Caso contrário, o CEP será nulo.
+        Cep cep = null;
+        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
+                cep = cepRepository
+                        .findById(dto.cepNumero())
+                        .orElseThrow();
+        }                
 
         Cliente cliente = new Cliente();
         cliente.setNome(dto.nome());
@@ -69,7 +73,12 @@ public class ClienteService {
         cliente.setBairro(dto.bairro());
         cliente.setLogradouro(dto.logradouro());
         cliente.setCep(cep);
-        cliente.setStatus(dto.status());
+
+        // Se vier null, o padrão do banco (1) será assumido (ou você pode setar manualmente aqui)
+        if (dto.status() != null) {
+                cliente.setStatus(dto.status());
+        }
+        
         cliente.setCpf(dto.cpf());
         cliente.setDataNascimento(dto.dataNascimento());
 
@@ -95,9 +104,12 @@ public class ClienteService {
                 .findById(id)
                 .orElseThrow();
 
-        Cep cep = cepRepository
-                .findById(dto.cepNumero())
-                .orElseThrow();
+        Cep cep = null;
+        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
+            cep = cepRepository
+                    .findById(dto.cepNumero())
+                    .orElseThrow();
+        }
 
         clienteExistente.setNome(dto.nome());
         clienteExistente.setEmail(dto.email());
@@ -106,7 +118,11 @@ public class ClienteService {
         clienteExistente.setBairro(dto.bairro());
         clienteExistente.setLogradouro(dto.logradouro());
         clienteExistente.setCep(cep);
-        clienteExistente.setStatus(dto.status());
+
+        if (dto.status() != null) {
+                clienteExistente.setStatus(dto.status());
+        }
+
         clienteExistente.setCpf(dto.cpf());
         clienteExistente.setDataNascimento(dto.dataNascimento());
 

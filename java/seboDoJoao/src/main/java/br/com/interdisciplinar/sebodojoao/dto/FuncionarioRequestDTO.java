@@ -11,5 +11,6 @@ public record FuncionarioRequestDTO(
         String logradouro,
         String cepNumero,
         StatusUsuario status,
-        String codigoFuncionario
+        String codigoFuncionario,
+        Boolean admin
 ) { }

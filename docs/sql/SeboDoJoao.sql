@@ -38,12 +38,12 @@ CREATE TABLE usuarios
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    status INT NOT NULL DEFAULT 1,
+    status INT NULL DEFAULT 1,
     logradouro VARCHAR(255),
     bairro VARCHAR(100),
     telefone VARCHAR(20),
     data_cadastro DATETIME DEFAULT GETDATE(),
-    cep_numero VARCHAR(10) NOT NULL,
+    cep_numero VARCHAR(10) NULL,
 
     CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_numero)
         REFERENCES ceps(numero_cep),
@@ -56,8 +56,8 @@ GO
 CREATE TABLE clientes
 (
     usuario_id INT PRIMARY KEY NOT NULL,
-    data_nascimento DATE NOT NULL,
-    cpf VARCHAR(14) UNIQUE NOT NULL,
+    data_nascimento DATE,
+    cpf VARCHAR(14) UNIQUE,
 
     CONSTRAINT fk_clientes_usuarios
         FOREIGN KEY (usuario_id)

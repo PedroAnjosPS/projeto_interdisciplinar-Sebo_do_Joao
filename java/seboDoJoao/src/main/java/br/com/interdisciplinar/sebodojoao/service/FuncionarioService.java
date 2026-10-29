@@ -20,19 +20,26 @@ public class FuncionarioService {
     public List<FuncionarioResponseDTO> listarTodos() {
         return funcionarioRepository.findAll()
                 .stream()
-                .map(funcionario -> new FuncionarioResponseDTO(
-                        funcionario.getId(),
-                        funcionario.getNome(),
-                        funcionario.getEmail(),
-                        funcionario.getSenha(),
-                        funcionario.getTelefone(),
-                        funcionario.getBairro(),
-                        funcionario.getLogradouro(),
-                        funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
-                        funcionario.getStatus(),
-                        funcionario.getCodigoFuncionario(),
-                        funcionario.getAdmin()
-                ))
+                .map(funcionario -> {
+                        // Pega o caminho da foto de perfil (caso exista) ou null caso não tenha imagem
+                        String fotoPerfil = (funcionario.getFotoPerfil() != null && funcionario.getFotoPerfil().isEmpty()) ?
+                                                        funcionario.getFotoPerfil() : null;
+                        
+                        return new FuncionarioResponseDTO(
+                                funcionario.getId(),
+                                funcionario.getNome(),
+                                funcionario.getEmail(),
+                                funcionario.getSenha(),
+                                funcionario.getTelefone(),
+                                funcionario.getBairro(),
+                                funcionario.getLogradouro(),
+                                funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
+                                funcionario.getStatus(),
+                                fotoPerfil,
+                                funcionario.getCodigoFuncionario(),
+                                funcionario.getAdmin()
+                        );
+                })
                 .toList();
     }
 
@@ -51,6 +58,7 @@ public class FuncionarioService {
                 funcionario.getLogradouro(),
                 funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                 funcionario.getStatus(),
+                funcionario.getFotoPerfil(),
                 funcionario.getCodigoFuncionario(),
                 funcionario.getAdmin()
         );
@@ -72,6 +80,7 @@ public class FuncionarioService {
         funcionario.setBairro(dto.bairro());
         funcionario.setLogradouro(dto.logradouro());
         funcionario.setCep(cep);
+        funcionario.setFotoPerfil(dto.fotoPerfil());
 
         if (dto.status() != null) {
                 funcionario.setStatus(dto.status());
@@ -91,6 +100,7 @@ public class FuncionarioService {
                 salvo.getLogradouro(),
                 salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
+                salvo.getFotoPerfil(),
                 salvo.getCodigoFuncionario(),
                 salvo.getAdmin()
         );
@@ -115,6 +125,7 @@ public class FuncionarioService {
         funcionarioExistente.setBairro(dto.bairro());
         funcionarioExistente.setLogradouro(dto.logradouro());
         funcionarioExistente.setCep(cep);
+        funcionarioExistente.setFotoPerfil(dto.fotoPerfil());
         
         if (dto.status() != null) {
                 funcionarioExistente.setStatus(dto.status());
@@ -138,6 +149,7 @@ public class FuncionarioService {
                 atualizado.getLogradouro(),
                 atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
+                atualizado.getFotoPerfil(),
                 atualizado.getCodigoFuncionario(),
                 atualizado.getAdmin()
         );

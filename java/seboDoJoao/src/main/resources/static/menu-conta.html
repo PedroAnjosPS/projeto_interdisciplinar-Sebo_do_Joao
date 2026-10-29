@@ -127,7 +127,9 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
+    <script src="js/perfil.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const usuario = await exigirLogin();
@@ -137,9 +139,9 @@
             document.getElementById('conta-email').textContent = usuario.email;
 
             // Foto de perfil no lugar do ícone (se o usuário já colocou uma)
-            if (usuario.foto) {
+            if (usuario.fotoPerfil) {
                 document.getElementById('avatar-conta').innerHTML =
-                    `<img src="${escaparHtml(usuario.foto)}" alt="Foto de ${escaparHtml(usuario.nome)}">`;
+                    `<img src="${escaparHtml(usuario.fotoPerfil)}" alt="Foto de ${escaparHtml(usuario.nome)}">`;
             }
 
             atualizarCabecalhoConta();

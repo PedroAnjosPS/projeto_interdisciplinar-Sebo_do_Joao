@@ -101,9 +101,9 @@
                         <label class="ec-admin-label">Status</label>
                         <select id="campo-status" class="form-select ec-admin-input" required>
                             <option value="" selected disabled>Selecione o status</option>
-                            <option value="Ativo">Ativo</option>
-                            <option value="Inativo">Inativo</option>
-                            <option value="Esgotado">Esgotado</option>
+                            <!-- Os values devem bater exatamente com o Enum StatusProduto do Java (maiúsculas) -->
+                            <option value="DISPONIVEL">Ativo / Disponível</option>
+                            <option value="INATIVO">Inativo</option>
                         </select>
                     </div>
                 </div>
@@ -140,6 +140,9 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script>
         // Tela só do administrador: sem login dele, vai pro admin-login.html

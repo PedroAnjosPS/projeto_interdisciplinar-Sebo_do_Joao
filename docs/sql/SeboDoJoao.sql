@@ -43,6 +43,7 @@ CREATE TABLE usuarios
     bairro VARCHAR(100),
     telefone VARCHAR(20),
     data_cadastro DATETIME DEFAULT GETDATE(),
+    foto_perfil VARCHAR(255) NULL,
     cep_numero VARCHAR(10) NULL,
 
     CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_numero)
@@ -52,6 +53,11 @@ CREATE TABLE usuarios
         CHECK (status IN (1,2))
 )
 GO
+
+-- Alteração da tabela de usuários - Adição da coluna referente a foto de perfil --
+/* ALTER TABLE usuarios
+ADD foto_perfil VARCHAR(255) NULL;
+GO */
 
 CREATE TABLE clientes
 (

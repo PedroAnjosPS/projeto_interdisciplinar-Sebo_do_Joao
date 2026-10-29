@@ -330,8 +330,8 @@ async function atualizarCabecalhoConta() {
         elemento.classList.toggle('d-none', !UsuarioStore.ehAdmin(usuario));
     });
     document.querySelectorAll('[data-ec-avatar]').forEach((elemento) => {
-        elemento.innerHTML = usuario && usuario.foto
-            ? `<img src="${escaparHtml(usuario.foto)}" alt="Foto de ${escaparHtml(usuario.nome)}" class="ec-header-avatar-img">`
+        elemento.innerHTML = usuario && usuario.fotoPerfil
+            ? `<img src="${escaparHtml(usuario.fotoPerfil)}" alt="Foto de ${escaparHtml(usuario.nome)}" class="ec-header-avatar-img">`
             : '<i class="fas fa-user-circle fs-3"></i>';
     });
 }

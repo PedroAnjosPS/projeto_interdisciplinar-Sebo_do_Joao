@@ -95,14 +95,22 @@ const UsuarioStore = (() => {
         const usuarioLogado = lerSessao();
         if (!usuarioLogado) throw new Error('Você precisa estar logado.');
 
-        // Se for funcionário, a rota seria /api/funcionarios (simplificado aqui para cliente)
+        // Se for funcionário, a rota seria /api/funcionarios
         const rota = usuarioLogado.perfil === PERFIL_CLIENTE ? '/api/clientes' : '/api/funcionarios';
 
-        const resposta = await fetch(`${rota}/${usuarioLogado.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-        });
+        // Configurações base do fetch
+        const opcoesFetch = {
+            method: (dados instanceof FormData) ? 'POST' : 'PUT' // <-- A MÁGICA ESTÁ AQUI
+        };
+
+        if (dados instanceof FormData) {
+            opcoesFetch.body = dados;
+        } else {
+            opcoesFetch.headers = { 'Content-Type': 'application/json' };
+            opcoesFetch.body = JSON.stringify(dados);
+        }
+
+        const resposta = await fetch(`${rota}/${usuarioLogado.id}`, opcoesFetch);
 
         if (!resposta.ok) throw new Error('Erro ao atualizar os dados.');
 

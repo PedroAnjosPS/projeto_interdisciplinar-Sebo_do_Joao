@@ -53,3 +53,12 @@ SELECT * FROM pagamentos pag ORDER BY pag.pedido_id;
 Select Prod.preco
 from produtos Prod
 ORDER BY preco DESC
+
+select Cli.*
+from usuarios Cli
+WHERE Cli.nome Like 'Pedro%';
+
+SELECT * 
+FROM usuarios, funcionarios
+WHERE usuarios.id = funcionarios.usuario_id;
+GO

@@ -41,6 +41,9 @@ public abstract class Usuario {
     @Column(name = "telefone", nullable = false, length = 20)
     private String telefone;
 
+    @Column(name = "foto_perfil")
+    private String fotoPerfil;
+
     @Column(name = "data_cadastro", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dataCadastro;
 

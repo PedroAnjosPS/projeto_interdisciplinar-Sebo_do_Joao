@@ -14,6 +14,7 @@ public record ClienteResponseDTO(
         String logradouro,
         String cepNumero,
         StatusUsuario status,
+        String fotoPerfil,
         String cpf,
         LocalDate dataNascimento
 ) { }

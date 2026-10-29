@@ -13,6 +13,7 @@ public record ClienteRequestDTO(
         String logradouro,
         String cepNumero,
         StatusUsuario status,
+        String fotoPerfil,
         String cpf,
         LocalDate dataNascimento
 ) { }

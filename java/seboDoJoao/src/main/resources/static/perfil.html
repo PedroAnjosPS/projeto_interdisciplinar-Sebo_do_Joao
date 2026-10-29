@@ -113,14 +113,14 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
+    <script src="js/perfil.js"></script>
     <script>
         // ===== Tela de informações do perfil =====
         // Os campos ficam numa lista só: dá pra mostrar como texto (modo normal)
         // ou como inputs (modo edição, depois de clicar em "Editar").
         const CAMPOS_PERFIL = [
-            // "validar" devolve a mensagem de erro (ou '') — vem do vitrine.js.
-            // "mascara" formata enquanto a pessoa digita (CPF e telefone).
             { chave: 'nome', rotulo: 'Nome', icone: 'fa-user', tipo: 'text', placeholder: 'Seu nome completo',
               atributos: 'autocomplete="name" maxlength="100"', validar: erroDoNome },
             { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', tipo: 'email', placeholder: 'seuemail@exemplo.com',
@@ -129,7 +129,9 @@
               atributos: 'inputmode="numeric" maxlength="14" autocomplete="off"', mascara: formatarCpf, validar: erroDoCpf },
             { chave: 'telefone', rotulo: 'Telefone', icone: 'fa-phone', tipo: 'tel', placeholder: '(00) 00000-0000',
               atributos: 'inputmode="numeric" autocomplete="tel"', mascara: formatarTelefone, validar: erroDoTelefone },
-            { chave: 'nascimento', rotulo: 'Data de Nascimento', icone: 'fa-calendar', tipo: 'date',
+            
+            // ALTERAÇÃO AQUI: Troque de 'nascimento' para 'dataNascimento' para o JS reconhecer o que vem do Java
+            { chave: 'dataNascimento', rotulo: 'Data de Nascimento', icone: 'fa-calendar', tipo: 'date',
               atributos: 'min="1900-01-01" max="' + new Date().toISOString().slice(0, 10) + '"', validar: erroDaDataNascimento }
         ];
 
@@ -255,50 +257,20 @@
         });
 
         // ===== Foto de perfil =====
-        // Fotos de celular vêm com vários MB e o localStorage tem pouco espaço,
-        // então a gente recorta no centro (quadrado), reduz e comprime como JPEG
-        // antes de guardar.
-        function prepararFoto(arquivo, ladoMaximo = 320, qualidade = 0.85) {
-            return new Promise((resolve, reject) => {
-                const leitor = new FileReader();
-                leitor.onload = (evento) => {
-                    const imagem = new Image();
-                    imagem.onload = () => {
-                        const menorLado = Math.min(imagem.width, imagem.height);
-                        const lado = Math.min(ladoMaximo, menorLado);
-                        const origemX = (imagem.width - menorLado) / 2;
-                        const origemY = (imagem.height - menorLado) / 2;
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = lado;
-                        canvas.height = lado;
-                        const contexto = canvas.getContext('2d');
-                        contexto.fillStyle = '#FFFFFF'; // PNG transparente vira fundo branco (JPEG não tem transparência)
-                        contexto.fillRect(0, 0, lado, lado);
-                        contexto.drawImage(imagem, origemX, origemY, menorLado, menorLado, 0, 0, lado, lado);
-                        resolve(canvas.toDataURL('image/jpeg', qualidade));
-                    };
-                    imagem.onerror = () => reject(new Error('Não consegui ler essa imagem.'));
-                    imagem.src = evento.target.result;
-                };
-                leitor.onerror = () => reject(new Error('Não consegui ler esse arquivo.'));
-                leitor.readAsDataURL(arquivo);
-            });
-        }
-
-        // Mostra a foto (ou o ícone, se não tiver) no avatar grande e no cabeçalho
+        
+        // Atualiza o avatar na tela e no menu
         function renderizarFoto() {
             const avatar = document.getElementById('avatar-perfil');
-            avatar.innerHTML = usuarioAtual.foto
-                ? `<img src="${escaparHtml(usuarioAtual.foto)}" alt="Foto de ${escaparHtml(usuarioAtual.nome)}">`
+            avatar.innerHTML = usuarioAtual.fotoPerfil
+                ? `<img src="${escaparHtml(usuarioAtual.fotoPerfil)}" alt="Foto do usuário">`
                 : '<i class="fas fa-user"></i>';
             document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.foto);
             atualizarCabecalhoConta();
         }
 
-        document.getElementById('campo-foto').addEventListener('change', async (evento) => {
+        // Preview da foto (À prova de falhas, sem canvas)
+        document.getElementById('campo-foto').addEventListener('change', (evento) => {
             const arquivo = evento.target.files[0];
-            evento.target.value = ''; // permite escolher o mesmo arquivo de novo depois
             if (!arquivo) return;
 
             if (!arquivo.type.startsWith('image/')) {
@@ -306,23 +278,64 @@
                 return;
             }
 
+            const fotoPreview = URL.createObjectURL(arquivo);
+            document.getElementById('avatar-perfil').innerHTML = `<img src="${fotoPreview}">`;
+            document.getElementById('botao-remover-foto').classList.remove('d-none');
+            mostrarMensagem('', ''); 
+        });
+
+        // Botão de remover a foto
+        document.getElementById('botao-remover-foto').addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('foto', ''); 
+            
             try {
-                const foto = await prepararFoto(arquivo);
-                usuarioAtual = await UsuarioStore.salvar({ foto });
+                usuarioAtual = await UsuarioStore.salvar(formData);
                 renderizarFoto();
-                mostrarMensagem('Foto de perfil atualizada!', 'success');
+                mostrarMensagem('Foto removida.', 'success');
             } catch (erro) {
-                console.error('Erro ao salvar a foto:', erro);
-                mostrarMensagem(erro.message || 'Não foi possível salvar a foto. Tente novamente.', 'danger');
+                mostrarMensagem('Erro ao remover foto.', 'danger');
             }
         });
 
-        document.getElementById('botao-remover-foto').addEventListener('click', async () => {
-            usuarioAtual = await UsuarioStore.salvar({ foto: '' });
-            renderizarFoto();
-            mostrarMensagem('Foto removida.', 'success');
+        // O Salvar definitivo (Envia pro Java)
+        formularioPerfil.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+
+            const camposComErro = CAMPOS_PERFIL.filter((campo) => !validarCampo(campo));
+            if (camposComErro.length) {
+                mostrarMensagem('Corrija os campos em vermelho para salvar.', 'danger');
+                return;
+            }
+            mostrarMensagem('', '');
+
+            const formData = new FormData();
+            
+            CAMPOS_PERFIL.forEach((campo) => {
+                formData.append(campo.chave, document.getElementById(`campo-${campo.chave}`).value.trim());
+            });
+
+            const inputFoto = document.getElementById('campo-foto');
+            if (inputFoto.files.length > 0) {
+                formData.append('foto', inputFoto.files[0]);
+            }
+
+            const botaoSubmit = formularioPerfil.querySelector('button[type="submit"]');
+            if (botaoSubmit) botaoSubmit.disabled = true;
+
+            try {
+                usuarioAtual = await UsuarioStore.salvar(formData);
+                renderizarPerfil(false);
+                renderizarFoto();
+                mostrarMensagem('Dados atualizados com sucesso!', 'success');
+            } catch (erro) {
+                mostrarMensagem(escaparHtml(erro.message || 'Não foi possível salvar os dados.'), 'danger');
+            } finally {
+                if (botaoSubmit) botaoSubmit.disabled = false;
+            }
         });
 
+        // Carregamento inicial da página
         document.addEventListener('DOMContentLoaded', async () => {
             usuarioAtual = await exigirLogin();
             if (!usuarioAtual) return;

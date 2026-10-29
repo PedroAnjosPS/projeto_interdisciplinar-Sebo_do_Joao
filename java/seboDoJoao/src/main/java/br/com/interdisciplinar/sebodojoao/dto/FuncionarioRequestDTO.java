@@ -11,6 +11,7 @@ public record FuncionarioRequestDTO(
         String logradouro,
         String cepNumero,
         StatusUsuario status,
+        String fotoPerfil,
         String codigoFuncionario,
         Boolean admin
 ) { }

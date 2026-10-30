@@ -21,9 +21,11 @@ SELECT * FROM funcionarios func ORDER BY func.codigo_funcionario;
 
 -- Tabela Categorias --
 SELECT * FROM categorias cat ORDER BY cat.nome;
+SELECT * FROM categorias cat;
 
 -- Tabela Generos --
 SELECT * FROM generos gen ORDER BY gen.nome;
+SELECT * FROM generos gen;
 
 -- Tabela Produtos --
 SELECT * FROM produtos prod ORDER BY prod.nome;
@@ -56,7 +58,7 @@ ORDER BY preco DESC
 
 select Cli.*
 from usuarios Cli
-WHERE Cli.nome Like 'Pedro%';
+WHERE Cli.nome Like 'Jan%';
 
 SELECT * 
 FROM usuarios, funcionarios

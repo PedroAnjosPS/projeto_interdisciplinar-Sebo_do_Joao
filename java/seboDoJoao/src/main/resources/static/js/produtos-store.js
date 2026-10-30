@@ -60,25 +60,41 @@ const ProdutosStore = (() => {
     }
 
     // 3-) Cadastra um novo produto (Conecta com @PostMapping)
+    // 3-) Cadastra um novo produto (Conecta com @PostMapping)
     async function salvar(dadosProduto) {
-        const resposta = await fetch(URL_API, {
-            method: 'POST', // método de envio
-            headers: { 'Content-Type': 'application/json' }, // Avisa o Java que está sendo enviado um JSON
-            body: JSON.stringify(dadosProduto) // Transforma o objeto JS em formato JSON
-        });
+        const opcoesFetch = {
+            method: 'POST'
+        };
+
+        if (dadosProduto instanceof FormData) {
+            opcoesFetch.body = dadosProduto;
+        } else {
+            opcoesFetch.headers = { 'Content-Type': 'application/json' };
+            opcoesFetch.body = JSON.stringify(dadosProduto);
+        }
+
+        const resposta = await fetch(URL_API, opcoesFetch);
 
         if (!resposta.ok) throw new Error('Erro ao tentar salvar o produto');
 
         return await resposta.json();
     }
 
-    // 4-) Atualiza um produto já existente no banco (Conecta com @PutMapping("/{id}"))
+    // 4-) Atualiza um produto já existente no banco
     async function atualizar(id, dadosAtualizados) {
-        const resposta = await fetch(`${URL_API}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dadosAtualizados)
-        });
+        const opcoesFetch = {
+            // MUDANÇA: Usa POST se tiver arquivo, senão PUT
+            method: (dadosAtualizados instanceof FormData) ? 'POST' : 'PUT'
+        };
+
+        if (dadosAtualizados instanceof FormData) {
+            opcoesFetch.body = dadosAtualizados;
+        } else {
+            opcoesFetch.headers = { 'Content-Type': 'application/json' };
+            opcoesFetch.body = JSON.stringify(dadosAtualizados);
+        }
+
+        const resposta = await fetch(`${URL_API}/${id}`, opcoesFetch);
 
         if (!resposta.ok) throw new Error('Erro ao tentar atualizar o produto');
 

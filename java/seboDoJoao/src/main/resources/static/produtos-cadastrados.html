@@ -100,7 +100,7 @@
             });
 
             const conteudoImagem = produto.imagem
-                ? `<img src="${produto.imagem}" alt="${produto.titulo}" class="w-100 h-100" style="object-fit: cover;">`
+                ? `<img src="${produto.imagem}" alt="${produto.nome}" class="w-100 h-100" style="object-fit: cover;">`
                 : `<i class="fas ${produto.icone || 'fa-box'} fa-4x opacity-50"></i>`;
 
             const classeStatus = CLASSE_POR_STATUS[produto.status] || 'ec-admin-status-inativo';
@@ -116,7 +116,7 @@
                             <span class="position-absolute top-0 end-0 m-3 ec-admin-status-badge ${classeStatus}">${produto.status || '—'}</span>
                         </div>
                         <div class="ec-product-body d-flex flex-column flex-grow-1 p-4">
-                            <h5 class="ec-product-title mb-2">${produto.titulo}</h5>
+                            <h5 class="ec-product-title mb-2">${produto.nome}</h5>
                             <p class="mb-3" style="color: var(--ec-color-mocha); font-size: 0.9rem;">
                                 Estoque: ${produto.estoque ?? 0} un.
                             </p>

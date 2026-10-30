@@ -5,7 +5,6 @@ import br.com.interdisciplinar.sebodojoao.dto.ClienteResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 
-import org.apache.tomcat.util.http.parser.MediaType;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -23,7 +23,7 @@ public class Produto {
     @Column(name = "nome", nullable = false)
     private String nome;
 
-    @Column(name = "descricao", nullable = false)
+    @Column(name = "descricao", nullable = false, columnDefinition = "VARCHAR(MAX)")
     private String descricao;
 
     @Column(name = "preco", nullable = false, precision = 10, scale = 2)

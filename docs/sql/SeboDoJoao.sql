@@ -132,6 +132,8 @@ CREATE TABLE produtos
 )
 GO
 
+-- ALTER TABLE produtos ALTER COLUMN descricao VARCHAR(MAX); --
+
 CREATE TABLE imagem_produtos
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,

@@ -407,8 +407,11 @@ function ligarBotoesComprar(container) {
 }
 
 // Card de produto da vitrine/busca (mesmo visual do index.html)
+// Card de produto da vitrine/busca (mesmo visual do index.html)
 function montarCardProduto(produto) {
+    // CORREÇÃO: Usar produto.nome para ler o atributo correto do Java
     const titulo = escaparHtml(produto.nome);
+    // ... restante da função
     const link = `produto.html?id=${encodeURIComponent(produto.id)}`;
     const disponivel = CarrinhoStore.disponivel(produto);
 
@@ -480,7 +483,7 @@ document.addEventListener('click', (evento) => {
     if (!evento.target.closest('[data-ec-sair-admin]')) return;
     evento.preventDefault();
     UsuarioStore.sair();
-    location.href = 'login.html';
+    location.href = 'index.html'; // Redireciona corretamente para a loja (index.html)
 });
 
 // Botão de olhinho: <button data-ec-mostrar-senha="id-do-input"> alterna entre

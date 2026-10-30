@@ -57,13 +57,13 @@
                         <label class="ec-admin-label">Categoria</label>
                         <select id="campo-categoria" class="form-select ec-admin-input" required>
                             <option value="" selected disabled>Selecione a categoria</option>
-                            <option>Livros</option>
-                            <option>Discos de Vinil</option>
-                            <option>Blu-rays</option>
-                            <option>Dvds</option>
-                            <option>HQs</option>
-                            <option>Cds</option>
-                            <option>Fitas Cassetes</option>
+                            <option value="1">Livros</option>
+                            <option value="2">HQs</option>
+                            <option value="3">Disco de Vinil</option>
+                            <option value="4">Blu-rays</option>
+                            <option value="5">DVDs</option>
+                            <option value="6">CDs</option>
+                            <option value="7">Fitas Cassetes</option>
                         </select>
                     </div>
                     <div class="col-md-5">
@@ -152,14 +152,22 @@
         // Quais gêneros fazem sentido pra cada categoria — é isso que faz o
         // select de Gênero só mostrar opções relevantes (ex: escolhendo
         // "Livros" não aparece "Rock").
+        const GENEROS_BD = [
+            { id: 1, nome: 'Ficção Científica' }, { id: 2, nome: 'Terror' },
+            { id: 3, nome: 'Suspense' }, { id: 4, nome: 'Rock' },
+            { id: 5, nome: 'Heavy Metal' }, { id: 6, nome: 'Ação' },
+            { id: 7, nome: 'Aventura' }, { id: 8, nome: 'Rap' },
+            { id: 9, nome: 'Didático' }, { id: 10, nome: 'Biografia' }
+        ];
+
         const GENEROS_POR_CATEGORIA = {
-            'Livros': ['Ficção', 'Romance', 'Terror', 'Fantasia', 'Biografia', 'Autoajuda', 'Outro'],
-            'Discos de Vinil': ['Rock', 'MPB', 'Jazz', 'Pop', 'Samba', 'Outro'],
-            'Blu-rays': ['Ação', 'Drama', 'Comédia', 'Terror', 'Animação', 'Outro'],
-            'Dvds': ['Ação', 'Drama', 'Comédia', 'Terror', 'Animação', 'Outro'],
-            'HQs': ['Super-heróis', 'Mangá', 'Quadrinhos Nacionais', 'Outro'],
-            'Cds': ['Rock', 'MPB', 'Jazz', 'Pop', 'Samba', 'Outro'],
-            'Fitas Cassetes': ['Rock', 'MPB', 'Pop', 'Outro']
+            '1': [1, 2, 3, 9, 10], // Livros
+            '2': [6, 7, 1, 2],     // HQs
+            '3': [4, 5, 8],        // Vinil
+            '4': [1, 2, 3, 6, 7],  // Blu-rays
+            '5': [1, 2, 3, 6, 7],  // DVDs
+            '6': [4, 5, 8],        // CDs
+            '7': [4, 8]            // Fitas
         };
 
         const campoImagem = document.getElementById('campo-imagem');
@@ -173,80 +181,43 @@
         // Se a URL tiver ?id=123, estamos editando um produto que já existe
         // em vez de cadastrar um novo.
         const idParaEditar = new URLSearchParams(location.search).get('id');
-        let imagemAtual = null; // imagem que já estava salva (modo edição)
-        let imagemProcessada = null; // imagem nova, já redimensionada, pronta pra salvar
 
         // Troca as opções do select de Gênero de acordo com a categoria
         // escolhida. Se a categoria ainda não tem gêneros definidos aqui,
         // o campo fica desabilitado.
-        function atualizarOpcoesDeGenero(categoriaEscolhida, generoParaManter = '') {
-            const opcoes = GENEROS_POR_CATEGORIA[categoriaEscolhida] || [];
+        function atualizarOpcoesDeGenero(categoriaId, generoParaManter = '') {
+            const idsPermitidos = GENEROS_POR_CATEGORIA[categoriaId] || [];
 
-            if (!opcoes.length) {
+            if (!idsPermitidos.length) {
                 campoGenero.innerHTML = '<option value="" selected disabled>Escolha a categoria primeiro</option>';
                 campoGenero.disabled = true;
                 return;
             }
 
             campoGenero.disabled = false;
-            campoGenero.innerHTML =
-                '<option value="" disabled' + (generoParaManter ? '' : ' selected') + '>Selecione o gênero</option>' +
-                opcoes.map((opcao) => {
-                    const selecionado = opcao === generoParaManter ? ' selected' : '';
-                    return `<option${selecionado}>${opcao}</option>`;
+            campoGenero.innerHTML = '<option value="" disabled' + (generoParaManter ? '' : ' selected') + '>Selecione o gênero</option>' +
+                GENEROS_BD.filter(g => idsPermitidos.includes(g.id)).map((opcao) => {
+                    const selecionado = (String(opcao.id) === String(generoParaManter)) ? ' selected' : '';
+                    return `<option value="${opcao.id}"${selecionado}>${opcao.nome}</option>`;
                 }).join('');
         }
 
         campoCategoria.addEventListener('change', () => atualizarOpcoesDeGenero(campoCategoria.value));
 
-        // Mostra pro usuário qual vai ser o próximo Código ID assim que a
-        // página abre (só quando é cadastro novo — no modo edição quem
-        // define o valor é carregarProdutoParaEdicao()).
-        async function mostrarProximoId() {
-            campoId.value = await ProdutosStore.proximoId();
-        }
-
-        // Fotos de celular costumam vir com vários MB — como o localStorage
-        // só tem uns 5-10MB no TOTAL pra guardar todos os produtos, salvar a
-        // imagem "crua" estoura esse limite rapidinho. Por isso a gente
-        // redimensiona (e comprime como JPEG) antes de guardar.
-        function redimensionarImagem(arquivo, larguraMaxima = 700, qualidade = 0.7) {
-            return new Promise((resolve, reject) => {
-                const leitorOriginal = new FileReader();
-                leitorOriginal.onload = (evento) => {
-                    const imagem = new Image();
-                    imagem.onload = () => {
-                        const escala = Math.min(1, larguraMaxima / imagem.width);
-                        const canvas = document.createElement('canvas');
-                        canvas.width = imagem.width * escala;
-                        canvas.height = imagem.height * escala;
-                        canvas.getContext('2d').drawImage(imagem, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', qualidade));
-                    };
-                    imagem.onerror = () => reject(new Error('Não consegui ler essa imagem.'));
-                    imagem.src = evento.target.result;
-                };
-                leitorOriginal.onerror = () => reject(new Error('Não consegui ler esse arquivo.'));
-                leitorOriginal.readAsDataURL(arquivo);
-            });
-        }
-
-        campoImagem.addEventListener('change', async () => {
+        // APENAS GERA O PREVIEW (sem Base64 e sem Canvas, usa URL.createObjectURL para ser leve)
+        campoImagem.addEventListener('change', () => {
             const arquivo = campoImagem.files[0];
             if (!arquivo) return;
 
-            textoUpload.textContent = 'Processando imagem...';
-
-            try {
-                imagemProcessada = await redimensionarImagem(arquivo);
-                previewImagem.src = imagemProcessada;
-                previewImagem.classList.remove('d-none');
-                textoUpload.textContent = arquivo.name;
-            } catch (erro) {
-                console.error('Erro ao processar imagem:', erro);
-                imagemProcessada = null;
-                textoUpload.textContent = 'Não consegui ler essa imagem, tente outra.';
+            if (!arquivo.type.startsWith('image/')) {
+                mostrarMensagem('Escolha um arquivo de imagem (JPG, PNG...).', 'warning');
+                return;
             }
+
+            const fotoPreview = URL.createObjectURL(arquivo);
+            previewImagem.src = fotoPreview;
+            previewImagem.classList.remove('d-none');
+            textoUpload.textContent = arquivo.name;
         });
 
         function mostrarMensagem(texto, tipo) {
@@ -257,7 +228,7 @@
         async function carregarProdutoParaEdicao() {
             const produto = await ProdutosStore.obterPorId(idParaEditar);
             if (!produto) {
-                mostrarMensagem('Não encontrei esse produto pra editar — talvez ele já tenha sido removido.', 'warning');
+                mostrarMensagem('Não encontrei esse produto pra editar.', 'warning');
                 return;
             }
 
@@ -266,16 +237,17 @@
             document.getElementById('botao-enviar').textContent = 'ATUALIZAR';
 
             document.getElementById('campo-id').value = produto.id;
-            document.getElementById('campo-nome').value = produto.titulo || '';
-            campoCategoria.value = produto.categoria || '';
-            atualizarOpcoesDeGenero(produto.categoria, produto.genero || '');
-            document.getElementById('campo-preco').value = produto.preco || '';
+            // Lê o '.nome' vindo do Java
+            document.getElementById('campo-nome').value = produto.nome || '';
+            campoCategoria.value = produto.categoriaId || '';
+            atualizarOpcoesDeGenero(produto.categoriaId, produto.generoId || '');
+            // O .toFixed(2) força os centavos a aparecerem (ex: 80.00)
+            document.getElementById('campo-preco').value = produto.preco ? Number(produto.preco).toFixed(2) : '';
             document.getElementById('campo-estoque').value = produto.estoque || '';
             document.getElementById('campo-status').value = produto.status || '';
             document.getElementById('campo-descricao').value = produto.descricao || '';
 
             if (produto.imagem) {
-                imagemAtual = produto.imagem;
                 previewImagem.src = produto.imagem;
                 previewImagem.classList.remove('d-none');
                 textoUpload.textContent = 'Imagem atual (escolha outra pra trocar)';
@@ -285,46 +257,47 @@
         if (idParaEditar) {
             carregarProdutoParaEdicao();
         } else {
-            mostrarProximoId();
+            campoId.value = 'Gerado pelo sistema';
         }
 
         formulario.addEventListener('submit', async (evento) => {
             evento.preventDefault();
+            
+            const adminLogado = await UsuarioStore.obter();
+            const botao = document.getElementById('botao-enviar');
+            botao.disabled = true;
 
-            // Se o usuário escolheu uma imagem nova, ela já foi redimensionada
-            // no momento da seleção (evento 'change' lá em cima). Senão, mantém
-            // a imagem que já existia (modo edição) ou fica sem imagem mesmo.
-            const imagemBase64 = imagemProcessada || imagemAtual;
+            // EMPACOTA TUDO EM FORMDATA (Textos + Arquivo físico)
+            const formData = new FormData();
+            formData.append('nome', document.getElementById('campo-nome').value.trim());
+            formData.append('categoriaId', Number(campoCategoria.value));
+            formData.append('generoId', Number(campoGenero.value));
+            formData.append('funcionarioId', adminLogado.id);
+            formData.append('preco', Number(document.getElementById('campo-preco').value) || 0);
+            formData.append('estoque', Number(document.getElementById('campo-estoque').value) || 0);
+            formData.append('status', document.getElementById('campo-status').value);
+            formData.append('descricao', document.getElementById('campo-descricao').value.trim());
 
-            const dadosDoProduto = {
-                titulo: document.getElementById('campo-nome').value,
-                categoria: campoCategoria.value,
-                genero: campoGenero.value,
-                preco: Number(document.getElementById('campo-preco').value) || 0,
-                estoque: Number(document.getElementById('campo-estoque').value) || 0,
-                status: document.getElementById('campo-status').value,
-                descricao: document.getElementById('campo-descricao').value,
-                imagem: imagemBase64,
-                icone: 'fa-box' // usado como placeholder quando não há imagem
-            };
+            if (campoImagem.files.length > 0) {
+                formData.append('imagem', campoImagem.files[0]);
+            }
 
             try {
                 if (idParaEditar) {
-                    const produtoAtualizado = await ProdutosStore.atualizar(idParaEditar, dadosDoProduto);
-                    mostrarMensagem(`Produto "${produtoAtualizado.titulo}" atualizado com sucesso!`, 'success');
+                    await ProdutosStore.atualizar(idParaEditar, formData);
+                    mostrarMensagem(`Produto atualizado com sucesso!`, 'success');
                 } else {
-                    const produtoSalvo = await ProdutosStore.salvar(dadosDoProduto);
-                    mostrarMensagem(`Produto "${produtoSalvo.titulo}" cadastrado com sucesso! (Código ID: ${produtoSalvo.id})`, 'success');
+                    const produtoSalvo = await ProdutosStore.salvar(formData);
+                    mostrarMensagem(`Produto "${produtoSalvo.nome}" cadastrado com sucesso! (Código ID: ${produtoSalvo.id})`, 'success');
                     formulario.reset();
                     previewImagem.classList.add('d-none');
                     textoUpload.textContent = 'Selecione um arquivo';
-                    imagemProcessada = null;
-                    atualizarOpcoesDeGenero(''); // volta o gênero pro estado "escolha a categoria primeiro"
-                    mostrarProximoId(); // já mostra o próximo id, pro caso de cadastrar outro em seguida
+                    atualizarOpcoesDeGenero(''); 
                 }
             } catch (erro) {
-                console.error('Erro ao salvar produto:', erro);
-                mostrarMensagem(erro.message || 'Não foi possível salvar o produto. Tente novamente.', 'danger');
+                mostrarMensagem(erro.message || 'Não foi possível salvar o produto.', 'danger');
+            } finally {
+                botao.disabled = false;
             }
         });
     </script>

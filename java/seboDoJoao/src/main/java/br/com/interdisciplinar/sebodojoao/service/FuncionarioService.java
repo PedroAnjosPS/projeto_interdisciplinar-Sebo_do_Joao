@@ -111,33 +111,31 @@ public class FuncionarioService {
                 .findById(id)
                 .orElseThrow();
 
-        Cep cep = null;
+        // Proteções contra atualização nula
+        if (dto.nome() != null) funcionarioExistente.setNome(dto.nome());
+        if (dto.email() != null) funcionarioExistente.setEmail(dto.email());
+        if (dto.senha() != null) funcionarioExistente.setSenha(dto.senha());
+        if (dto.telefone() != null) funcionarioExistente.setTelefone(dto.telefone());
+        if (dto.bairro() != null) funcionarioExistente.setBairro(dto.bairro());
+        if (dto.logradouro() != null) funcionarioExistente.setLogradouro(dto.logradouro());
+        if (dto.fotoPerfil() != null) funcionarioExistente.setFotoPerfil(dto.fotoPerfil());
+        if (dto.codigoFuncionario() != null) funcionarioExistente.setCodigoFuncionario(dto.codigoFuncionario());
+        if (dto.admin() != null) funcionarioExistente.setAdmin(dto.admin());
+
         if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
-                cep = cepRepository
-                        .findById(dto.cepNumero())
-                        .orElseThrow();
-        }  
-
-        funcionarioExistente.setNome(dto.nome());
-        funcionarioExistente.setEmail(dto.email());
-        funcionarioExistente.setSenha(dto.senha());
-        funcionarioExistente.setTelefone(dto.telefone());
-        funcionarioExistente.setBairro(dto.bairro());
-        funcionarioExistente.setLogradouro(dto.logradouro());
-        funcionarioExistente.setCep(cep);
-        funcionarioExistente.setFotoPerfil(dto.fotoPerfil());
-        
-        if (dto.status() != null) {
-                funcionarioExistente.setStatus(dto.status());
+            Cep cep = cepRepository.findById(dto.cepNumero()).orElseThrow();
+            funcionarioExistente.setCep(cep);
         }
-        
-        funcionarioExistente.setCodigoFuncionario(dto.codigoFuncionario());
 
-        if (dto.admin() != null) {
-                funcionarioExistente.setAdmin(dto.admin());
+        if (dto.status() != null) {
+            funcionarioExistente.setStatus(dto.status());
         }
 
         Funcionario atualizado = funcionarioRepository.save(funcionarioExistente);
+
+        // Verifica se a foto de perfil foi atualizada ou não
+        String fotoPerfil = (atualizado.getFotoPerfil() != null && !atualizado.getFotoPerfil().isEmpty()) ?
+                atualizado.getFotoPerfil() : null;
 
         return new FuncionarioResponseDTO(
                 atualizado.getId(),
@@ -149,7 +147,7 @@ public class FuncionarioService {
                 atualizado.getLogradouro(),
                 atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
-                atualizado.getFotoPerfil(),
+                fotoPerfil,
                 atualizado.getCodigoFuncionario(),
                 atualizado.getAdmin()
         );

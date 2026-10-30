@@ -120,8 +120,44 @@ const UsuarioStore = (() => {
         return novaSessao;
     }
 
+    //Função para trocar a senha do administrador
+    //Função para trocar a senha do administrador
+    async function alterarSenha(senhaAtual, novaSenha, confirmacao) {
+        const usuarioLogado = lerSessao();
+        if (!usuarioLogado) throw new Error("Você precisa estar logado para alterar a senha!");
+
+        // A verificação (senhaAtual !== usuarioLogado.senha) FOI REMOVIDA DAQUI.
+
+        if (novaSenha === senhaAtual) {
+            throw new Error('A nova senha precisa ser diferente da atual!');
+        }
+
+        if (novaSenha !== confirmacao) {
+            throw new Error('A confirmação não é igual à nova senha!');
+        }
+
+        const dadosAtualizados = {
+            ...usuarioLogado,
+            senha: novaSenha
+        };
+
+        const rota = usuarioLogado.perfil === PERFIL_CLIENTE ? '/api/clientes' : '/api/funcionarios';
+
+        const resposta = await fetch(`${rota}/${usuarioLogado.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosAtualizados)
+        });
+
+        if (!resposta.ok) throw new Error('Erro ao alterar a senha no banco de dados!');
+
+        const usuarioAtualizado = await resposta.json();
+        const novaSessao = { ...usuarioAtualizado, perfil: usuarioLogado.perfil };
+        iniciarSessao(novaSessao);
+    }
+
     // Apenas exporta as funções
-    return { PERFIL_ADMIN, cadastrar, entrar, sair, obter, salvar, ehAdmin };
+    return { PERFIL_ADMIN, cadastrar, entrar, sair, obter, salvar, alterarSenha, ehAdmin };
     
     
     

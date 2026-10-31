@@ -47,6 +47,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
                         <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
                         <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
                         <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -61,13 +62,13 @@
         <h2 class="ec-admin-title fw-bold mb-4">SEU CARRINHO</h2>
 
         <div id="aviso-indisponivel" class="alert alert-warning d-none" role="alert">
-            Alguns itens não estão mais disponíveis. Remova eles para poder confirmar a compra.
+            Alguns itens não estão mais disponíveis. Remova eles para poder finalizar a compra.
         </div>
 
         <div id="lista-carrinho" class="d-flex flex-column gap-3"></div>
     </main>
 
-    <!-- Rodapé fixo com o total e o botão de confirmar -->
+    <!-- Rodapé fixo com o total e o botão de finalizar -->
     <footer class="ec-cart-footer">
         <div class="ec-cart-total">
             <span>Total</span>
@@ -75,38 +76,23 @@
         </div>
         <div class="text-center">
             <button id="botao-confirmar" type="button" class="btn ec-btn-dark ec-btn-pill px-5 py-2" disabled>
-                CONFIRMAR COMPRA
+                FINALIZAR COMPRA
             </button>
         </div>
     </footer>
-
-    <!-- Modal de pedido confirmado -->
-    <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalPedidoTitulo" aria-hidden="true"
-        data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content ec-card ec-card-shadow border-0">
-                <div class="modal-body text-center p-4 p-md-5">
-                    <i class="fas fa-circle-check fs-1 mb-3" style="color: var(--ec-color-sand);"></i>
-                    <h5 id="modalPedidoTitulo" class="ec-heading-dark fw-bold mb-2">Pedido confirmado!</h5>
-                    <p id="modalPedidoResumo" class="mb-4" style="color: var(--ec-color-mocha);"></p>
-                    <a href="index.html" class="btn ec-btn-dark ec-btn-pill px-4">Voltar à loja</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
-    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script>
         // ===== Tela do carrinho =====
         const listaCarrinho = document.getElementById('lista-carrinho');
         const botaoConfirmar = document.getElementById('botao-confirmar');
-        const modalPedido = new bootstrap.Modal(document.getElementById('modalPedido'));
 
         // Junta cada item do carrinho ({ id, quantidade }) com os dados do produto
         async function carregarItensDetalhados() {
@@ -122,7 +108,7 @@
 
             // Produto apagado do catálogo, inativo ou sem estoque
             if (!produto || !CarrinhoStore.disponivel(produto)) {
-                const nome = produto ? escaparHtml(produto.titulo) : 'Produto removido do catálogo';
+                const nome = produto ? escaparHtml(produto.nome) : 'Produto removido do catálogo';
                 return `
                     <div class="ec-cart-item ec-cart-indisponivel d-flex align-items-center gap-3 p-3" data-id="${escaparHtml(item.id)}">
                         <div class="ec-cart-thumb"><i class="fas fa-box fa-2x opacity-50"></i></div>
@@ -136,7 +122,7 @@
                     </div>`;
             }
 
-            const titulo = escaparHtml(produto.titulo);
+            const titulo = escaparHtml(produto.nome);
             const limite = CarrinhoStore.limiteDeEstoque(produto);
             const detalhes = [produto.categoria, produto.genero].filter(Boolean).map(escaparHtml).join(' · ');
 
@@ -223,23 +209,11 @@
             renderizarCarrinho();
         });
 
-        // Ainda não existe pagamento nem pedido de verdade: confirmar só mostra o
-        // resumo e esvazia o carrinho. (Quando o backend existir, é aqui que a
-        // tela vai chamar a API de pedidos — ex: POST /pedidos.)
-        botaoConfirmar.addEventListener('click', async () => {
-            const itens = await carregarItensDetalhados();
-            const disponiveis = itens.filter((item) => item.produto && CarrinhoStore.disponivel(item.produto));
-            if (!disponiveis.length) return;
-
-            const quantidadeTotal = disponiveis.reduce((soma, item) => soma + item.quantidade, 0);
-            const total = disponiveis.reduce((soma, item) => soma + item.produto.preco * item.quantidade, 0);
-
-            await CarrinhoStore.limpar();
-            document.getElementById('modalPedidoResumo').textContent =
-                `${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'} no valor de ${formatarPreco(total)}. Obrigado pela compra!`;
-
-            await renderizarCarrinho();
-            modalPedido.show();
+        // O pagamento e o pedido acontecem na tela de finalizar compra (checkout.html):
+        // lá a pessoa escolhe endereço, entrega e forma de pagamento.
+        botaoConfirmar.addEventListener('click', () => {
+            if (botaoConfirmar.disabled) return;
+            window.location.href = 'checkout.html';
         });
 
         document.addEventListener('DOMContentLoaded', async () => {

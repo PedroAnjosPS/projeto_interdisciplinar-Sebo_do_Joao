@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segurança e Privacidade - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes novas dessa tela estão na seção 12 dele) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link" href="index.html">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="ec-page-title-bar">
+            <h2 class="ec-page-title">Segurança e Privacidade</h2>
+            <div class="d-flex align-items-center gap-3">
+                <a href="menu-conta.html" class="ec-link-voltar"><i class="fas fa-rotate-left me-1"></i>Voltar</a>
+                <i class="fas fa-shield-halved fs-4 ec-page-title-icone"></i>
+            </div>
+        </div>
+
+        <div class="ec-seguranca-lista">
+
+            <!-- ===== E-mail ===== -->
+            <section class="ec-seguranca-card" aria-labelledby="titulo-email">
+                <div class="ec-seguranca-cabecalho">
+                    <i class="fas fa-envelope ec-seguranca-icone"></i>
+                    <div>
+                        <h3 id="titulo-email" class="ec-seguranca-titulo">E-mail de acesso</h3>
+                        <p class="ec-seguranca-descricao">E-mail atual: <strong id="email-atual">...</strong></p>
+                    </div>
+                </div>
+
+                <div id="mensagem-email" role="status"></div>
+
+                <form id="form-email" novalidate>
+                    <!-- Ajuda o gerenciador de senhas do navegador a saber de qual conta é a senha -->
+                    <input type="email" id="email-usuario-oculto" autocomplete="username" hidden>
+
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="email-novo">Novo e-mail</label>
+                        <input id="email-novo" type="email" class="form-control ec-admin-input" autocomplete="email"
+                            maxlength="120" placeholder="novoemail@exemplo.com" aria-describedby="erro-email-novo">
+                        <div id="erro-email-novo" class="ec-form-erro" role="alert"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="email-senha">Sua senha (para confirmar)</label>
+                        <div class="ec-campo-senha">
+                            <input id="email-senha" type="password" class="form-control ec-admin-input"
+                                autocomplete="current-password" aria-describedby="erro-email-senha">
+                            <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="email-senha"
+                                aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="erro-email-senha" class="ec-form-erro" role="alert"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn ec-btn-dark ec-btn-pill px-4">Alterar e-mail</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ===== Senha ===== -->
+            <section class="ec-seguranca-card" aria-labelledby="titulo-senha">
+                <div class="ec-seguranca-cabecalho">
+                    <i class="fas fa-key ec-seguranca-icone"></i>
+                    <div>
+                        <h3 id="titulo-senha" class="ec-seguranca-titulo">Senha</h3>
+                        <p class="ec-seguranca-descricao">Use uma senha que você não usa em outros sites.</p>
+                    </div>
+                </div>
+
+                <div id="mensagem-senha" role="status"></div>
+
+                <form id="form-senha" novalidate>
+                    <input type="email" id="senha-usuario-oculto" autocomplete="username" hidden>
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="senha-atual">Senha atual</label>
+                        <div class="ec-campo-senha">
+                            <input id="senha-atual" type="password" class="form-control ec-admin-input"
+                                autocomplete="current-password" aria-describedby="erro-senha-atual">
+                            <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="senha-atual"
+                                aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="erro-senha-atual" class="ec-form-erro" role="alert"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="senha-nova">Nova senha</label>
+                        <div class="ec-campo-senha">
+                            <input id="senha-nova" type="password" class="form-control ec-admin-input"
+                                autocomplete="new-password" aria-describedby="dica-senha-nova erro-senha-nova">
+                            <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="senha-nova"
+                                aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="dica-senha-nova" class="ec-form-dica">Mínimo de 8 caracteres.</div>
+                        <div id="erro-senha-nova" class="ec-form-erro" role="alert"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="senha-confirmar">Confirmar nova senha</label>
+                        <div class="ec-campo-senha">
+                            <input id="senha-confirmar" type="password" class="form-control ec-admin-input"
+                                autocomplete="new-password" aria-describedby="erro-senha-confirmar">
+                            <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="senha-confirmar"
+                                aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="erro-senha-confirmar" class="ec-form-erro" role="alert"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn ec-btn-dark ec-btn-pill px-4">Alterar senha</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ===== Cookies ===== -->
+            <section class="ec-seguranca-card" aria-labelledby="titulo-cookies">
+                <div class="ec-seguranca-cabecalho">
+                    <i class="fas fa-cookie-bite ec-seguranca-icone"></i>
+                    <div>
+                        <h3 id="titulo-cookies" class="ec-seguranca-titulo">Cookies e dados do navegador</h3>
+                        <p class="ec-seguranca-descricao">
+                            O site guarda neste navegador o seu carrinho e dados temporários de navegação.
+                            Apagar não exclui a sua conta nem encerra o seu login.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="mensagem-cookies" role="status"></div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <span id="resumo-cookies" class="ec-seguranca-descricao mb-0"></span>
+                    <button id="botao-apagar-cookies" type="button" class="btn ec-btn-outline-primary ec-btn-pill px-4">
+                        <i class="fas fa-broom me-2"></i>Apagar cookies
+                    </button>
+                </div>
+            </section>
+
+            <!-- ===== Excluir conta (não aparece para o administrador) ===== -->
+            <section id="secao-excluir" class="ec-seguranca-card ec-seguranca-perigo" aria-labelledby="titulo-excluir">
+                <div class="ec-seguranca-cabecalho">
+                    <i class="fas fa-user-slash ec-seguranca-icone"></i>
+                    <div>
+                        <h3 id="titulo-excluir" class="ec-seguranca-titulo">Excluir conta</h3>
+                        <p class="ec-seguranca-descricao">
+                            Apaga de vez os seus dados (nome, e-mail, CPF, telefone, foto e senha).
+                            Essa ação não pode ser desfeita.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button id="botao-abrir-exclusao" type="button" class="btn btn-danger ec-btn-pill px-4"
+                        data-bs-toggle="modal" data-bs-target="#modalExcluirConta">
+                        <i class="fas fa-trash-alt me-2"></i>Excluir minha conta
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Confirmação da exclusão: pede a senha -->
+    <div class="modal fade" id="modalExcluirConta" tabindex="-1" aria-labelledby="modalExcluirContaTitulo"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ec-card ec-card-shadow border-0">
+                <form id="form-excluir" novalidate>
+                    <div class="modal-body p-4 p-md-5">
+                        <div class="text-center">
+                            <i class="fas fa-triangle-exclamation fs-1 mb-3" style="color: var(--ec-color-error);"></i>
+                            <h5 id="modalExcluirContaTitulo" class="ec-heading-dark fw-bold mb-2">Excluir a sua conta?</h5>
+                            <p class="mb-4" style="color: var(--ec-color-mocha);">
+                                Todos os seus dados serão apagados e você será desconectado.
+                                Essa ação não pode ser desfeita.
+                            </p>
+                        </div>
+
+                        <div id="mensagem-excluir" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label class="ec-admin-label" for="excluir-senha">Digite a sua senha para confirmar</label>
+                        <div class="ec-campo-senha">
+                            <input id="excluir-senha" type="password" class="form-control ec-admin-input"
+                                autocomplete="current-password" aria-describedby="erro-excluir-senha">
+                            <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="excluir-senha"
+                                aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="erro-excluir-senha" class="ec-form-erro" role="alert"></div>
+                    </div>
+
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger ec-btn-pill px-4">Excluir conta</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script>
+        // ===== Tela de segurança e privacidade =====
+
+        // --- Funções de apoio dos formulários ---
+        // Alerta verde/vermelho no topo de cada seção
+        function mostrarMensagem(idDaArea, texto, tipo) {
+            const area = document.getElementById(idDaArea);
+            area.innerHTML = '';
+            if (!texto) return;
+
+            const alerta = document.createElement('div');
+            alerta.className = `alert alert-${tipo} mb-3`;
+            alerta.textContent = texto;
+            area.appendChild(alerta);
+        }
+
+        // Mostra (ou limpa) o erro embaixo de um campo. Devolve true se o campo está ok.
+        function marcarCampo(id, erro) {
+            const input = document.getElementById(id);
+            input.classList.toggle('is-invalid', Boolean(erro));
+            input.setAttribute('aria-invalid', erro ? 'true' : 'false');
+            document.getElementById('erro-' + id).textContent = erro;
+            return !erro;
+        }
+
+        // Enquanto um campo está com erro, vai conferindo a cada tecla pra o aviso sumir ao corrigir
+        function conferirEnquantoDigita(formulario, conferir) {
+            formulario.querySelectorAll('input').forEach((input) => {
+                input.addEventListener('input', () => {
+                    if (formulario.querySelector('.is-invalid')) conferir();
+                });
+            });
+        }
+
+        const valor = (id) => document.getElementById(id).value;
+
+        // --- E-mail ---
+        const formEmail = document.getElementById('form-email');
+
+        function conferirEmail() {
+            return [
+                marcarCampo('email-novo', erroDoEmail(valor('email-novo').trim())),
+                marcarCampo('email-senha', valor('email-senha') ? '' : 'Digite a sua senha para confirmar.')
+            ].every(Boolean);
+        }
+        conferirEnquantoDigita(formEmail, conferirEmail);
+
+        formEmail.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            mostrarMensagem('mensagem-email', '');
+            if (!conferirEmail()) {
+                formEmail.querySelector('.is-invalid').focus();
+                return;
+            }
+
+            try {
+                const usuario = await UsuarioStore.alterarEmail(valor('email-novo'), valor('email-senha'));
+                formEmail.reset();
+                [ 'email-novo', 'email-senha' ].forEach((id) => marcarCampo(id, ''));
+                document.getElementById('email-atual').textContent = usuario.email;
+                mostrarMensagem('mensagem-email', 'E-mail alterado com sucesso! Use o novo e-mail no próximo login.', 'success');
+            } catch (erro) {
+                // Erros que pertencem a um campo aparecem nele; os outros, no alerta da seção
+                if (erro.message === 'A senha está incorreta.') {
+                    marcarCampo('email-senha', erro.message);
+                    document.getElementById('email-senha').focus();
+                } else if (/e-mail/i.test(erro.message)) {
+                    marcarCampo('email-novo', erro.message);
+                    document.getElementById('email-novo').focus();
+                } else {
+                    mostrarMensagem('mensagem-email', erro.message || 'Não foi possível alterar o e-mail.', 'danger');
+                }
+            }
+        });
+
+        // --- Senha ---
+        const formSenha = document.getElementById('form-senha');
+
+        function conferirSenha() {
+            const atual = valor('senha-atual');
+            const nova = valor('senha-nova');
+            const confirmar = valor('senha-confirmar');
+            const erroNova = erroDaSenhaNova(nova) || (nova === atual ? 'A nova senha precisa ser diferente da atual.' : '');
+
+            return [
+                marcarCampo('senha-atual', atual ? '' : 'Digite a senha atual.'),
+                marcarCampo('senha-nova', erroNova),
+                marcarCampo('senha-confirmar', !confirmar ? 'Confirme a nova senha.' : (confirmar !== nova ? 'A confirmação não é igual à nova senha.' : ''))
+            ].every(Boolean);
+        }
+        conferirEnquantoDigita(formSenha, conferirSenha);
+
+        formSenha.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            mostrarMensagem('mensagem-senha', '');
+            if (!conferirSenha()) {
+                formSenha.querySelector('.is-invalid').focus();
+                return;
+            }
+
+            try {
+                await UsuarioStore.alterarSenha(valor('senha-atual'), valor('senha-nova'), valor('senha-confirmar'));
+                formSenha.reset();
+                [ 'senha-atual', 'senha-nova', 'senha-confirmar' ].forEach((id) => marcarCampo(id, ''));
+                mostrarMensagem('mensagem-senha', 'Senha alterada com sucesso! Use a nova senha no próximo login.', 'success');
+            } catch (erro) {
+                if (erro.message === 'A senha atual está incorreta.') {
+                    marcarCampo('senha-atual', erro.message);
+                    document.getElementById('senha-atual').focus();
+                } else {
+                    mostrarMensagem('mensagem-senha', erro.message || 'Não foi possível alterar a senha.', 'danger');
+                }
+            }
+        });
+
+        // --- Cookies ---
+        async function mostrarResumoCookies() {
+            const itens = await CarrinhoStore.contarItens();
+            document.getElementById('resumo-cookies').textContent = itens === 0
+                ? 'Seu carrinho está vazio.'
+                : `Seu carrinho tem ${itens} ite${itens === 1 ? 'm' : 'ns'}, que ${itens === 1 ? 'será esvaziado' : 'serão esvaziados'}.`;
+        }
+
+        document.getElementById('botao-apagar-cookies').addEventListener('click', async () => {
+            const itens = await apagarDadosDeNavegacao();
+            mostrarMensagem('mensagem-cookies',
+                itens > 0
+                    ? `Cookies e dados temporários apagados. Seu carrinho (${itens} ite${itens === 1 ? 'm' : 'ns'}) foi esvaziado.`
+                    : 'Cookies e dados temporários apagados.',
+                'success');
+            mostrarResumoCookies();
+        });
+
+        // --- Excluir conta ---
+        const modalExcluir = document.getElementById('modalExcluirConta');
+        const formExcluir = document.getElementById('form-excluir');
+
+        // Cada vez que a janela abre, começa limpa
+        modalExcluir.addEventListener('show.bs.modal', () => {
+            formExcluir.reset();
+            marcarCampo('excluir-senha', '');
+            mostrarMensagem('mensagem-excluir', '');
+        });
+        modalExcluir.addEventListener('shown.bs.modal', () => document.getElementById('excluir-senha').focus());
+
+        formExcluir.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            mostrarMensagem('mensagem-excluir', '');
+            if (!marcarCampo('excluir-senha', valor('excluir-senha') ? '' : 'Digite a sua senha para confirmar.')) return;
+
+            const botao = formExcluir.querySelector('button[type="submit"]');
+            botao.disabled = true;
+            try {
+                await UsuarioStore.excluirConta(valor('excluir-senha'));
+                deixarAvisoParaProximaTela('Sua conta foi excluída.');
+                location.href = 'index.html';
+            } catch (erro) {
+                if (erro.message === 'A senha está incorreta.') {
+                    marcarCampo('excluir-senha', erro.message);
+                    document.getElementById('excluir-senha').focus();
+                } else {
+                    mostrarMensagem('mensagem-excluir', erro.message || 'Não foi possível excluir a conta.', 'danger');
+                }
+                botao.disabled = false;
+            }
+        });
+
+        // --- Início ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const usuario = await exigirLogin();
+            if (!usuario) return;
+
+            document.getElementById('email-atual').textContent = usuario.email;
+            document.getElementById('email-usuario-oculto').value = usuario.email;
+            document.getElementById('senha-usuario-oculto').value = usuario.email;
+
+            // O administrador não pode excluir a própria conta
+            if (UsuarioStore.ehAdmin(usuario)) document.getElementById('secao-excluir').remove();
+
+            mostrarResumoCookies();
+            atualizarCabecalhoConta();
+            atualizarBadgeCarrinho();
+        });
+    </script>
+</body>
+
+</html>

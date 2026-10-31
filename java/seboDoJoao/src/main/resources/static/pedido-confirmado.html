@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes dessas telas estão na seção 17 dele) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link" href="index.html">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div id="pedido-conteudo" class="ec-ped-detalhe"></div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script>
+        // ===== Pedido confirmado / detalhe do pedido =====
+        const parametros = new URLSearchParams(location.search);
+        const pedidoNovo = parametros.get('novo') === '1';
+
+        // QR Code ILUSTRATIVO (só desenha um quadriculado parecido; não é um QR de verdade).
+        // O mesmo texto sempre gera o mesmo desenho.
+        function desenharQrIlustrativo(canvas, texto) {
+            const modulos = 29;
+            const tamanho = 6;
+            canvas.width = canvas.height = modulos * tamanho;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let semente = 2166136261;
+            for (const c of texto) semente = Math.imul(semente ^ c.charCodeAt(0), 16777619) >>> 0;
+            const proximo = () => { semente ^= semente << 13; semente >>>= 0; semente ^= semente >>> 17; semente ^= semente << 5; semente >>>= 0; return semente / 4294967296; };
+
+            const noCanto = (x, y) => (x < 8 && y < 8) || (x >= modulos - 8 && y < 8) || (x < 8 && y >= modulos - 8);
+            ctx.fillStyle = '#4D443B';
+            for (let y = 0; y < modulos; y++) {
+                for (let x = 0; x < modulos; x++) {
+                    if (!noCanto(x, y) && proximo() > 0.52) ctx.fillRect(x * tamanho, y * tamanho, tamanho, tamanho);
+                }
+            }
+            // os 3 quadrados de canto
+            [[0, 0], [modulos - 7, 0], [0, modulos - 7]].forEach(([x, y]) => {
+                ctx.fillStyle = '#4D443B'; ctx.fillRect(x * tamanho, y * tamanho, 7 * tamanho, 7 * tamanho);
+                ctx.fillStyle = '#fff'; ctx.fillRect((x + 1) * tamanho, (y + 1) * tamanho, 5 * tamanho, 5 * tamanho);
+                ctx.fillStyle = '#4D443B'; ctx.fillRect((x + 2) * tamanho, (y + 2) * tamanho, 3 * tamanho, 3 * tamanho);
+            });
+        }
+
+        function textoDoPagamento(pg) {
+            if (pg.tipo === 'pix') return 'Pix';
+            const nome = NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão';
+            const parcelas = pg.parcelas === 1
+                ? `1x de ${formatarPreco(pg.valorParcela)}`
+                : `${pg.parcelas}x de ${formatarPreco(pg.valorParcela)} sem juros`;
+            return `${nome} final ${pg.ultimos4} · ${parcelas}`;
+        }
+
+        function montarBlocoPix(p) {
+            const aguardando = p.status === PedidosStore.STATUS_AGUARDANDO;
+            if (!aguardando) {
+                return `<section class="ec-ped-bloco ec-ped-pix-pago">
+                    <i class="fas fa-circle-check me-2"></i>Pix recebido. Obrigado!
+                </section>`;
+            }
+            return `
+                <section class="ec-ped-bloco">
+                    <h3 class="ec-ped-bloco-titulo"><i class="fas fa-qrcode me-2"></i>Pague com Pix</h3>
+                    <p class="ec-texto-suave">Abra o app do seu banco, escolha pagar com Pix e escaneie o QR Code ou cole o código abaixo.</p>
+                    <div class="ec-pix">
+                        <div class="ec-pix-qr">
+                            <canvas id="pix-qr" aria-label="QR Code ilustrativo do Pix"></canvas>
+                            <small>QR Code ilustrativo</small>
+                        </div>
+                        <div class="ec-pix-codigo">
+                            <label class="ec-admin-label" for="pix-codigo">Pix copia e cola</label>
+                            <textarea id="pix-codigo" class="form-control ec-admin-input" rows="4" readonly>${escaparHtml(p.pagamento.pixCodigo)}</textarea>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <button type="button" id="pix-copiar" class="btn ec-btn-dark ec-btn-pill px-4"><i class="far fa-copy me-2"></i>Copiar código</button>
+                                <button type="button" id="pix-simular" class="btn ec-btn-outline-primary ec-btn-pill px-4">Simular pagamento</button>
+                            </div>
+                            <p class="ec-form-dica mt-2 mb-0">Demonstração: este site não cobra de verdade. "Simular pagamento" faz de conta que o Pix foi pago.</p>
+                        </div>
+                    </div>
+                </section>`;
+        }
+
+        function montarPedidoCompleto(p, nome) {
+            const e = p.endereco;
+            const [linha1, linha2, linha3] = linhasDoEndereco(e);
+            const itens = p.itens.map((i) => `
+                <li class="ec-ped-linha-item">
+                    <span class="ec-ped-miniatura"><i class="fas ${escaparHtml(i.icone)}"></i></span>
+                    <span class="flex-grow-1">${escaparHtml(i.nome)}<br><small class="ec-texto-suave">${i.quantidade} un. × ${formatarPreco(i.preco)}</small></span>
+                    <strong>${formatarPreco(i.preco * i.quantidade)}</strong>
+                </li>`).join('');
+            const aprovado = p.status === PedidosStore.STATUS_APROVADO;
+
+            return `
+                <section class="ec-ped-banner">
+                    <i class="fas ${aprovado || p.pagamento.tipo === 'pix' ? 'fa-circle-check' : 'fa-clock'} ec-ped-banner-icone"></i>
+                    <div>
+                        <h2 class="ec-ped-banner-titulo">${pedidoNovo ? 'Pedido confirmado!' : `Pedido ${escaparHtml(p.codigo)}`}</h2>
+                        <p class="mb-0">${pedidoNovo ? `Obrigado pela compra, ${escaparHtml(nome)}. ` : ''}Pedido <strong>${escaparHtml(p.codigo)}</strong>
+                            · <span class="ec-status ${aprovado ? 'ec-status-ok' : 'ec-status-aguardando'}">${escaparHtml(p.status)}</span></p>
+                    </div>
+                </section>
+
+                ${p.pagamento.tipo === 'pix' ? montarBlocoPix(p) : ''}
+
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        <section class="ec-ped-bloco">
+                            <h3 class="ec-ped-bloco-titulo"><i class="fas fa-box me-2"></i>Produtos</h3>
+                            <ul class="ec-ped-lista-itens">${itens}</ul>
+                        </section>
+                    </div>
+                    <div class="col-lg-5 d-flex flex-column gap-4">
+                        <section class="ec-ped-bloco">
+                            <h3 class="ec-ped-bloco-titulo"><i class="fas fa-truck me-2"></i>Entrega</h3>
+                            <p class="mb-1"><strong>${escaparHtml(p.frete.nome)}</strong> · ${p.frete.preco ? formatarPreco(p.frete.preco) : 'Grátis'}</p>
+                            <p class="ec-texto-suave">${escaparHtml(p.frete.prazoTexto)}</p>
+                            <p class="mb-0"><strong>${escaparHtml(e.destinatario)}</strong><br>
+                                ${escaparHtml(linha1)}<br>${escaparHtml(linha2)}<br>${escaparHtml(linha3)}</p>
+                        </section>
+                        <section class="ec-ped-bloco">
+                            <h3 class="ec-ped-bloco-titulo"><i class="fas fa-wallet me-2"></i>Pagamento</h3>
+                            <p class="mb-3">${escaparHtml(textoDoPagamento(p.pagamento))}</p>
+                            <dl class="ec-resumo-valores mb-0">
+                                <div><dt>Produtos</dt><dd>${formatarPreco(p.subtotal)}</dd></div>
+                                <div><dt>Frete</dt><dd>${p.frete.preco ? formatarPreco(p.frete.preco) : 'Grátis'}</dd></div>
+                                <div class="ec-resumo-total"><dt>Total</dt><dd>${formatarPreco(p.total)}</dd></div>
+                            </dl>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+                    <a href="pedidos.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">Meus pedidos</a>
+                    <a href="index.html" class="btn ec-btn-dark ec-btn-pill px-4">Continuar comprando</a>
+                </div>`;
+        }
+
+        async function renderizarPedido(usuario) {
+            const area = document.getElementById('pedido-conteudo');
+            const pedido = await PedidosStore.obter(parametros.get('id'));
+            if (!pedido) {
+                area.innerHTML = `<div class="ec-vazio"><i class="fas fa-box-open"></i>
+                    <p>Não encontramos esse pedido na sua conta.</p>
+                    <a href="pedidos.html" class="btn ec-btn-dark ec-btn-pill px-4">Meus pedidos</a></div>`;
+                return;
+            }
+            area.innerHTML = montarPedidoCompleto(pedido, usuario.nome.split(' ')[0]);
+            document.title = `Pedido ${pedido.codigo} - Sebo do João`;
+
+            if (pedido.pagamento.tipo === 'pix' && pedido.status === PedidosStore.STATUS_AGUARDANDO) {
+                desenharQrIlustrativo(document.getElementById('pix-qr'), pedido.pagamento.pixCodigo);
+
+                document.getElementById('pix-copiar').addEventListener('click', async (evento) => {
+                    const botao = evento.currentTarget;
+                    const campo = document.getElementById('pix-codigo');
+                    try {
+                        await navigator.clipboard.writeText(campo.value);
+                    } catch (erro) {
+                        campo.select(); // sem permissão de área de transferência: a pessoa copia na mão
+                        document.execCommand('copy');
+                    }
+                    botao.innerHTML = '<i class="fas fa-check me-2"></i>Código copiado!';
+                    setTimeout(() => { botao.innerHTML = '<i class="far fa-copy me-2"></i>Copiar código'; }, 2500);
+                });
+
+                document.getElementById('pix-simular').addEventListener('click', async () => {
+                    await PedidosStore.simularPagamentoDoPix(pedido.id);
+                    renderizarPedido(usuario);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            atualizarCabecalhoConta();
+            atualizarBadgeCarrinho();
+            const usuario = await exigirLogin();
+            if (!usuario) return;
+            renderizarPedido(usuario);
+        });
+    </script>
+</body>
+
+</html>

@@ -58,13 +58,6 @@
                     <p id="admin-total-produtos" class="ec-conta-card-descricao">Editar ou remover itens</p>
                 </a>
             </div>
-            <div class="col">
-                <a href="admin-senha.html" class="ec-conta-card text-decoration-none h-100">
-                    <i class="fas fa-key ec-conta-card-icone"></i>
-                    <h3 class="ec-conta-card-titulo">Alterar senha</h3>
-                    <p class="ec-conta-card-descricao">Trocar a senha do administrador</p>
-                </a>
-            </div>
         </div>
     </main>
 
@@ -87,7 +80,7 @@
 
             // Mostra no card quantos produtos a loja tem
             const produtos = await ProdutosStore.listar();
-            const ativos = produtos.filter((produto) => !produto.status || produto.status === 'Ativo').length;
+            const ativos = produtos.filter((produto) => !produto.status || produto.status === 'DISPONIVEL').length;
             document.getElementById('admin-total-produtos').textContent =
                 `${produtos.length} cadastrado${produtos.length === 1 ? '' : 's'} (${ativos} à venda)`;
         });

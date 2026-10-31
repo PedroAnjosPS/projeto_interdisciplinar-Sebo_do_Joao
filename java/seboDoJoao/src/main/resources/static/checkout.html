@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar compra - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes dessa tela estão na seção 17 dele) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho enxuto da compra (como nos grandes sites: só logo e "compra segura",
+         pra pessoa não se distrair no meio do pagamento) -->
+    <header class="ec-admin-header ec-co-header py-3 px-4">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+            <h1 class="ec-co-header-titulo d-none d-sm-block mb-0">Finalizar compra</h1>
+            <span class="ec-co-seguro"><i class="fas fa-lock me-2"></i>Compra segura</span>
+        </div>
+    </header>
+
+    <main class="container py-4 py-lg-5">
+        <a href="carrinho.html" class="ec-link-voltar d-inline-block mb-3"><i class="fas fa-arrow-left me-2"></i>Voltar ao carrinho</a>
+
+        <div id="co-aviso" role="alert"></div>
+
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-8 d-flex flex-column gap-4">
+
+                <!-- 1. Endereço -->
+                <section class="ec-co-secao" id="secao-endereco" aria-labelledby="titulo-endereco">
+                    <h2 class="ec-co-secao-titulo" id="titulo-endereco"><span class="ec-co-num">1</span>Endereço de entrega</h2>
+                    <div id="co-enderecos" class="d-flex flex-column gap-2"></div>
+                    <div id="erro-co-endereco" class="ec-form-erro" role="alert"></div>
+                    <button type="button" id="co-novo-endereco" class="ec-btn-texto mt-3"><i class="fas fa-plus me-2"></i>Adicionar novo endereço</button>
+                </section>
+
+                <!-- 2. Frete -->
+                <section class="ec-co-secao" id="secao-frete" aria-labelledby="titulo-frete">
+                    <h2 class="ec-co-secao-titulo" id="titulo-frete"><span class="ec-co-num">2</span>Forma de entrega</h2>
+                    <div id="co-frete" class="d-flex flex-column gap-2">
+                        <p class="ec-texto-suave mb-0">Escolha um endereço pra ver as opções de entrega.</p>
+                    </div>
+                </section>
+
+                <!-- 3. Pagamento -->
+                <section class="ec-co-secao" id="secao-pagamento" aria-labelledby="titulo-pagamento">
+                    <h2 class="ec-co-secao-titulo" id="titulo-pagamento"><span class="ec-co-num">3</span>Como você quer pagar?</h2>
+
+                    <div class="d-flex flex-column gap-2">
+                        <!-- Cartão -->
+                        <div class="ec-co-opcao" id="opcao-cartao">
+                            <label class="ec-co-opcao-rotulo">
+                                <input type="radio" name="forma" value="cartao" class="form-check-input">
+                                <i class="fas fa-credit-card ec-co-opcao-icone"></i>
+                                <span class="flex-grow-1">Cartão de crédito<small>Pague em até 6x sem juros</small></span>
+                            </label>
+
+                            <div class="ec-co-opcao-corpo" id="detalhes-cartao" hidden>
+                                <div id="co-cartoes" class="d-flex flex-column gap-2"></div>
+
+                                <!-- Cartão novo (sem salvar antes) -->
+                                <div id="co-cartao-novo" class="ec-co-cartao-novo" hidden>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="ec-admin-label" for="cc-numero">Número do cartão</label>
+                                            <div class="ec-campo-senha">
+                                                <input id="cc-numero" type="text" class="form-control ec-admin-input" inputmode="numeric"
+                                                    autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="19" aria-describedby="erro-cc-numero">
+                                                <span id="cc-bandeira" class="ec-bandeira-no-campo" aria-hidden="true"></span>
+                                            </div>
+                                            <div id="erro-cc-numero" class="ec-form-erro" role="alert"></div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="ec-admin-label" for="cc-titular">Nome impresso no cartão</label>
+                                            <input id="cc-titular" type="text" class="form-control ec-admin-input" maxlength="60" autocomplete="cc-name"
+                                                style="text-transform: uppercase" aria-describedby="erro-cc-titular">
+                                            <div id="erro-cc-titular" class="ec-form-erro" role="alert"></div>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="ec-admin-label" for="cc-validade">Validade</label>
+                                            <input id="cc-validade" type="text" class="form-control ec-admin-input" inputmode="numeric" maxlength="5"
+                                                autocomplete="cc-exp" placeholder="MM/AA" aria-describedby="erro-cc-validade">
+                                            <div id="erro-cc-validade" class="ec-form-erro" role="alert"></div>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="ec-admin-label" for="cc-cvv">Código de segurança</label>
+                                            <input id="cc-cvv" type="password" class="form-control ec-admin-input" inputmode="numeric" maxlength="4"
+                                                autocomplete="cc-csc" placeholder="CVV" aria-describedby="erro-cc-cvv">
+                                            <div id="erro-cc-cvv" class="ec-form-erro" role="alert"></div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="cc-salvar">
+                                                <label class="form-check-label" for="cc-salvar">Salvar esse cartão pras próximas compras</label>
+                                            </div>
+                                            <small class="ec-texto-suave">Guardamos só a bandeira e os 4 últimos números, nunca o CVV.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CVV do cartão salvo -->
+                                <div id="co-cvv-salvo" class="ec-co-cvv-salvo" hidden>
+                                    <label class="ec-admin-label" for="cs-cvv">Código de segurança do cartão selecionado</label>
+                                    <input id="cs-cvv" type="password" class="form-control ec-admin-input ec-co-campo-curto" inputmode="numeric" maxlength="4"
+                                        autocomplete="cc-csc" placeholder="CVV" aria-describedby="erro-cs-cvv">
+                                    <div id="erro-cs-cvv" class="ec-form-erro" role="alert"></div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="ec-admin-label" for="co-parcelas">Parcelas</label>
+                                    <select id="co-parcelas" class="form-select ec-admin-input ec-co-campo-curto"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pix -->
+                        <div class="ec-co-opcao" id="opcao-pix">
+                            <label class="ec-co-opcao-rotulo">
+                                <input type="radio" name="forma" value="pix" class="form-check-input">
+                                <i class="fas fa-qrcode ec-co-opcao-icone"></i>
+                                <span class="flex-grow-1">Pix<small>Aprovação na hora</small></span>
+                            </label>
+                            <div class="ec-co-opcao-corpo" id="detalhes-pix" hidden>
+                                <p class="ec-texto-suave mb-0">Depois de confirmar a compra, você vê o QR Code e o código Pix pra pagar.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="erro-co-pagamento" class="ec-form-erro" role="alert"></div>
+                </section>
+            </div>
+
+            <!-- Resumo -->
+            <aside class="col-lg-4">
+                <div class="ec-co-resumo">
+                    <h2 class="ec-co-resumo-titulo">Resumo da compra</h2>
+                    <ul id="co-itens" class="ec-co-itens"></ul>
+                    <dl class="ec-resumo-valores">
+                        <div><dt id="co-rotulo-produtos">Produtos</dt><dd id="co-subtotal">R$ 0,00</dd></div>
+                        <div><dt>Frete</dt><dd id="co-frete-valor">—</dd></div>
+                        <div class="ec-resumo-total"><dt>Total</dt><dd id="co-total">R$ 0,00</dd></div>
+                    </dl>
+                    <p id="co-parcelas-resumo" class="ec-texto-suave text-end mb-3"></p>
+                    <button type="button" id="co-confirmar" class="btn ec-btn-dark ec-btn-pill w-100 py-2" disabled>Confirmar a compra</button>
+                    <p class="ec-co-nota"><i class="fas fa-lock me-1"></i>Seus dados ficam só neste navegador. Esta loja é uma demonstração e não cobra de verdade.</p>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script src="js/formularios-conta.js"></script>
+    <script>
+        // ===== Tela de finalizar compra =====
+        // Tudo que a pessoa escolhe fica em "estado"; as funções renderizar... só desenham.
+        const estado = {
+            itens: [],            // [{ produto, quantidade }]
+            subtotal: 0,
+            enderecos: [],
+            enderecoId: null,
+            opcoesFrete: [],
+            freteId: null,
+            forma: 'cartao',      // 'cartao' | 'pix'
+            cartoes: [],
+            cartaoId: 'novo',     // id de um cartão salvo, ou 'novo'
+            parcelas: 1
+        };
+
+        const $ = (id) => document.getElementById(id);
+        const freteEscolhido = () => estado.opcoesFrete.find((o) => o.id === estado.freteId) || null;
+        const totalDaCompra = () => estado.subtotal + (freteEscolhido() ? freteEscolhido().preco : 0);
+
+        function mostrarAviso(texto) {
+            $('co-aviso').innerHTML = texto
+                ? `<div class="alert alert-danger mb-4">${escaparHtml(texto)}</div>` : '';
+            if (texto) window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ----- Resumo -----
+        function renderizarResumo() {
+            const unidades = estado.itens.reduce((soma, i) => soma + i.quantidade, 0);
+            $('co-itens').innerHTML = estado.itens.map(({ produto, quantidade }) => `
+                <li class="ec-co-item">
+                    <span class="ec-ped-miniatura"><i class="fas ${escaparHtml(produto.icone || 'fa-box')}"></i></span>
+                    <span class="flex-grow-1">${escaparHtml(produto.nome)}<br><small class="ec-texto-suave">${quantidade} un.</small></span>
+                    <strong>${formatarPreco(produto.preco * quantidade)}</strong>
+                </li>`).join('');
+
+            $('co-rotulo-produtos').textContent = `Produtos (${unidades})`;
+            $('co-subtotal').textContent = formatarPreco(estado.subtotal);
+            const frete = freteEscolhido();
+            $('co-frete-valor').textContent = frete ? (frete.preco ? formatarPreco(frete.preco) : 'Grátis') : '—';
+            $('co-frete-valor').classList.toggle('ec-texto-verde', Boolean(frete) && frete.preco === 0);
+            $('co-total').textContent = formatarPreco(totalDaCompra());
+
+            const pagandoNoCartao = estado.forma === 'cartao' && estado.parcelas > 1;
+            $('co-parcelas-resumo').textContent = pagandoNoCartao
+                ? `em ${estado.parcelas}x de ${formatarPreco(totalDaCompra() / estado.parcelas)} sem juros` : '';
+
+            $('co-confirmar').disabled = !(estado.enderecoId && frete && estado.forma);
+        }
+
+        // ----- 1. Endereços -----
+        function renderizarEnderecos() {
+            if (!estado.enderecos.length) {
+                $('co-enderecos').innerHTML = '<p class="ec-texto-suave mb-0">Você ainda não tem endereço salvo. Adicione um pra continuar.</p>';
+                return;
+            }
+            $('co-enderecos').innerHTML = estado.enderecos.map((e) => {
+                const [l1, l2, l3] = linhasDoEndereco(e);
+                return `
+                    <label class="ec-co-opcao-rotulo ec-co-card ${String(e.id) === String(estado.enderecoId) ? 'ec-co-card-ativo' : ''}">
+                        <input type="radio" name="endereco" value="${escaparHtml(e.id)}" class="form-check-input"
+                            ${String(e.id) === String(estado.enderecoId) ? 'checked' : ''}>
+                        <span class="flex-grow-1">
+                            <strong>${escaparHtml(l1)}</strong>
+                            ${e.padrao ? '<span class="ec-tag-padrao ms-2">Padrão</span>' : ''}<br>
+                            <small class="ec-texto-suave">${escaparHtml(l2)} · ${escaparHtml(l3)}<br>
+                                ${escaparHtml(e.destinatario)} · ${escaparHtml(e.telefone)}</small>
+                        </span>
+                        <button type="button" class="ec-btn-texto" data-editar-endereco="${escaparHtml(e.id)}">Editar</button>
+                    </label>`;
+            }).join('');
+        }
+
+        // ----- 2. Frete (depende do endereço) -----
+        function atualizarOpcoesDeFrete() {
+            const endereco = estado.enderecos.find((e) => String(e.id) === String(estado.enderecoId));
+            estado.opcoesFrete = endereco ? calcularOpcoesDeFrete(endereco.cep, estado.subtotal) : [];
+            if (!estado.opcoesFrete.some((o) => o.id === estado.freteId)) {
+                estado.freteId = estado.opcoesFrete.length ? estado.opcoesFrete[0].id : null;
+            }
+            renderizarFrete();
+            atualizarParcelas();
+            renderizarResumo();
+        }
+
+        function renderizarFrete() {
+            if (!estado.opcoesFrete.length) {
+                $('co-frete').innerHTML = '<p class="ec-texto-suave mb-0">Escolha um endereço pra ver as opções de entrega.</p>';
+                return;
+            }
+            $('co-frete').innerHTML = estado.opcoesFrete.map((o) => `
+                <label class="ec-co-opcao-rotulo ec-co-card ${o.id === estado.freteId ? 'ec-co-card-ativo' : ''}">
+                    <input type="radio" name="frete" value="${o.id}" class="form-check-input" ${o.id === estado.freteId ? 'checked' : ''}>
+                    <span class="flex-grow-1">
+                        <strong>${escaparHtml(o.nome)}</strong><br>
+                        <small class="ec-texto-suave">${escaparHtml(o.prazoTexto)}</small>
+                        ${o.observacao ? `<br><small class="ec-texto-verde">${escaparHtml(o.observacao)}</small>` : ''}
+                    </span>
+                    <strong class="${o.preco === 0 ? 'ec-texto-verde' : ''}">${o.preco === 0 ? 'Grátis' : formatarPreco(o.preco)}</strong>
+                </label>`).join('');
+        }
+
+        // ----- 3. Pagamento -----
+        function renderizarCartoesSalvos() {
+            const salvos = estado.cartoes.map((c) => {
+                const vencido = validadeJaVenceu(c.validade);
+                return `
+                    <label class="ec-co-opcao-rotulo ec-co-card ${String(c.id) === String(estado.cartaoId) ? 'ec-co-card-ativo' : ''} ${vencido ? 'ec-co-card-desativado' : ''}">
+                        <input type="radio" name="cartao" value="${escaparHtml(c.id)}" class="form-check-input"
+                            ${String(c.id) === String(estado.cartaoId) ? 'checked' : ''} ${vencido ? 'disabled' : ''}>
+                        ${iconeDaBandeira(c.bandeira)}
+                        <span class="flex-grow-1">
+                            <strong>${escaparHtml(NOMES_DAS_BANDEIRAS[c.bandeira] || 'Cartão')} •••• ${escaparHtml(c.ultimos4)}</strong>
+                            ${c.padrao ? '<span class="ec-tag-padrao ms-2">Padrão</span>' : ''}
+                            ${vencido ? '<span class="ec-tag-vencido ms-2">Vencido</span>' : ''}<br>
+                            <small class="ec-texto-suave">${escaparHtml(c.titular)} · vence ${escaparHtml(c.validade)}</small>
+                        </span>
+                    </label>`;
+            }).join('');
+
+            $('co-cartoes').innerHTML = salvos + `
+                <label class="ec-co-opcao-rotulo ec-co-card ${estado.cartaoId === 'novo' ? 'ec-co-card-ativo' : ''}">
+                    <input type="radio" name="cartao" value="novo" class="form-check-input" ${estado.cartaoId === 'novo' ? 'checked' : ''}>
+                    <i class="far fa-credit-card ec-bandeira-icone"></i>
+                    <span class="flex-grow-1"><strong>Pagar com outro cartão</strong></span>
+                </label>`;
+
+            $('co-cartao-novo').hidden = estado.cartaoId !== 'novo';
+            $('co-cvv-salvo').hidden = estado.cartaoId === 'novo';
+        }
+
+        function renderizarFormaDePagamento() {
+            $('opcao-cartao').classList.toggle('ec-co-opcao-ativa', estado.forma === 'cartao');
+            $('opcao-pix').classList.toggle('ec-co-opcao-ativa', estado.forma === 'pix');
+            $('detalhes-cartao').hidden = estado.forma !== 'cartao';
+            $('detalhes-pix').hidden = estado.forma !== 'pix';
+            document.querySelector('input[name="forma"][value="' + estado.forma + '"]').checked = true;
+        }
+
+        function atualizarParcelas() {
+            const opcoes = calcularParcelas(totalDaCompra());
+            if (estado.parcelas > opcoes.length) estado.parcelas = 1;
+            $('co-parcelas').innerHTML = opcoes.map((p) => `
+                <option value="${p.quantidade}" ${p.quantidade === estado.parcelas ? 'selected' : ''}>
+                    ${p.quantidade}x de ${formatarPreco(p.valor)}${p.quantidade === 1 ? '' : ' sem juros'}
+                </option>`).join('');
+        }
+
+        // ----- Eventos -----
+        $('co-enderecos').addEventListener('change', (evento) => {
+            if (evento.target.name !== 'endereco') return;
+            estado.enderecoId = evento.target.value;
+            mostrarErroDoCampo('erro-co-endereco', '');
+            $('erro-co-endereco').textContent = '';
+            renderizarEnderecos();
+            atualizarOpcoesDeFrete();
+        });
+
+        $('co-enderecos').addEventListener('click', async (evento) => {
+            const botao = evento.target.closest('[data-editar-endereco]');
+            if (!botao) return;
+            evento.preventDefault(); // o botão está dentro do <label> do endereço
+            const salvo = await abrirModalEndereco(await EnderecosStore.obter(botao.dataset.editarEndereco));
+            if (salvo) await carregarEnderecos(salvo.id);
+        });
+
+        $('co-novo-endereco').addEventListener('click', async () => {
+            const salvo = await abrirModalEndereco();
+            if (salvo) await carregarEnderecos(salvo.id);
+        });
+
+        $('co-frete').addEventListener('change', (evento) => {
+            if (evento.target.name !== 'frete') return;
+            estado.freteId = evento.target.value;
+            renderizarFrete();
+            atualizarParcelas();
+            renderizarResumo();
+        });
+
+        document.querySelectorAll('input[name="forma"]').forEach((radio) => radio.addEventListener('change', () => {
+            estado.forma = radio.value;
+            $('erro-co-pagamento').textContent = '';
+            renderizarFormaDePagamento();
+            renderizarResumo();
+        }));
+
+        $('co-cartoes').addEventListener('change', (evento) => {
+            if (evento.target.name !== 'cartao') return;
+            estado.cartaoId = evento.target.value;
+            renderizarCartoesSalvos();
+        });
+
+        $('co-parcelas').addEventListener('change', () => {
+            estado.parcelas = Number($('co-parcelas').value);
+            renderizarResumo();
+        });
+
+        // Máscaras e conferência do cartão novo
+        ligarMascara($('cc-numero'), formatarNumeroCartao);
+        ligarMascara($('cc-validade'), formatarValidade);
+        $('cc-numero').addEventListener('input', () => {
+            const b = bandeiraDoCartao($('cc-numero').value);
+            $('cc-bandeira').innerHTML = b ? iconeDaBandeira(b) : '';
+        });
+        $('cc-cvv').addEventListener('input', () => { $('cc-cvv').value = somenteDigitos($('cc-cvv').value); });
+        $('cs-cvv').addEventListener('input', () => { $('cs-cvv').value = somenteDigitos($('cs-cvv').value); });
+
+        const verificadoresDoCartaoNovo = {
+            'cc-numero': () => erroDoNumeroCartao($('cc-numero').value),
+            'cc-titular': () => erroDoTitularDoCartao($('cc-titular').value),
+            'cc-validade': () => erroDaValidade($('cc-validade').value),
+            'cc-cvv': () => erroDoCvv($('cc-cvv').value, bandeiraDoCartao($('cc-numero').value))
+        };
+        Object.keys(verificadoresDoCartaoNovo).forEach((id) => {
+            $(id).addEventListener('blur', () => { if (!apertandoBotao && $(id).value.trim()) mostrarErroDoCampo(id, verificadoresDoCartaoNovo[id]()); });
+            $(id).addEventListener('input', () => { if ($(id).classList.contains('is-invalid')) mostrarErroDoCampo(id, verificadoresDoCartaoNovo[id]()); });
+        });
+        $('cs-cvv').addEventListener('input', () => { if ($('cs-cvv').classList.contains('is-invalid')) mostrarErroDoCampo('cs-cvv', erroDoCvvSalvo()); });
+
+        function erroDoCvvSalvo() {
+            const cartao = estado.cartoes.find((c) => String(c.id) === String(estado.cartaoId));
+            return erroDoCvv($('cs-cvv').value, cartao ? cartao.bandeira : '');
+        }
+
+        // ----- Confirmar -----
+        // Confere o que a tela sabe conferir (mostrando o erro no campo certo) e manda pro PedidosStore,
+        // que confere tudo de novo (preço, estoque, frete...) antes de criar o pedido.
+        async function confirmarCompra() {
+            mostrarAviso('');
+            let primeiroCampoComErro = null;
+
+            if (!estado.enderecoId) {
+                $('erro-co-endereco').textContent = 'Escolha um endereço de entrega.';
+                primeiroCampoComErro = primeiroCampoComErro || $('secao-endereco');
+            }
+            if (!freteEscolhido()) {
+                primeiroCampoComErro = primeiroCampoComErro || $('secao-frete');
+            }
+
+            let pagamento = { tipo: 'pix' };
+            if (estado.forma === 'cartao') {
+                if (estado.cartaoId === 'novo') {
+                    const ids = Object.keys(verificadoresDoCartaoNovo);
+                    ids.forEach((id) => mostrarErroDoCampo(id, verificadoresDoCartaoNovo[id]()));
+                    const comErro = ids.find((id) => verificadoresDoCartaoNovo[id]());
+                    if (comErro) primeiroCampoComErro = primeiroCampoComErro || $(comErro);
+                    pagamento = {
+                        tipo: 'cartao', parcelas: estado.parcelas, cvv: $('cc-cvv').value,
+                        cartaoNovo: {
+                            numero: $('cc-numero').value, titular: $('cc-titular').value,
+                            validade: $('cc-validade').value, salvar: $('cc-salvar').checked
+                        }
+                    };
+                } else {
+                    const erro = erroDoCvvSalvo();
+                    mostrarErroDoCampo('cs-cvv', erro);
+                    if (erro) primeiroCampoComErro = primeiroCampoComErro || $('cs-cvv');
+                    pagamento = { tipo: 'cartao', parcelas: estado.parcelas, cvv: $('cs-cvv').value, cartaoId: estado.cartaoId };
+                }
+            }
+
+            if (primeiroCampoComErro) {
+                primeiroCampoComErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (primeiroCampoComErro.focus) primeiroCampoComErro.focus({ preventScroll: true });
+                return;
+            }
+
+            const botao = $('co-confirmar');
+            botao.disabled = true;
+            botao.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Confirmando...';
+            try {
+                const pedido = await PedidosStore.criar({ enderecoId: estado.enderecoId, freteId: estado.freteId, pagamento });
+                location.href = `pedido-confirmado.html?id=${encodeURIComponent(pedido.id)}&novo=1`;
+            } catch (erro) {
+                mostrarAviso(erro.message || 'Não foi possível concluir a compra. Tente novamente.');
+                botao.textContent = 'Confirmar a compra';
+                botao.disabled = false;
+            }
+        }
+        $('co-confirmar').addEventListener('click', confirmarCompra);
+
+        // ----- Carregamento -----
+        async function carregarEnderecos(idParaSelecionar) {
+            estado.enderecos = await EnderecosStore.listar();
+            const existe = (id) => estado.enderecos.some((e) => String(e.id) === String(id));
+            estado.enderecoId = existe(idParaSelecionar) ? idParaSelecionar
+                : existe(estado.enderecoId) ? estado.enderecoId
+                : (estado.enderecos[0] ? estado.enderecos[0].id : null); // lista vem com o padrão primeiro
+            renderizarEnderecos();
+            atualizarOpcoesDeFrete();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!(await exigirLogin())) return;
+
+            const itensDoCarrinho = await CarrinhoStore.listar();
+            if (!itensDoCarrinho.length) { location.replace('carrinho.html'); return; }
+
+            estado.itens = await Promise.all(itensDoCarrinho.map(async (item) => ({
+                produto: await ProdutosStore.obterPorId(item.id), quantidade: item.quantidade
+            })));
+            const indisponivel = estado.itens.some(({ produto, quantidade }) =>
+                !produto || !CarrinhoStore.disponivel(produto) || quantidade > CarrinhoStore.limiteDeEstoque(produto));
+            if (indisponivel) {
+                mostrarAviso('Alguns itens do carrinho não estão mais disponíveis. Volte ao carrinho pra ajustar.');
+                $('co-itens').innerHTML = '';
+                $('co-confirmar').disabled = true;
+                return;
+            }
+            estado.subtotal = estado.itens.reduce((soma, { produto, quantidade }) => soma + produto.preco * quantidade, 0);
+
+            estado.cartoes = await CartoesStore.listar();
+            const cartaoInicial = estado.cartoes.find((c) => c.padrao && !validadeJaVenceu(c.validade))
+                || estado.cartoes.find((c) => !validadeJaVenceu(c.validade));
+            estado.cartaoId = cartaoInicial ? cartaoInicial.id : 'novo';
+
+            renderizarFormaDePagamento();
+            renderizarCartoesSalvos();
+            await carregarEnderecos();
+        });
+    </script>
+</body>
+
+</html>

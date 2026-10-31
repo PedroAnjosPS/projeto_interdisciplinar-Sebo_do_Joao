@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus pedidos - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes dessas telas estão na seção 17 dele) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link" href="index.html">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="ec-page-title-bar">
+            <h2 class="ec-page-title">Meus pedidos</h2>
+            <div class="d-flex align-items-center gap-3">
+                <a href="menu-conta.html" class="ec-link-voltar"><i class="fas fa-rotate-left me-1"></i>Voltar</a>
+                <i class="fas fa-box fs-4 ec-page-title-icone"></i>
+            </div>
+        </div>
+
+        <div id="lista-pedidos" class="d-flex flex-column gap-4"></div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script>
+        // ===== Tela de meus pedidos =====
+        function dataDoPedido(iso) {
+            return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        function classeDoStatus(status) {
+            return status === PedidosStore.STATUS_APROVADO ? 'ec-status-ok' : 'ec-status-aguardando';
+        }
+
+        function montarPedido(p) {
+            const unidades = p.itens.reduce((soma, i) => soma + i.quantidade, 0);
+            const linhas = p.itens.slice(0, 3).map((i) => `
+                <li><i class="fas ${escaparHtml(i.icone)} me-2"></i>${escaparHtml(i.nome)}
+                    <span class="ec-texto-suave">× ${i.quantidade}</span></li>`).join('');
+            const resto = p.itens.length > 3 ? `<li class="ec-texto-suave">e mais ${p.itens.length - 3} ${p.itens.length - 3 === 1 ? 'produto' : 'produtos'}</li>` : '';
+
+            return `
+                <article class="ec-ped-card">
+                    <header class="ec-ped-topo">
+                        <div>
+                            <h3 class="ec-ped-codigo">Pedido ${escaparHtml(p.codigo)}</h3>
+                            <p class="ec-texto-suave mb-0">${escaparHtml(dataDoPedido(p.criadoEm))}</p>
+                        </div>
+                        <span class="ec-status ${classeDoStatus(p.status)}">${escaparHtml(p.status)}</span>
+                    </header>
+                    <ul class="ec-ped-itens">${linhas}${resto}</ul>
+                    <footer class="ec-ped-rodape">
+                        <div>
+                            <span class="ec-texto-suave">${unidades} ${unidades === 1 ? 'item' : 'itens'} · Total</span>
+                            <strong class="ec-ped-total">${formatarPreco(p.total)}</strong>
+                        </div>
+                        <a href="pedido-confirmado.html?id=${encodeURIComponent(p.id)}" class="btn ec-btn-outline-primary ec-btn-pill px-4">Ver detalhes</a>
+                    </footer>
+                </article>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            atualizarCabecalhoConta();
+            atualizarBadgeCarrinho();
+            if (!(await exigirLogin())) return;
+
+            const pedidos = await PedidosStore.listar();
+            document.getElementById('lista-pedidos').innerHTML = pedidos.length
+                ? pedidos.map(montarPedido).join('')
+                : `<div class="ec-vazio">
+                        <i class="fas fa-box-open"></i>
+                        <p>Você ainda não fez nenhuma compra.</p>
+                        <a href="index.html" class="btn ec-btn-dark ec-btn-pill px-4">Ver produtos</a>
+                   </div>`;
+        });
+    </script>
+</body>
+
+</html>

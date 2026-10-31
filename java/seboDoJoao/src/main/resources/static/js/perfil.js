@@ -1,6 +1,9 @@
 // perfil.js - Cuida apenas da interface da tela de perfil
 
-document.getElementById('formPerfil').addEventListener('submit', async (evento) => {
+// Este arquivo é carregado em várias telas, mas só a que tem o formulário "formPerfil" precisa dele
+// (sem essa conferência dava erro no console nas outras telas).
+const formPerfilLegado = document.getElementById('formPerfil');
+if (formPerfilLegado) formPerfilLegado.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     
     // 1. Pega o arquivo de imagem do input HTML

@@ -47,6 +47,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
                         <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
                         <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
                         <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -95,15 +96,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
-    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
-    <script src="js/vitrine.js"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
     <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
     <script>
         // ===== Página de produto =====
         const idProduto = new URLSearchParams(location.search).get('id');
 
         function montarProdutoDetalhado(produto) {
-            const titulo = escaparHtml(produto.titulo);
+            const titulo = escaparHtml(produto.nome);
             const disponivel = CarrinhoStore.disponivel(produto);
             const limite = CarrinhoStore.limiteDeEstoque(produto);
 
@@ -173,7 +175,7 @@
             // Mesma categoria, sem repetir o produto atual nem mostrar inativos.
             // Os que têm o mesmo gênero vêm primeiro.
             const similares = todos
-                .filter((p) => String(p.id) !== String(produtoAtual.id) && p.status !== 'Inativo')
+                .filter((p) => String(p.id) !== String(produtoAtual.id) && p.status !== 'INATIVO')
                 .filter((p) => p.categoria === produtoAtual.categoria)
                 .sort((a, b) => Number(b.genero === produtoAtual.genero) - Number(a.genero === produtoAtual.genero))
                 .slice(0, 3);
@@ -189,7 +191,7 @@
             const produto = idProduto ? await ProdutosStore.obterPorId(idProduto) : null;
 
             // Produto "Inativo" é tratado como se não existisse pro cliente
-            if (!produto || produto.status === 'Inativo') {
+            if (!produto || produto.status === 'INATIVO') {
                 container.innerHTML = `
                     <div class="text-center py-5">
                         <i class="fas fa-box-open fa-4x mb-3 ec-icon-sand"></i>
@@ -200,7 +202,7 @@
                 return;
             }
 
-            document.title = `${produto.titulo} - Sebo do João`;
+            document.title = `${produto.nome} - Sebo do João`;
             container.innerHTML = montarProdutoDetalhado(produto);
 
             document.getElementById('botao-adicionar').addEventListener('click', () => comprarProduto(produto.id));

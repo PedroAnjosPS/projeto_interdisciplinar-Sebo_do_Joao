@@ -47,6 +47,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
                         <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
                         <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
                         <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -112,7 +113,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
-    <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
     <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script src="js/perfil.js"></script>
@@ -123,8 +125,9 @@
         const CAMPOS_PERFIL = [
             { chave: 'nome', rotulo: 'Nome', icone: 'fa-user', tipo: 'text', placeholder: 'Seu nome completo',
               atributos: 'autocomplete="name" maxlength="100"', validar: erroDoNome },
-            { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', tipo: 'email', placeholder: 'seuemail@exemplo.com',
-              atributos: 'autocomplete="email" maxlength="120"', validar: erroDoEmail },
+            // E-mail só aparece (somenteLeitura): quem troca é a tela Segurança e Privacidade,
+            // que pede a senha da conta antes de mudar.
+            { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', somenteLeitura: true },
             { chave: 'cpf', rotulo: 'CPF', icone: 'fa-id-card', tipo: 'text', placeholder: '000.000.000-00',
               atributos: 'inputmode="numeric" maxlength="14" autocomplete="off"', mascara: formatarCpf, validar: erroDoCpf },
             { chave: 'telefone', rotulo: 'Telefone', icone: 'fa-phone', tipo: 'tel', placeholder: '(00) 00000-0000',
@@ -134,6 +137,8 @@
             { chave: 'dataNascimento', rotulo: 'Data de Nascimento', icone: 'fa-calendar', tipo: 'date',
               atributos: 'min="1900-01-01" max="' + new Date().toISOString().slice(0, 10) + '"', validar: erroDaDataNascimento }
         ];
+
+        const CAMPOS_EDITAVEIS_PERFIL = CAMPOS_PERFIL.filter((campo) => !campo.somenteLeitura);
 
         const formularioPerfil = document.getElementById('form-perfil');
         const camposPerfil = document.getElementById('campos-perfil');
@@ -166,7 +171,7 @@
         }
 
         function ligarMascarasEValidacao() {
-            CAMPOS_PERFIL.forEach((campo) => {
+            CAMPOS_EDITAVEIS_PERFIL.forEach((campo) => {
                 const input = document.getElementById(`campo-${campo.chave}`);
                 if (campo.mascara) ligarMascara(input, campo.mascara);
 
@@ -184,14 +189,17 @@
                 const valorGuardado = usuarioAtual[campo.chave] || '';
                 const valor = campo.mascara ? campo.mascara(valorGuardado) : valorGuardado;
 
-                if (!modoEdicao) {
-                    const exibicao = campo.chave === 'nascimento' ? formatarDataBR(valor) : valor;
+                if (!modoEdicao || campo.somenteLeitura) {
+                    const dica = modoEdicao && campo.somenteLeitura
+                        ? `<div class="ec-profile-dica">Para trocar o e-mail, use <a href="seguranca.html" class="ec-link-accent">Segurança e Privacidade</a>.</div>`
+                        : '';
+                    const exibicao = campo.chave === 'dataNascimento' ? formatarDataBR(valor) : valor;
                     return `
-                        <div class="ec-profile-row">
+                        <div class="ec-profile-row${modoEdicao ? ' ec-profile-row-alinhada' : ''}">
                             <i class="fas ${campo.icone}"></i>
                             <span class="ec-profile-label">${campo.rotulo}:</span>
                             <span class="ec-profile-value">${escaparHtml(exibicao) || '—'}</span>
-                        </div>`;
+                        </div>${dica}`;
                 }
 
                 return `
@@ -228,34 +236,6 @@
             }
         }
 
-        formularioPerfil.addEventListener('submit', async (evento) => {
-            evento.preventDefault();
-
-            // Só chega aqui no modo edição (o botão Salvar é o único "submit").
-            // Confere todos os campos de uma vez, assim aparecem todos os erros juntos.
-            const camposComErro = CAMPOS_PERFIL.filter((campo) => !validarCampo(campo));
-            if (camposComErro.length) {
-                mostrarMensagem('Corrija os campos destacados em vermelho para salvar.', 'danger');
-                document.getElementById(`campo-${camposComErro[0].chave}`).focus();
-                return;
-            }
-            mostrarMensagem('', '');
-
-            const dados = {};
-            CAMPOS_PERFIL.forEach((campo) => {
-                dados[campo.chave] = document.getElementById(`campo-${campo.chave}`).value.trim();
-            });
-
-            try {
-                usuarioAtual = await UsuarioStore.salvar(dados);
-                renderizarPerfil(false);
-                mostrarMensagem('Dados atualizados com sucesso!', 'success');
-            } catch (erro) {
-                console.error('Erro ao salvar o perfil:', erro);
-                mostrarMensagem(escaparHtml(erro.message || 'Não foi possível salvar os dados. Tente novamente.'), 'danger');
-            }
-        });
-
         // ===== Foto de perfil =====
         
         // Atualiza o avatar na tela e no menu
@@ -264,7 +244,7 @@
             avatar.innerHTML = usuarioAtual.fotoPerfil
                 ? `<img src="${escaparHtml(usuarioAtual.fotoPerfil)}" alt="Foto do usuário">`
                 : '<i class="fas fa-user"></i>';
-            document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.foto);
+            document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.fotoPerfil);
             atualizarCabecalhoConta();
         }
 
@@ -302,16 +282,21 @@
         formularioPerfil.addEventListener('submit', async (evento) => {
             evento.preventDefault();
 
-            const camposComErro = CAMPOS_PERFIL.filter((campo) => !validarCampo(campo));
+            // Só chega aqui no modo edição (o botão Salvar é o único "submit").
+            // Confere todos os campos de uma vez, assim aparecem todos os erros juntos.
+            const camposComErro = CAMPOS_EDITAVEIS_PERFIL.filter((campo) => !validarCampo(campo));
             if (camposComErro.length) {
-                mostrarMensagem('Corrija os campos em vermelho para salvar.', 'danger');
+                mostrarMensagem('Corrija os campos destacados em vermelho para salvar.', 'danger');
+                document.getElementById(`campo-${camposComErro[0].chave}`).focus();
                 return;
             }
             mostrarMensagem('', '');
 
+            // FormData porque a API recebe os campos (e a foto) em multipart.
+            // O e-mail não vai: ele só muda na tela Segurança e Privacidade.
             const formData = new FormData();
-            
-            CAMPOS_PERFIL.forEach((campo) => {
+
+            CAMPOS_EDITAVEIS_PERFIL.forEach((campo) => {
                 formData.append(campo.chave, document.getElementById(`campo-${campo.chave}`).value.trim());
             });
 

@@ -20,6 +20,36 @@ const ProdutosStore = (() => {
     // URL base que aponta para o ProdutoRestController no Spring Boot.
     const URL_API = '/api/produtos';
 
+    // ----- Nomes de categoria/gênero e ícone (a API devolve só os ids) -----
+    // As telas da vitrine (busca, produto, carrinho, cards...) mostram o NOME da categoria
+    // e do gênero e filtram por ele; a API manda só categoriaId/generoId. Por isso cada produto
+    // que sai deste Store ganha também "categoria", "genero" e "icone" (os campos que a API
+    // mandou continuam todos lá: nome, categoriaId, generoId, status "DISPONIVEL"/"INATIVO"...).
+    // Os ids são os mesmos das <option> de cadastro-produto.html (e da tabela do banco).
+    const NOMES_CATEGORIAS = {
+        1: 'Livros', 2: 'HQs', 3: 'Discos de Vinil', 4: 'Blu-rays',
+        5: 'Dvds', 6: 'Cds', 7: 'Fitas Cassetes'
+    };
+    const ICONES_CATEGORIAS = {
+        1: 'fa-book-open', 2: 'fa-mask', 3: 'fa-record-vinyl', 4: 'fa-compact-disc',
+        5: 'fa-film', 6: 'fa-compact-disc', 7: 'fa-cassette-tape'
+    };
+    const NOMES_GENEROS = {
+        1: 'Ficção Científica', 2: 'Terror', 3: 'Suspense', 4: 'Rock', 5: 'Heavy Metal',
+        6: 'Ação', 7: 'Aventura', 8: 'Rap', 9: 'Didático', 10: 'Biografia'
+    };
+
+    function completarProduto(produto) {
+        if (!produto || typeof produto !== 'object') return produto;
+        return {
+            ...produto,
+            categoria: NOMES_CATEGORIAS[produto.categoriaId] || '',
+            genero: NOMES_GENEROS[produto.generoId] || '',
+            icone: ICONES_CATEGORIAS[produto.categoriaId] || 'fa-box',
+            preco: Number(produto.preco) || 0
+        };
+    }
+
     //let seedGarantido = null;
 
     /* function garantirSeed() {
@@ -48,7 +78,7 @@ const ProdutosStore = (() => {
         const resposta = await fetch(URL_API);
         if (!resposta.ok) throw new Error('Erro ao carregar produtos');
         
-        return await resposta.json();
+        return (await resposta.json()).map(completarProduto);
     }
 
     // 2-) Busca um produto pelo id (Conecta com @GetMapping("/{id}"))
@@ -56,7 +86,7 @@ const ProdutosStore = (() => {
         const resposta = await fetch(`${URL_API}/${id}`);
         if (!resposta.ok) return null;
 
-        return await resposta.json();
+        return completarProduto(await resposta.json());
     }
 
     // 3-) Cadastra um novo produto (Conecta com @PostMapping)
@@ -180,6 +210,6 @@ const ProdutosStore = (() => {
  */
 
     // Expõe as funções para que o resto do site possa chamá-las
-    return {listar, obterPorId, salvar, atualizar, remover};
+    return {listar, obterPorId, salvar, atualizar, remover, NOMES_CATEGORIAS};
 })();
 // ===== FIM: js/produtos-store.js =====

@@ -43,29 +43,19 @@ public class ClienteRestController {
             @RequestParam(value = "cpf", required = false) String cpf,
             @RequestParam(value = "telefone", required = false) String telefone,
             @RequestParam(value = "dataNascimento", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataNascimento,
-            @RequestParam(value = "foto", required = false) MultipartFile foto) {
+            @RequestParam(value = "foto", required = false) MultipartFile foto,
+            @RequestParam(value = "removerFoto", defaultValue = "false") boolean removerFoto) {
 
+        // null = manter a foto atual; "" = remover (o service grava NULL no banco).
+        // A remoção precisa de um campo próprio: um "foto" de texto vazio nunca chegava
+        // aqui, porque o Spring só preenche MultipartFile quando recebe um arquivo.
         String caminhoFoto = null;
-        
-        if (foto != null && !foto.isEmpty()) {
-            try {
-                String diretorio = "src/main/resources/static/imagens/usuarios/";
-                java.nio.file.Path caminhoDiretorio = java.nio.file.Paths.get(diretorio);
-                
-                if (!java.nio.file.Files.exists(caminhoDiretorio)) {
-                    java.nio.file.Files.createDirectories(caminhoDiretorio);
-                }
 
-                String nomeArquivo = id + "_perfil.jpg";
-                java.nio.file.Path caminhoArquivo = caminhoDiretorio.resolve(nomeArquivo);
-                java.nio.file.Files.copy(foto.getInputStream(), caminhoArquivo, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-                caminhoFoto = "/imagens/usuarios/" + nomeArquivo;
-            } catch (java.io.IOException e) {
-                throw new RuntimeException("Erro ao guardar a foto.", e);
-            }
-        } else if (foto != null) {
-            caminhoFoto = ""; 
+        if (removerFoto) {
+            FotoPerfilArquivo.apagar(id);
+            caminhoFoto = "";
+        } else if (foto != null && !foto.isEmpty()) {
+            caminhoFoto = FotoPerfilArquivo.guardar(id, foto);
         }
 
         ClienteRequestDTO dto = new ClienteRequestDTO(

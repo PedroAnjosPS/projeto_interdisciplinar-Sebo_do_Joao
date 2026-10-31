@@ -22,7 +22,7 @@ public class ClienteService {
                 .stream()
                 .map(cliente -> {
                         // Pega o caminho da foto de perfil (caso exista) ou null caso não tenha imagem
-                        String fotoPerfil = (cliente.getFotoPerfil() != null && cliente.getFotoPerfil().isEmpty()) ?
+                        String fotoPerfil = (cliente.getFotoPerfil() != null && !cliente.getFotoPerfil().isEmpty()) ?
                                                         cliente.getFotoPerfil() : null;
 
                         return new ClienteResponseDTO(
@@ -121,9 +121,12 @@ public class ClienteService {
         if (dto.telefone() != null) clienteExistente.setTelefone(dto.telefone());
         if (dto.bairro() != null) clienteExistente.setBairro(dto.bairro());
         if (dto.logradouro() != null) clienteExistente.setLogradouro(dto.logradouro());
-        if (dto.cpf() != null) clienteExistente.setCpf(dto.cpf());
+        // O CPF é único no banco. Se dois clientes salvassem o campo vazio, o segundo receberia
+        // erro e nada do perfil seria gravado, por isso o vazio mantém o valor que já existe.
+        if (dto.cpf() != null && !dto.cpf().isBlank()) clienteExistente.setCpf(dto.cpf());
         if (dto.dataNascimento() != null) clienteExistente.setDataNascimento(dto.dataNascimento());
-        if (dto.fotoPerfil() != null) clienteExistente.setFotoPerfil(dto.fotoPerfil());
+        // Texto vazio é o pedido de remover a foto: a coluna volta a ser NULL
+        if (dto.fotoPerfil() != null) clienteExistente.setFotoPerfil(dto.fotoPerfil().isEmpty() ? null : dto.fotoPerfil());
 
         if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
             Cep cep = cepRepository.findById(dto.cepNumero()).orElseThrow();

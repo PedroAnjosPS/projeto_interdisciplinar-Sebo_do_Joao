@@ -4,6 +4,7 @@ import br.com.interdisciplinar.sebodojoao.dto.ItemPedidoIdDTO;
 import br.com.interdisciplinar.sebodojoao.dto.ItemPedidoRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.ItemPedidoResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.ItemPedidoService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,8 +29,10 @@ public class ItemPedidoRestController {
         return itemPedidoService.buscarPorId(idDto);
     }
 
+    // O carrinho fica no navegador; no servidor, colocar um produto na compra é criar um item do pedido
     @PostMapping
-    public ItemPedidoResponseDTO cadastrar(@RequestBody ItemPedidoRequestDTO dto) {
+    public ItemPedidoResponseDTO cadastrar(@RequestBody ItemPedidoRequestDTO dto, HttpSession sessao) {
+        ControleDeAcesso.exigirCliente(sessao);
         return itemPedidoService.cadastrar(dto);
     }
 

@@ -101,6 +101,9 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <!-- Faltavam os dois stores: sem eles, a tela parava com erro antes de mostrar o carrinho -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script>
         // ===== Tela do carrinho =====
@@ -122,7 +125,7 @@
 
             // Produto apagado do catálogo, inativo ou sem estoque
             if (!produto || !CarrinhoStore.disponivel(produto)) {
-                const nome = produto ? escaparHtml(produto.titulo) : 'Produto removido do catálogo';
+                const nome = produto ? escaparHtml(produto.nome) : 'Produto removido do catálogo';
                 return `
                     <div class="ec-cart-item ec-cart-indisponivel d-flex align-items-center gap-3 p-3" data-id="${escaparHtml(item.id)}">
                         <div class="ec-cart-thumb"><i class="fas fa-box fa-2x opacity-50"></i></div>
@@ -136,7 +139,8 @@
                     </div>`;
             }
 
-            const titulo = escaparHtml(produto.titulo);
+            // O Java devolve o nome do produto no campo "nome" (não existe "titulo")
+            const titulo = escaparHtml(produto.nome);
             const limite = CarrinhoStore.limiteDeEstoque(produto);
             const detalhes = [produto.categoria, produto.genero].filter(Boolean).map(escaparHtml).join(' · ');
 
@@ -246,7 +250,15 @@
             atualizarCabecalhoConta();
 
             // O carrinho é uma tela de conta: sem login, vai pro login e volta pra cá depois
-            if (!(await exigirLogin())) return;
+            const usuario = await exigirLogin();
+            if (!usuario) return;
+
+            // Esconder o ícone não basta: o funcionário ainda poderia digitar carrinho.html
+            // na barra de endereço. Por isso a própria tela o manda de volta para a loja.
+            if (UsuarioStore.ehAdmin(usuario)) {
+                location.replace('index.html');
+                return;
+            }
 
             renderizarCarrinho().catch((erro) => {
                 console.error('Erro ao carregar o carrinho:', erro);

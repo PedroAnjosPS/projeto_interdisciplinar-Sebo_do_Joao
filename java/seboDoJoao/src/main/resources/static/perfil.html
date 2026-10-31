@@ -91,7 +91,7 @@
                                 <i class="fas fa-camera"></i>
                                 <span class="visually-hidden">Alterar foto de perfil</span>
                             </label>
-                            <input id="campo-foto" type="file" accept="image/*" class="d-none">
+                            <input id="campo-foto" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="d-none">
                         </div>
                         <button id="botao-remover-foto" type="button"
                             class="btn btn-link p-0 ec-link-accent text-decoration-none d-none">Remover foto</button>
@@ -120,7 +120,7 @@
         // ===== Tela de informações do perfil =====
         // Os campos ficam numa lista só: dá pra mostrar como texto (modo normal)
         // ou como inputs (modo edição, depois de clicar em "Editar").
-        const CAMPOS_PERFIL = [
+        let CAMPOS_PERFIL = [
             { chave: 'nome', rotulo: 'Nome', icone: 'fa-user', tipo: 'text', placeholder: 'Seu nome completo',
               atributos: 'autocomplete="name" maxlength="100"', validar: erroDoNome },
             { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', tipo: 'email', placeholder: 'seuemail@exemplo.com',
@@ -228,49 +228,27 @@
             }
         }
 
-        formularioPerfil.addEventListener('submit', async (evento) => {
-            evento.preventDefault();
-
-            // Só chega aqui no modo edição (o botão Salvar é o único "submit").
-            // Confere todos os campos de uma vez, assim aparecem todos os erros juntos.
-            const camposComErro = CAMPOS_PERFIL.filter((campo) => !validarCampo(campo));
-            if (camposComErro.length) {
-                mostrarMensagem('Corrija os campos destacados em vermelho para salvar.', 'danger');
-                document.getElementById(`campo-${camposComErro[0].chave}`).focus();
-                return;
-            }
-            mostrarMensagem('', '');
-
-            const dados = {};
-            CAMPOS_PERFIL.forEach((campo) => {
-                dados[campo.chave] = document.getElementById(`campo-${campo.chave}`).value.trim();
-            });
-
-            try {
-                usuarioAtual = await UsuarioStore.salvar(dados);
-                renderizarPerfil(false);
-                mostrarMensagem('Dados atualizados com sucesso!', 'success');
-            } catch (erro) {
-                console.error('Erro ao salvar o perfil:', erro);
-                mostrarMensagem(escaparHtml(erro.message || 'Não foi possível salvar os dados. Tente novamente.'), 'danger');
-            }
-        });
-
         // ===== Foto de perfil =====
-        
+
+        // A foto é salva na hora em que é escolhida, igual ao botão de remover. Antes ela só
+        // era enviada no botão Salvar, que nem aparece fora do modo de edição: a imagem
+        // aparecia na tela, mas era perdida ao sair da página.
+        const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024; // mesmo limite do application.yaml
+
         // Atualiza o avatar na tela e no menu
         function renderizarFoto() {
             const avatar = document.getElementById('avatar-perfil');
             avatar.innerHTML = usuarioAtual.fotoPerfil
                 ? `<img src="${escaparHtml(usuarioAtual.fotoPerfil)}" alt="Foto do usuário">`
                 : '<i class="fas fa-user"></i>';
-            document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.foto);
+            document.getElementById('botao-remover-foto').classList.toggle('d-none', !usuarioAtual.fotoPerfil);
             atualizarCabecalhoConta();
         }
 
-        // Preview da foto (À prova de falhas, sem canvas)
-        document.getElementById('campo-foto').addEventListener('change', (evento) => {
+        // Mostra a prévia e envia a foto para o Java
+        document.getElementById('campo-foto').addEventListener('change', async (evento) => {
             const arquivo = evento.target.files[0];
+            evento.target.value = ''; // permite escolher o mesmo arquivo de novo depois de um erro
             if (!arquivo) return;
 
             if (!arquivo.type.startsWith('image/')) {
@@ -278,17 +256,32 @@
                 return;
             }
 
+            if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
+                mostrarMensagem('A foto precisa ter no máximo 5 MB.', 'warning');
+                return;
+            }
+
             const fotoPreview = URL.createObjectURL(arquivo);
             document.getElementById('avatar-perfil').innerHTML = `<img src="${fotoPreview}">`;
-            document.getElementById('botao-remover-foto').classList.remove('d-none');
-            mostrarMensagem('', ''); 
+            mostrarMensagem('', '');
+
+            const formData = new FormData();
+            formData.append('foto', arquivo);
+
+            try {
+                usuarioAtual = await UsuarioStore.salvar(formData);
+                mostrarMensagem('Foto salva com sucesso!', 'success');
+            } catch (erro) {
+                mostrarMensagem('Não foi possível salvar a foto. Tente uma imagem JPG ou PNG.', 'danger');
+            }
+            renderizarFoto(); // em caso de erro, volta a mostrar a foto que está no banco
         });
 
         // Botão de remover a foto
         document.getElementById('botao-remover-foto').addEventListener('click', async () => {
             const formData = new FormData();
-            formData.append('foto', ''); 
-            
+            formData.append('removerFoto', 'true');
+
             try {
                 usuarioAtual = await UsuarioStore.salvar(formData);
                 renderizarFoto();
@@ -298,7 +291,8 @@
             }
         });
 
-        // O Salvar definitivo (Envia pro Java)
+        // O Salvar definitivo (Envia pro Java). Havia dois "submit" neste formulário: cada
+        // clique enviava duas requisições e uma podia falhar enquanto a outra dava certo.
         formularioPerfil.addEventListener('submit', async (evento) => {
             evento.preventDefault();
 
@@ -314,11 +308,6 @@
             CAMPOS_PERFIL.forEach((campo) => {
                 formData.append(campo.chave, document.getElementById(`campo-${campo.chave}`).value.trim());
             });
-
-            const inputFoto = document.getElementById('campo-foto');
-            if (inputFoto.files.length > 0) {
-                formData.append('foto', inputFoto.files[0]);
-            }
 
             const botaoSubmit = formularioPerfil.querySelector('button[type="submit"]');
             if (botaoSubmit) botaoSubmit.disabled = true;
@@ -339,6 +328,15 @@
         document.addEventListener('DOMContentLoaded', async () => {
             usuarioAtual = await exigirLogin();
             if (!usuarioAtual) return;
+
+            // A tela precisa dos dados completos do banco, não só do que veio no login
+            usuarioAtual = await UsuarioStore.recarregar();
+
+            // CPF e data de nascimento só existem em Cliente (especialização da herança de
+            // Usuario). Tirar da lista oculta os campos ao ver, editar, validar e salvar o perfil.
+            if (UsuarioStore.ehAdmin(usuarioAtual)) {
+                CAMPOS_PERFIL = CAMPOS_PERFIL.filter((campo) => !['cpf', 'dataNascimento'].includes(campo.chave));
+            }
 
             renderizarPerfil(false);
             renderizarFoto();

@@ -22,7 +22,7 @@ public class FuncionarioService {
                 .stream()
                 .map(funcionario -> {
                         // Pega o caminho da foto de perfil (caso exista) ou null caso não tenha imagem
-                        String fotoPerfil = (funcionario.getFotoPerfil() != null && funcionario.getFotoPerfil().isEmpty()) ?
+                        String fotoPerfil = (funcionario.getFotoPerfil() != null && !funcionario.getFotoPerfil().isEmpty()) ?
                                                         funcionario.getFotoPerfil() : null;
                         
                         return new FuncionarioResponseDTO(
@@ -118,7 +118,8 @@ public class FuncionarioService {
         if (dto.telefone() != null) funcionarioExistente.setTelefone(dto.telefone());
         if (dto.bairro() != null) funcionarioExistente.setBairro(dto.bairro());
         if (dto.logradouro() != null) funcionarioExistente.setLogradouro(dto.logradouro());
-        if (dto.fotoPerfil() != null) funcionarioExistente.setFotoPerfil(dto.fotoPerfil());
+        // Texto vazio é o pedido de remover a foto: a coluna volta a ser NULL
+        if (dto.fotoPerfil() != null) funcionarioExistente.setFotoPerfil(dto.fotoPerfil().isEmpty() ? null : dto.fotoPerfil());
         if (dto.codigoFuncionario() != null) funcionarioExistente.setCodigoFuncionario(dto.codigoFuncionario());
         if (dto.admin() != null) funcionarioExistente.setAdmin(dto.admin());
 

@@ -14,6 +14,7 @@ import br.com.interdisciplinar.sebodojoao.model.Cliente;
 import br.com.interdisciplinar.sebodojoao.model.Funcionario;
 import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
 import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RestController 
@@ -24,25 +25,37 @@ public class LoginRestController {
     private final FuncionarioRepository funcionarioRepository;
 
     @PostMapping
-    public ResponseEntity<LoginResponseDTO> fazerLogin(@RequestBody LoginRequestDTO dto) {
-        
+    public ResponseEntity<LoginResponseDTO> fazerLogin(@RequestBody LoginRequestDTO dto, HttpSession sessao) {
+
         // 1-) Tenta achar como Cliente
         Optional<Cliente> clienteOpt = clienteRepository.findByEmailAndSenha(dto.email(), dto.senha());
         if (clienteOpt.isPresent()) {
             Cliente cliente = clienteOpt.get();
-            return ResponseEntity.ok(new LoginResponseDTO(cliente.getId(), cliente.getNome(), 
-                                                            cliente.getEmail(), "CLIENTE"));
+            // Guarda o perfil no servidor: é nele que as regras de compra vão confiar (ver ControleDeAcesso)
+            ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_CLIENTE);
+            return ResponseEntity.ok(new LoginResponseDTO(cliente.getId(), cliente.getNome(),
+                                                            cliente.getEmail(), ControleDeAcesso.PERFIL_CLIENTE,
+                                                            cliente.getFotoPerfil()));
         }
 
         // 2-) Se não achou, tenta achar como Funcionário
         Optional<Funcionario> funcionarioOpt = funcionarioRepository.findByEmailAndSenha(dto.email(), dto.senha());
         if (funcionarioOpt.isPresent()) {
             Funcionario funcionario = funcionarioOpt.get();
-            return ResponseEntity.ok(new LoginResponseDTO(funcionario.getId(), funcionario.getNome(), 
-                                                            funcionario.getEmail(), "FUNCIONARIO"));
+            ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_FUNCIONARIO);
+            return ResponseEntity.ok(new LoginResponseDTO(funcionario.getId(), funcionario.getNome(),
+                                                            funcionario.getEmail(), ControleDeAcesso.PERFIL_FUNCIONARIO,
+                                                            funcionario.getFotoPerfil()));
         }
 
         // Se não achou em nenhum lugar, retorna Erro 401 (Não autorizado)
         return ResponseEntity.status(401).build();
-    } 
+    }
+
+    // Encerra a sessão no servidor. Sem isso, o botão "Sair" limparia só o navegador
+    // e o perfil continuaria valendo no Java.
+    @PostMapping("/sair")
+    public void sair(HttpSession sessao) {
+        sessao.invalidate();
+    }
 }

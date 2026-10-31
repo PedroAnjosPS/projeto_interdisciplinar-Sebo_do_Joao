@@ -92,6 +92,10 @@
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
+    <!-- Faltavam os dois stores: sem eles, a busca e os links de categoria paravam com erro
+         e nenhum produto aparecia, para qualquer tipo de usuário -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script>
         // ===== Busca =====
@@ -110,13 +114,24 @@
             if (categoriaFiltro && normalizar(produto.categoria) !== normalizar(categoriaFiltro)) return false;
             if (!termoBusca) return true;
 
-            const textoDoProduto = normalizar([produto.titulo, produto.categoria, produto.genero, produto.descricao].join(' '));
+            // O Java devolve o nome do produto no campo "nome" (não existe "titulo")
+            const textoDoProduto = normalizar([produto.nome, produto.categoria, produto.genero, produto.descricao].join(' '));
             return normalizar(termoBusca).split(/\s+/).every((palavra) => textoDoProduto.includes(palavra));
         }
 
         async function renderizarResultados() {
             const container = document.getElementById('lista-resultados');
-            const todos = await ProdutosStore.listar();
+            const produtos = await ProdutosStore.listar();
+
+            // A API do produto traz só o categoriaId, mas o filtro compara o nome da categoria
+            // ("Livros"). Sem esta junção, nenhum produto combinaria com os links de categoria.
+            const respostaCategorias = await fetch('/api/categorias');
+            if (!respostaCategorias.ok) throw new Error('Erro ao carregar categorias');
+            const categorias = await respostaCategorias.json();
+            const todos = produtos.map((produto) => ({
+                ...produto,
+                categoria: categorias.find((categoria) => categoria.id === produto.categoriaId)?.nome
+            }));
 
             // Produtos "Inativos" não aparecem pro cliente
             const resultados = todos

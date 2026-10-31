@@ -10,8 +10,9 @@
 //
 // Existe um só login pra todo mundo. Cada conta tem um "perfil": CLIENTE (padrão)
 // ou ADMIN. Quem entra com uma conta ADMIN vai pro painel do administrador e,
-// pela loja, continua usando a conta normalmente (perfil, carrinho...).
-// No backend Java isso vira um papel (role) do Spring Security.
+// pela loja, só visualiza os produtos: funcionário não usa carrinho nem compra.
+// O perfil guardado aqui serve só para ajustar as telas. Quem garante a regra é
+// o Java, com o perfil da sessão (veja ControleDeAcesso.java).
 //
 // Conta do administrador (criada sozinha na primeira vez que o site é usado):
 //     e-mail: sebodojoao@gmail.com   senha inicial: sebodojoao
@@ -23,8 +24,10 @@ const UsuarioStore = (() => {
     const PERFIL_CLIENTE = 'CLIENTE';
     
     // Salva os dados básicos do usuário logado no navegador para manter a sessão 
+    // A API também devolve a senha, mas ela nunca deve ficar guardada no navegador.
     function iniciarSessao(dadosUsuario) {
-        localStorage.setItem(CHAVE_SESSAO, JSON.stringify(dadosUsuario));
+        const { senha, ...dadosSemSenha } = dadosUsuario;
+        localStorage.setItem(CHAVE_SESSAO, JSON.stringify(dadosSemSenha));
     }
     
     function lerSessao() {
@@ -55,12 +58,9 @@ const UsuarioStore = (() => {
             throw new Error('Erro ao cadastrar. O e-mail pode já estar em uso.');
         }
 
-        const clienteSalvo = await resposta.json();
-        
-        // Como acabou de se cadastrar, já fazemos o "login" automático
-        const dadosSessao = { ...clienteSalvo, perfil: PERFIL_CLIENTE };
-        iniciarSessao(dadosSessao);
-        return dadosSessao;
+        // Como acabou de se cadastrar, já fazemos o login automático. Ele passa pelo
+        // /api/login para o Java também criar a sessão com o perfil do novo cliente.
+        return entrar(dados.email, dados.senha);
     }
 
     // Chama uma rota unificada de login no Java (@PostMapping("/api/login"))
@@ -83,11 +83,34 @@ const UsuarioStore = (() => {
 
     function sair() {
         localStorage.removeItem(CHAVE_SESSAO);
+        // Encerra também a sessão no Java. O "keepalive" deixa a requisição terminar
+        // mesmo com a tela mudando de página logo depois do clique em "Sair".
+        fetch('/api/login/sair', { method: 'POST', keepalive: true }).catch(() => {});
     }
 
     // Retorna quem está logado agora
     async function obter() {
         return lerSessao();
+    }
+
+    // Busca no banco os dados completos de quem está logado. O login traz só o básico, então
+    // a tela de perfil abria com CPF, telefone e nascimento vazios. Ao salvar, esses campos
+    // vazios apagavam os dados reais ou davam erro. Sem conexão, segue com o que já está na sessão.
+    async function recarregar() {
+        const usuarioLogado = lerSessao();
+        if (!usuarioLogado) return null;
+
+        const rota = usuarioLogado.perfil === PERFIL_CLIENTE ? '/api/clientes' : '/api/funcionarios';
+
+        try {
+            const resposta = await fetch(`${rota}/${usuarioLogado.id}`);
+            if (!resposta.ok) return usuarioLogado;
+
+            iniciarSessao({ ...(await resposta.json()), perfil: usuarioLogado.perfil });
+            return lerSessao();
+        } catch (erro) {
+            return usuarioLogado;
+        }
     }
 
     // Chama o Java para atualizar os dados (@PutMapping("/api/clientes/{id}"))
@@ -115,9 +138,8 @@ const UsuarioStore = (() => {
         if (!resposta.ok) throw new Error('Erro ao atualizar os dados.');
 
         const usuarioAtualizado = await resposta.json();
-        const novaSessao = { ...usuarioAtualizado, perfil: usuarioLogado.perfil };
-        iniciarSessao(novaSessao);
-        return novaSessao;
+        iniciarSessao({ ...usuarioAtualizado, perfil: usuarioLogado.perfil });
+        return lerSessao();
     }
 
     //Função para trocar a senha do administrador
@@ -157,8 +179,11 @@ const UsuarioStore = (() => {
     }
 
     // Apenas exporta as funções
-    return { PERFIL_ADMIN, cadastrar, entrar, sair, obter, salvar, alterarSenha, ehAdmin };
-    
+    // - lerSessao: versão sem await de obter(), para quem monta HTML, como os cards de produto.
+    // - CHAVES: o vitrine.js usa para acompanhar login e saída feitos em outra aba. Ela tinha
+    //   ficado de fora e isso causava erro sempre que o localStorage mudava em outra aba.
+    return { CHAVES: [CHAVE_SESSAO], PERFIL_ADMIN, cadastrar, entrar, sair, obter, lerSessao, recarregar, salvar, alterarSenha, ehAdmin };
+
     
     
     

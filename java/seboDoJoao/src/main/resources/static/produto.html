@@ -98,12 +98,16 @@
     <!-- Código compartilhado (stores, carrinho, login...) — assets/js/vitrine.js -->
     <script src="js/vitrine.js"></script>
     <script src="js/produtos-store.js"></script>
+    <!-- Faltava este arquivo: sem ele, o UsuarioStore não existe e a página parava com
+         erro ao tentar descobrir o perfil de quem está logado (Cliente ou Funcionário) -->
+    <script src="js/usuario-store.js"></script>
     <script>
         // ===== Página de produto =====
         const idProduto = new URLSearchParams(location.search).get('id');
 
         function montarProdutoDetalhado(produto) {
-            const titulo = escaparHtml(produto.titulo);
+            // CORREÇÃO: Ler produto.nome em vez de produto.titulo
+            const titulo = escaparHtml(produto.nome || '');
             const disponivel = CarrinhoStore.disponivel(produto);
             const limite = CarrinhoStore.limiteDeEstoque(produto);
 
@@ -186,37 +190,69 @@
 
         async function renderizarProduto() {
             const container = document.getElementById('conteudo-produto');
-            const produto = idProduto ? await ProdutosStore.obterPorId(idProduto) : null;
+            
+            // Se não houver ID na URL, já exibe aviso amigável
+            if (!idProduto) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-4x mb-3 ec-icon-sand"></i>
+                        <h3 class="ec-heading-dark fw-bold">Produto não especificado</h3>
+                        <p class="ec-admin-empty">Nenhum ID de produto foi informado na URL.</p>
+                        <a href="index.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">Voltar para a loja</a>
+                    </div>`;
+                return;
+            }
 
-            // Produto "Inativo" é tratado como se não existisse pro cliente
+            let produto = null;
+            try {
+                produto = await ProdutosStore.obterPorId(idProduto);
+            } catch (e) {
+                console.error("Falha na requisição do produto:", e);
+            }
+
+            // Produto "Inativo" ou inexistente é tratado como não encontrado
             if (!produto || produto.status === 'Inativo') {
                 container.innerHTML = `
                     <div class="text-center py-5">
                         <i class="fas fa-box-open fa-4x mb-3 ec-icon-sand"></i>
                         <h3 class="ec-heading-dark fw-bold">Produto não encontrado</h3>
                         <p class="ec-admin-empty">Ele pode ter sido removido ou o link está errado.</p>
-                        <a href="busca.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">Ver todos os produtos</a>
+                        <a href="index.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">Voltar para a loja</a>
                     </div>`;
                 return;
             }
 
-            document.title = `${produto.titulo} - Sebo do João`;
+            // CORREÇÃO: Usar produto.nome (padrão do Java) em vez de produto.titulo
+            const nomeProduto = produto.nome || 'Produto';
+            document.title = `${nomeProduto} - Sebo do João`;
             container.innerHTML = montarProdutoDetalhado(produto);
 
-            document.getElementById('botao-adicionar').addEventListener('click', () => comprarProduto(produto.id));
-            document.getElementById('botao-comprar-agora').addEventListener('click', async () => {
-                // Adiciona e já vai pro carrinho. Se o item já estava no limite do
-                // estoque, o aviso aparece e a pessoa continua aqui.
-                const adicionou = await comprarProduto(produto.id);
-                if (adicionou) location.href = 'carrinho.html';
-            });
+            // Trava de segurança visual: se quem estiver logado for funcionário, desativa os botões de compra na página do produto
+            const usuarioLogado = await UsuarioStore.obter();
+            if (UsuarioStore.ehAdmin(usuarioLogado)) {
+                const btnAdicionar = document.getElementById('botao-adicionar');
+                const btnComprar = document.getElementById('botao-comprar-agora');
+                if (btnAdicionar) {
+                    btnAdicionar.disabled = true;
+                    btnAdicionar.innerHTML = '<i class="fas fa-ban me-2"></i>Indisponível para funcionários';
+                }
+                if (btnComprar) btnComprar.remove();
+            } else {
+                document.getElementById('botao-adicionar').addEventListener('click', () => comprarProduto(produto.id));
+                document.getElementById('botao-comprar-agora').addEventListener('click', async () => {
+                    const adicionou = await comprarProduto(produto.id);
+                    if (adicionou) location.href = 'carrinho.html';
+                });
+            }
 
             await renderizarSimilares(produto);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             atualizarCabecalhoConta();
-            ligarBotoesComprar(document.getElementById('lista-similares'));
+            const listaSimilares = document.getElementById('lista-similares');
+            if (listaSimilares) ligarBotoesComprar(listaSimilares);
+            
             renderizarProduto().catch((erro) => {
                 console.error('Erro ao carregar o produto:', erro);
                 document.getElementById('conteudo-produto').innerHTML =

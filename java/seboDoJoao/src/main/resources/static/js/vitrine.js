@@ -218,6 +218,10 @@ const CarrinhoStore = (() => {
     }
 
     async function adicionar(produto, quantidade = 1) {
+        // Funcionário não compra. A regra fica aqui porque todo caminho que coloca
+        // produto no carrinho passa por esta função, e assim ela não se repete em cada tela.
+        if (UsuarioStore.ehAdmin(UsuarioStore.lerSessao())) return { ok: false, motivo: 'funcionario' };
+
         if (!disponivel(produto)) return { ok: false, motivo: 'indisponivel' };
 
         const itens = lerTudo();
@@ -329,6 +333,10 @@ async function atualizarCabecalhoConta() {
     document.querySelectorAll('[data-ec-so-admin]').forEach((elemento) => {
         elemento.classList.toggle('d-none', !UsuarioStore.ehAdmin(usuario));
     });
+    // Funcionário não compra, então os ícones do carrinho (cabeçalho e botão flutuante) somem
+    document.querySelectorAll('.ec-cart-link, .ec-carrinho-flutuante').forEach((elemento) => {
+        elemento.classList.toggle('d-none', UsuarioStore.ehAdmin(usuario));
+    });
     document.querySelectorAll('[data-ec-avatar]').forEach((elemento) => {
         elemento.innerHTML = usuario && usuario.fotoPerfil
             ? `<img src="${escaparHtml(usuario.fotoPerfil)}" alt="Foto de ${escaparHtml(usuario.nome)}" class="ec-header-avatar-img">`
@@ -346,6 +354,40 @@ async function exigirLogin() {
     location.replace('login.html?voltar=' + encodeURIComponent(paginaAtual));
     return null;
 }
+
+// Monta os links de categoria com os nomes do banco. A busca filtra comparando o nome que vem
+// no link com o nome gravado na tabela. Como os links eram escritos à mão em cada tela, qualquer
+// diferença entre os dois (ex.: "Disco" e "Discos") fazia a categoria mostrar 0 produtos.
+// Se a API falhar, o menu continua com os links que já estão no HTML.
+async function atualizarMenuCategorias() {
+    const menus = document.querySelectorAll('.ec-nav-categories');
+    if (!menus.length) return;
+
+    try {
+        const resposta = await fetch('/api/categorias');
+        if (!resposta.ok) return;
+
+        const categorias = await resposta.json();
+        const categoriaAtual = new URLSearchParams(location.search).get('categoria');
+
+        menus.forEach((menu) => {
+            menu.querySelectorAll('a[href*="categoria="]').forEach((link) => link.remove());
+
+            categorias.forEach((categoria) => {
+                const link = document.createElement('a');
+                link.className = 'nav-link';
+                link.href = 'busca.html?categoria=' + encodeURIComponent(categoria.nome);
+                link.textContent = categoria.nome;
+                link.classList.toggle('ec-ativo', categoria.nome === categoriaAtual);
+                menu.appendChild(link);
+            });
+        });
+    } catch (erro) {
+        console.error('Erro ao carregar as categorias:', erro);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', atualizarMenuCategorias);
 
 // Botão "Sair" do menu da conta
 document.addEventListener('click', (evento) => {
@@ -385,12 +427,15 @@ async function comprarProduto(id) {
 
     const resultado = await CarrinhoStore.adicionar(produto, 1);
     if (resultado.ok) {
-        avisar(`"${produto.titulo}" foi adicionado ao carrinho.`, true);
+        // CORREÇÃO: Usar produto.nome (padrão do Java) em vez de produto.titulo
+        avisar(`"${produto.nome}" foi adicionado ao carrinho.`, true);
         atualizarBadgeCarrinho();
         return true;
     }
 
-    if (resultado.motivo === 'estoque') {
+    if (resultado.motivo === 'funcionario') {
+        avisar('Contas de funcionário não podem realizar compras.', false);
+    } else if (resultado.motivo === 'estoque') {
         avisar('Você já tem todas as unidades disponíveis desse produto no carrinho.', true);
     } else {
         avisar('Esse produto está indisponível no momento.', false);
@@ -409,21 +454,29 @@ function ligarBotoesComprar(container) {
 // Card de produto da vitrine/busca (mesmo visual do index.html)
 // Card de produto da vitrine/busca (mesmo visual do index.html)
 function montarCardProduto(produto) {
-    // CORREÇÃO: Usar produto.nome para ler o atributo correto do Java
     const titulo = escaparHtml(produto.nome);
-    // ... restante da função
     const link = `produto.html?id=${encodeURIComponent(produto.id)}`;
     const disponivel = CarrinhoStore.disponivel(produto);
+
+    // 1. Verifica se quem está vendo a vitrine é um funcionário. Toda tela que usa este
+    // card precisa carregar o usuario-store.js: sem ele, o UsuarioStore não existe, a
+    // função quebra e nenhum produto aparece.
+    const ehFuncionario = UsuarioStore.ehAdmin(UsuarioStore.lerSessao());
 
     const conteudoImagem = produto.imagem
         ? `<img src="${escaparHtml(produto.imagem)}" alt="${titulo}" class="w-100 h-100 object-fit-cover">`
         : `<i class="fas ${escaparHtml(produto.icone || 'fa-box')} fa-4x opacity-50"></i>`;
 
-    const botao = disponivel
-        ? `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill w-100" data-comprar="${escaparHtml(produto.id)}">
-                <i class="fas fa-cart-plus me-2"></i>Comprar
-           </button>`
-        : `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill w-100" disabled>Esgotado</button>`;
+    // 2. Se for funcionário, a variável 'botao' fica vazia (nenhum botão "Comprar" aparece).
+    // Se for cliente/visitante, gera o botão normalmente.
+    let botao = '';
+    if (!ehFuncionario) {
+        botao = disponivel
+            ? `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill w-100" data-comprar="${escaparHtml(produto.id)}">
+                    <i class="fas fa-cart-plus me-2"></i>Comprar
+               </button>`
+            : `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill w-100" disabled>Esgotado</button>`;
+    }
 
     const selo = disponivel
         ? ''

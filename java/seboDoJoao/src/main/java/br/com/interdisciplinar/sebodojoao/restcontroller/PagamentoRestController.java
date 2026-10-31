@@ -3,6 +3,7 @@ package br.com.interdisciplinar.sebodojoao.restcontroller;
 import br.com.interdisciplinar.sebodojoao.dto.PagamentoRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.PagamentoResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.PagamentoService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,10 @@ public class PagamentoRestController {
         return pagamentoService.buscarPorId(id);
     }
 
+    // Pagar faz parte da compra, então segue a mesma regra de criar o pedido
     @PostMapping
-    public PagamentoResponseDTO cadastrar(@RequestBody PagamentoRequestDTO dto) {
+    public PagamentoResponseDTO cadastrar(@RequestBody PagamentoRequestDTO dto, HttpSession sessao) {
+        ControleDeAcesso.exigirCliente(sessao);
         return pagamentoService.cadastrar(dto);
     }
 

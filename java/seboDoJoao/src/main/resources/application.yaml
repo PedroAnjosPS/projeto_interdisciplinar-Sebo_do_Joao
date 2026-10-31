@@ -7,6 +7,17 @@ spring:
     url: jdbc:sqlserver://localhost:1433;databaseName=Sebo_Do_Joao;encrypt=false;trustServerCertificate=true
     username: sa
     password: Fatec@2026
+  servlet:
+    multipart:
+      # O padrão do Spring é 1MB, e uma foto de celular passa disso facilmente.
+      max-file-size: 5MB
+      max-request-size: 6MB
+  web:
+    resources:
+      # As imagens enviadas são salvas em src/main/resources/static, mas o Spring normalmente
+      # lê os arquivos copiados para target/classes. Procurar primeiro na pasta original faz a
+      # foto aparecer logo depois do envio, sem precisar recompilar o projeto.
+      static-locations: file:src/main/resources/static/,classpath:/static/
   jpa:
     hibernate:
       ddl-auto: update

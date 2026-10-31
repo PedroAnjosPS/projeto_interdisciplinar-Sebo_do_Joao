@@ -3,6 +3,7 @@ package br.com.interdisciplinar.sebodojoao.restcontroller;
 import br.com.interdisciplinar.sebodojoao.dto.PedidoRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.PedidoResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.PedidoService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,10 @@ public class PedidoRestController {
         return pedidoService.buscarPorId(id);
     }
 
+    // Criar um pedido é o que representa uma compra, por isso só Cliente logado pode chamar esta rota
     @PostMapping
-    public PedidoResponseDTO cadastrar(@RequestBody PedidoRequestDTO dto) {
+    public PedidoResponseDTO cadastrar(@RequestBody PedidoRequestDTO dto, HttpSession sessao) {
+        ControleDeAcesso.exigirCliente(sessao);
         return pedidoService.cadastrar(dto);
     }
 

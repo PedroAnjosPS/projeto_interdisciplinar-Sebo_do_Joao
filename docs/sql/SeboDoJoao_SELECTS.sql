@@ -42,7 +42,7 @@ SELECT * FROM pedidos pe ORDER BY pe.total DESC;
 SELECT * FROM pedidos pe;
 
 -- Tabela Item_Pedidos --
-SELECT pe.id ID_Pedido, prod.nome Produto, pe.total Total_Pedido  
+SELECT pe.id ID_Pedido, prod.nome Produto, prod.id ID_Produto, pe.total Total_Pedido  
 FROM produtos prod, pedidos pe, item_pedidos item 
 WHERE 
     item.pedido_id = pe.id AND

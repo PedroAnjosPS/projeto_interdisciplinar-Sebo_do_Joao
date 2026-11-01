@@ -28,8 +28,12 @@ BEGIN
             THROW 50005, 'Forma de pagamento inválida!', 1;
 
         -- Valida a quantidade de parcelas permitida --
-        -- Somente o cartão de crédito permite parcelamento em até 3 vezes --
-        IF @quantidade_parcelas < 1 OR @quantidade_parcelas > 3 OR
+        -- Somente o cartão de crédito permite parcelamento, em até @max_parcelas vezes --
+        -- ALTERADO: o limite (3) estava escrito direto na condição. Agora fica nesta variável, que é o --
+        -- ÚNICO lugar a mudar se a loja resolver aumentar o número de parcelas no futuro. --
+        DECLARE @max_parcelas INT = 3;
+
+        IF @quantidade_parcelas < 1 OR @quantidade_parcelas > @max_parcelas OR
             (@forma_pagamento <> 'CARTAO_CREDITO' AND @quantidade_parcelas <> 1)
             THROW 50006, 'Quantidade de parcelas inválida!', 1;
 
@@ -89,10 +93,13 @@ BEGIN
 
 
         -- Cadastra a entrega com status inicial 1 e calcula a previsão de entrega --
-        INSERT INTO entregas (transportadora, status, data_previsao_entrega)
+        -- ALTERADO: data_postagem agora entra como NULL. Sem isso, a coluna usava GETDATE() e a entrega --
+        -- nascia "postada" no momento da compra. A data é preenchida por sp_avancar_entrega (em trânsito). --
+        INSERT INTO entregas (transportadora, status, data_postagem, data_previsao_entrega)
         VALUES (
             @transportadora,
             1,
+            NULL,
             DATEADD(DAY, @prazo_dias, CAST(GETDATE() AS DATE))
         );
 

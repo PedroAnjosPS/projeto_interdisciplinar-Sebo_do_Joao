@@ -22,7 +22,9 @@ BEGIN
 		WHERE	prod.estoque < itens_agrupados.quantidade_total 
 	)
 	BEGIN
-		;THROW 50001, 'Estoque é insuficiente para realizar o pedido!', 1;
+		-- ALTERADO: o código do erro era 50001, o mesmo de "Cliente não encontrado!" na procedure --
+		-- sp_finalizar_compra. Como o Java identifica o erro pelo código, cada erro precisa de um número próprio. --
+		;THROW 50007, 'Estoque é insuficiente para realizar o pedido!', 1;
 	END;
 
 	-- Realiza a baixa das quantidades no estoque. --
@@ -64,7 +66,8 @@ GO
 
 
 
--- 2-) Atualiza automaticamente o status do pedido para PROCESSANDO (2) --
+-- 3-) Atualiza automaticamente o status do pedido para PROCESSANDO (2) --
+-- (numeração corrigida: eram duas triggers com o número 2) --
 -- quando todos os pagamentos vinculados a ele estiverem aprovados. --
 -- Utiliza a tabela lógica inserted para identificar os pedidos afetados --
 -- e NOT EXISTS para verificar se ainda existem pagamentos não aprovados. --
@@ -90,7 +93,7 @@ GO
 
 
 
--- 3-) Atualiza automaticamente o status do pedido para CONCLUÍDO (3) --
+-- 4-) Atualiza automaticamente o status do pedido para CONCLUÍDO (3) --
 -- quando a entrega associada passa para ENTREGUE (4). Verifica se o campo --
 -- status foi atualizado e compara os valores anteriores e atuais da entrega --
 -- utilizando as tabelas lógicas inserted e deleted. Realiza a atualização --

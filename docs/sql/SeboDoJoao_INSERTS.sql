@@ -1,5 +1,12 @@
 -- INSERTS DO BANCO DE DADOS - SEBO DO JOÃO --
 -- 10 INSERTS PARA CADA TABELA --
+
+-- ORDEM DE EXECUÇÃO (banco novo, recém-criado): --
+-- 1-) Script_DELETANDO-BANCO  2-) SeboDoJoao (cria banco e tabelas)  3-) ESTE ARQUIVO --
+-- 4-) FUNCTIONS  5-) VIEWS  6-) TRIGGERS  7-) PROCEDURES --
+-- Este arquivo deve rodar ANTES das triggers: os pedidos, o estoque e os status abaixo já estão --
+-- prontos e coerentes. Com as triggers criadas, a baixa de estoque seria feita duas vezes. --
+-- Os IDs dos pedidos e das entregas (1 a 10) assumem um banco novo, onde o IDENTITY começa em 1. --
 -- Tabela UFs --
 INSERT INTO ufs (sigla, nome) VALUES 
 ('SP', 'São Paulo'),
@@ -137,64 +144,114 @@ INSERT INTO imagem_produtos (caminho, produto_id) VALUES
 ('/imagens/produtos/imagemProduto7.jpg', 7),
 ('/imagens/produtos/imagemProduto8.jpg', 8),
 ('/imagens/produtos/imagemProduto9.jpg', 9),
-('/imagens/produtos/imagemProduto10.jpg', 10);
+('/imagens/produtos/ImagemProduto10.jpg', 10); -- ALTERADO: o arquivo se chama "ImagemProduto10.jpg" (I maiúsculo); em sistemas que diferenciam maiúsculas o caminho antigo não achava a imagem
 GO
 
 -- Tabela Entregas --
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_previsao_entrega) VALUES 
-('Correios (PAC)', 1, 'https://rastreio.com/AB1', 'AB123456789BR', '2026-10-25'),
-('Correios (SEDEX)', 1, 'https://rastreio.com/AB2', 'AB987654321BR', '2026-10-20'),
-('Jadlog', 1, 'https://jadlog.com.br/JD1', 'JD123456789SP', '2026-10-22'),
-('Loggi', 1, 'https://loggi.com/LG1', 'LG987654321SP', '2026-10-21'),
-('Correios (PAC)', 1, 'https://rastreio.com/AB3', 'AB111222333BR', '2026-10-28'),
-('Jadlog', 1, 'https://jadlog.com.br/JD2', 'JD444555666SP', '2026-10-24'),
-('Loggi', 1, 'https://loggi.com/LG2', 'LG777888999SP', '2026-10-23'),
-('Correios (SEDEX)', 1, 'https://rastreio.com/AB4', 'AB999888777BR', '2026-10-19'),
-('Jadlog', 1, 'https://jadlog.com.br/JD3', 'JD333222111SP', '2026-10-26'),
-('Correios (PAC)', 1, 'https://rastreio.com/AB5', 'AB555444333BR', '2026-10-30');
+-- ALTERADO: antes todas as entregas estavam "Pendente (1)", mas já tinham código de rastreio, e a --
+-- data de postagem era a do dia em que o script rodava. Agora cada entrega tem um status coerente --
+-- com o seu pedido, seguindo a mesma regra da procedure sp_avancar_entrega: --
+--   * link, código e data de postagem só existem quando a entrega está EM TRÂNSITO (3) ou ENTREGUE (4); --
+--   * a data de entrega só existe quando a entrega foi concluída (4). --
+-- A entrega N pertence ao pedido N (entrega 1 -> pedido 1, entrega 2 -> pedido 2...). --
+-- Status: 1 Pendente | 2 Preparando | 3 Em trânsito | 4 Entregue | 5 Cancelada --
+INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_previsao_entrega, data_entrega) VALUES
+('Correios (PAC)',   4, 'https://rastreio.com/AB1',     'AB123456789BR', '2026-10-07T09:00:00', '2026-10-15', '2026-10-14T15:30:00'), -- 1: Entregue
+('Correios (SEDEX)', 4, 'https://rastreio.com/AB2',     'AB987654321BR', '2026-10-09T10:00:00', '2026-10-13', '2026-10-12T11:20:00'), -- 2: Entregue
+('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-10-22', NULL),                  -- 3: Pendente
+('Loggi',            2, NULL,                           NULL,            NULL,                  '2026-11-04', NULL),                  -- 4: Preparando
+('Correios (PAC)',   1, NULL,                           NULL,            NULL,                  '2026-11-06', NULL),                  -- 5: Pendente
+('Jadlog',           3, 'https://jadlog.com.br/JD2',    'JD444555666SP', '2026-10-26T14:00:00', '2026-11-03', NULL),                  -- 6: Em trânsito
+('Loggi',            5, NULL,                           NULL,            NULL,                  '2026-10-27', NULL),                  -- 7: Cancelada
+('Correios (SEDEX)', 4, 'https://rastreio.com/AB4',     'AB999888777BR', '2026-10-15T08:30:00', '2026-10-19', '2026-10-18T17:10:00'), -- 8: Entregue
+('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-11-07', NULL),                  -- 9: Pendente
+('Correios (PAC)',   2, NULL,                           NULL,            NULL,                  '2026-11-05', NULL);                  -- 10: Preparando
 GO
 
 -- Tabela Pedidos --
-INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) VALUES 
-(80.50, 1, 1, 1, 7),
-(45.50, 1, 2, 2002, 8),
-(40.00, 1, 3, 1, 9),
-(25.00, 1, 4, 2002, 10),
-(20.00, 1, 5, 1, 7),
-(50.00, 1, 6, 2002, 8),
-(38.00, 1, 7, 1, 9),
-(30.00, 1, 8, 2002, 10),
-(42.00, 1, 9, 1, 7),
-(49.90, 1, 10, 2002, 8);
+-- ALTERADO: --
+--   * cliente_id 2002 não existe neste script (os clientes são os IDs 1 a 6); trocado por 2; --
+--   * o total de cada pedido agora é a soma dos seus itens (veja a tabela item_pedidos); --
+--   * "data" passou a ser informada (antes valia o dia em que o script rodava, depois dos vencimentos e --
+--     das previsões de entrega); --
+--   * o status acompanha os pagamentos e a entrega: 1 Aguardando pagamento (há pagamento pendente), --
+--     2 Processando (todos os pagamentos aprovados), 3 Concluído (entrega entregue), 4 Cancelado. --
+INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) VALUES
+('2026-10-05T10:15:00',  80.50, 3,  1, 1, 7),   -- 1: Concluído
+('2026-10-08T14:30:00',  45.50, 3,  2, 2, 8),   -- 2: Concluído
+('2026-10-12T09:40:00',  40.00, 1,  3, 1, 9),   -- 3: Aguardando pagamento (boleto)
+('2026-10-28T16:20:00',  55.00, 2,  4, 2, 10),  -- 4: Processando
+('2026-10-30T11:05:00',  60.00, 2,  5, 1, 7),   -- 5: Processando
+('2026-10-24T18:45:00', 150.00, 2,  6, 2, 8),   -- 6: Processando (entrega em trânsito)
+('2026-10-20T13:10:00',  90.00, 4,  7, 1, 9),   -- 7: Cancelado
+('2026-10-14T08:55:00',  30.00, 3,  8, 2, 10),  -- 8: Concluído
+('2026-10-31T19:30:00',  35.00, 1,  9, 1, 7),   -- 9: Aguardando pagamento (PIX)
+('2026-10-29T15:00:00',  70.00, 2, 10, 2, 8);   -- 10: Processando
 GO
 
 select * from pedidos
 select * from produtos
 
 -- Tabela Item_Pedidos --
-INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VALUES 
-(1004, 1, 1, 35.00),
-(1005, 2, 1, 45.50),
-(1006, 3, 1, 45.50),
-(1007, 4, 1, 40.00),
-(1008, 5, 1, 25.00),
-(1009, 6, 1, 20.00),
-(1010, 7, 1, 50.00),
-(1011, 8, 1, 38.00),
-(1012, 9, 1, 30.00),
-(1013, 10, 1, 42.00);
+-- ALTERADO: --
+--   * os pedidos agora são 1 a 10 (antes apontavam para 1004 a 1013, que só existiam no banco antigo); --
+--   * o preço de cada item é o preço do produto cadastrado (antes eram valores sem relação com ele); --
+--   * os pedidos 1 e 10 têm dois produtos e o produto 2 e o produto 8 aparecem em mais de um pedido, --
+--     o que demonstra o relacionamento N x N entre pedidos e produtos; --
+--   * o pedido 7 tem 2 unidades do produto 7. --
+INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VALUES
+(1,  1, 1,  35.00),
+(1,  2, 1,  45.50),
+(2,  2, 1,  45.50),
+(3,  3, 1,  40.00),
+(4,  4, 1,  55.00),
+(5,  5, 1,  60.00),
+(6,  6, 1, 150.00),
+(7,  7, 2,  45.00),
+(8,  8, 1,  30.00),
+(9,  9, 1,  35.00),
+(10, 10, 1, 40.00),
+(10, 8, 1,  30.00);
+GO
+
+-- ALTERADO: baixa do estoque dos produtos vendidos. As triggers só são criadas depois deste arquivo, --
+-- então a baixa é feita aqui, no mesmo cálculo da trigger tr_item_pedidos_baixa_estoque. --
+-- Pedidos cancelados (status 4) não consomem estoque. Os dados da tabela produtos não foram mexidos: --
+-- o estoque inserido lá é o estoque inicial. --
+UPDATE prod SET prod.estoque = prod.estoque - vendidos.quantidade_total
+FROM produtos prod
+INNER JOIN (
+	SELECT ip.produto_id, SUM(ip.quantidade) AS quantidade_total
+	FROM item_pedidos ip
+	INNER JOIN pedidos pe ON pe.id = ip.pedido_id
+	WHERE pe.status <> 4
+	GROUP BY ip.produto_id
+) AS vendidos ON vendidos.produto_id = prod.id;
 GO
 
 -- Tabela Pagamentos --
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, pedido_id) VALUES 
-(1, 1, 80.50, 1, 'PIX', '2026-10-15', 1004),
-(1, 1, 45.50, 1, 'CARTAO_CREDITO', '2026-10-15', 1005),
-(1, 1, 40.00, 1, 'BOLETO', '2026-10-18', 1006),
-(1, 1, 25.00, 1, 'PIX', '2026-10-15', 1007),
-(1, 1, 20.00, 1, 'CARTAO_DEBITO', '2026-10-15', 1008),
-(1, 1, 50.00, 1, 'PIX', '2026-10-15', 1009),
-(1, 1, 38.00, 1, 'BOLETO', '2026-10-20', 1010),
-(1, 1, 30.00, 1, 'CARTAO_CREDITO', '2026-10-15', 1011),
-(1, 1, 42.00, 1, 'PIX', '2026-10-15', 1012),
-(1, 1, 49.90, 1, 'CARTAO_CREDITO', '2026-10-15', 1013);
+-- ALTERADO: --
+--   * pedido_id agora é 1 a 10 (antes 1004 a 1013); --
+--   * a soma das parcelas de cada pedido é igual ao total do pedido; --
+--   * "CARTAO_DEBITO" não é uma forma aceita pelo sistema (só PIX, CARTAO_CREDITO e BOLETO); --
+--   * parcelamento só no cartão de crédito e em até 3 vezes (regra da loja); os centavos sobram na --
+--     última parcela, como na função fn_parcelas (ex.: 70,00 em 3x = 23,33 + 23,33 + 23,34); --
+--   * o status acompanha o pedido: pagamento APROVADO (2) tem data_pagamento; PENDENTE (1) não tem; --
+--     o boleto do pedido cancelado (7) ficou RECUSADO (3), como faz a procedure sp_cancelar_pedido; --
+--   * os vencimentos não são mais anteriores à data do pedido. --
+-- Status: 1 Pendente | 2 Aprovado | 3 Recusado --
+INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, data_pagamento, pedido_id) VALUES
+(1, 2,  80.50, 1, 'PIX',            '2026-10-05', '2026-10-05', 1),
+(1, 2,  45.50, 1, 'CARTAO_CREDITO', '2026-10-08', '2026-10-08', 2),
+(1, 1,  40.00, 1, 'BOLETO',         '2026-10-17', NULL,         3),
+(1, 2,  55.00, 1, 'PIX',            '2026-10-28', '2026-10-28', 4),
+(1, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-10-30', '2026-10-30', 5),
+(2, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-11-30', '2026-10-30', 5),
+(1, 2, 150.00, 1, 'PIX',            '2026-10-24', '2026-10-24', 6),
+(1, 3,  90.00, 1, 'BOLETO',         '2026-10-25', NULL,         7),
+(1, 2,  30.00, 1, 'CARTAO_CREDITO', '2026-10-14', '2026-10-14', 8),
+(1, 1,  35.00, 1, 'PIX',            '2026-10-31', NULL,         9),
+(1, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-10-29', '2026-10-29', 10),
+(2, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-11-29', '2026-10-29', 10),
+(3, 2,  23.34, 3, 'CARTAO_CREDITO', '2026-12-29', '2026-10-29', 10);
 GO

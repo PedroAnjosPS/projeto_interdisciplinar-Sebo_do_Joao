@@ -12,6 +12,7 @@ SELECT * FROM ceps cep ORDER BY cep.numero_cep;
 
 -- Tabela Usuarios --
 SELECT * FROM usuarios usu ORDER BY usu.nome;
+SELECT * FROM usuarios usu;
 
 -- Tabela Clientes --
 SELECT * FROM clientes cli ORDER BY cli.data_nascimento;

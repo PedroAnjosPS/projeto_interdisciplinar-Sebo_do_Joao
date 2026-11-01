@@ -946,6 +946,11 @@ async function atualizarCabecalhoConta() {
     document.querySelectorAll('[data-ec-so-admin]').forEach((elemento) => {
         elemento.classList.toggle('d-none', !UsuarioStore.ehAdmin(usuario));
     });
+    // Itens ligados a compras (ex.: "Meus pedidos") somem para o Funcionário, que não compra.
+    // Basta marcar o item no HTML com data-ec-so-cliente: a regra fica aqui, num lugar só.
+    document.querySelectorAll('[data-ec-so-cliente]').forEach((elemento) => {
+        elemento.classList.toggle('d-none', UsuarioStore.ehAdmin(usuario));
+    });
     // Funcionário não compra, então os ícones do carrinho (cabeçalho e botão flutuante) somem
     document.querySelectorAll('.ec-cart-link, .ec-carrinho-flutuante').forEach((elemento) => {
         elemento.classList.toggle('d-none', UsuarioStore.ehAdmin(usuario));

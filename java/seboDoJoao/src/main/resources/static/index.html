@@ -48,6 +48,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
                         <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
                         <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
                         <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -171,7 +172,7 @@
             ProdutosStore.listar()
                 .then((listaDeProdutos) => {
                     // Produtos "Inativos" ficam escondidos da vitrine
-                    const produtosVisiveis = listaDeProdutos.filter((produto) => produto.status !== 'Inativo');
+                    const produtosVisiveis = listaDeProdutos.filter((produto) => produto.status !== 'INATIVO');
 
                     if (!produtosVisiveis.length) {
                         productGrid.innerHTML = '<p class="text-center w-100 mt-4">Nenhum produto cadastrado ainda.</p>';

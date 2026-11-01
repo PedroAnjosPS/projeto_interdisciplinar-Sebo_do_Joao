@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartões - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado (as classes dessas telas estão na seção 17 dele) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="ec-page-vitrine">
+
+    <!-- Cabeçalho da loja: logo + busca centralizada + carrinho + conta (Fazer Login ou
+         menu da conta, conforme o login) e, embaixo, a barra de categorias -->
+    <header class="ec-admin-header py-3 px-4">
+        <div class="ec-header-linha-principal d-flex align-items-center">
+            <a href="index.html" class="ec-admin-logo text-decoration-none">
+                <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+            </a>
+
+            <form action="busca.html" method="get"
+                class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden">
+                <input type="text" name="q" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
+                <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <a href="carrinho.html" class="ec-cart-link ec-icon-sand fs-4 text-decoration-none" aria-label="Carrinho">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="ec-cart-badge d-none" data-ec-badge-carrinho>0</span>
+                </a>
+                <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2" data-ec-deslogado>
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span class="d-none d-sm-inline">Fazer Login</span>
+                </a>
+                <div class="dropdown d-none" data-ec-logado>
+                    <a href="#" class="ec-header-user d-flex align-items-center gap-1 text-decoration-none"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu da conta">
+                        <i class="fas fa-chevron-down ec-header-chevron"></i>
+                        <span class="ec-header-avatar" data-ec-avatar><i class="fas fa-user-circle fs-3"></i></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end ec-dropdown">
+                        <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
+                        <li><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
+                        <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <nav class="ec-nav-categories d-flex justify-content-center gap-2 overflow-auto mt-2">
+            <a class="nav-link" href="index.html">Todos</a>
+            <a class="nav-link" href="busca.html?categoria=Livros">Livros</a>
+            <a class="nav-link" href="busca.html?categoria=Discos+de+Vinil">Discos de Vinil</a>
+            <a class="nav-link" href="busca.html?categoria=Blu-rays">Blu-rays</a>
+            <a class="nav-link" href="busca.html?categoria=Dvds">Dvds</a>
+            <a class="nav-link" href="busca.html?categoria=HQs">HQs</a>
+            <a class="nav-link" href="busca.html?categoria=Cds">Cds</a>
+            <a class="nav-link" href="busca.html?categoria=Fitas+Cassetes">Fitas Cassetes</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="ec-page-title-bar">
+            <h2 class="ec-page-title">Cartões</h2>
+            <div class="d-flex align-items-center gap-3">
+                <a href="menu-conta.html" class="ec-link-voltar"><i class="fas fa-rotate-left me-1"></i>Voltar</a>
+                <i class="fas fa-credit-card fs-4 ec-page-title-icone"></i>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <p id="contador-cartoes" class="ec-texto-suave mb-0">&nbsp;</p>
+            <button id="botao-novo-cartao" type="button" class="btn ec-btn-dark ec-btn-pill px-4">
+                <i class="fas fa-plus me-2"></i>Adicionar cartão
+            </button>
+        </div>
+
+        <p class="ec-aviso-seguro"><i class="fas fa-lock me-2"></i>Por segurança, guardamos só a bandeira e os 4 últimos números.
+            O número completo e o código de segurança (CVV) nunca ficam salvos: pedimos o CVV a cada compra.</p>
+
+        <div id="mensagem-pagina" role="status"></div>
+
+        <div id="lista-cartoes" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4"></div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Stores (API Java) e código compartilhado (carrinho, login, cabeçalho...) — js/ -->
+    <script src="js/produtos-store.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script src="js/formularios-conta.js"></script>
+    <script>
+        // ===== Tela de cartões =====
+        const listaCartoes = document.getElementById('lista-cartoes');
+
+        function mostrarMensagemDaPagina(texto, tipo = 'success') {
+            document.getElementById('mensagem-pagina').innerHTML = texto
+                ? `<div class="alert alert-${tipo} mb-4">${escaparHtml(texto)}</div>` : '';
+        }
+
+        function montarCartao(c) {
+            const vencido = validadeJaVenceu(c.validade);
+            return `
+                <div class="col">
+                    <article class="ec-cartao-bloco" data-id="${escaparHtml(c.id)}">
+                        <div class="ec-cartao-visual ${vencido ? 'ec-cartao-vencido' : ''}">
+                            <div class="ec-cartao-topo">
+                                ${iconeDaBandeira(c.bandeira)}
+                                <span class="ec-cartao-bandeira-nome">${escaparHtml(NOMES_DAS_BANDEIRAS[c.bandeira] || 'Cartão')}</span>
+                            </div>
+                            <div class="ec-cartao-numero">•••• •••• •••• ${escaparHtml(c.ultimos4)}</div>
+                            <div class="ec-cartao-rodape">
+                                <span class="ec-cartao-titular">${escaparHtml(c.titular)}</span>
+                                <span>${escaparHtml(c.validade)}</span>
+                            </div>
+                        </div>
+                        <div class="ec-cartao-info">
+                            <div class="d-flex gap-2 flex-wrap">
+                                ${c.padrao ? '<span class="ec-tag-padrao">Padrão</span>' : ''}
+                                ${vencido ? '<span class="ec-tag-vencido">Vencido</span>' : ''}
+                            </div>
+                            <div class="ec-end-card-acoes">
+                                ${c.padrao || vencido ? '' : '<button type="button" class="ec-btn-texto" data-acao="padrao"><i class="fas fa-star me-1"></i>Definir como padrão</button>'}
+                                <button type="button" class="ec-btn-texto ec-btn-texto-perigo" data-acao="excluir"><i class="far fa-trash-can me-1"></i>Excluir</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>`;
+        }
+
+        async function renderizarCartoes() {
+            const cartoes = await CartoesStore.listar();
+            document.getElementById('contador-cartoes').textContent = cartoes.length
+                ? `${cartoes.length} de ${CartoesStore.LIMITE} cartões salvos`
+                : 'Você ainda não tem cartões salvos.';
+            document.getElementById('botao-novo-cartao').disabled = cartoes.length >= CartoesStore.LIMITE;
+
+            listaCartoes.innerHTML = cartoes.length
+                ? cartoes.map(montarCartao).join('')
+                : `<div class="col-12"><div class="ec-vazio">
+                        <i class="far fa-credit-card"></i>
+                        <p>Salve um cartão pra pagar suas compras com mais agilidade.</p>
+                   </div></div>`;
+        }
+
+        document.getElementById('botao-novo-cartao').addEventListener('click', async () => {
+            mostrarMensagemDaPagina('');
+            const salvo = await abrirModalCartao();
+            if (salvo) { await renderizarCartoes(); mostrarMensagemDaPagina('Cartão salvo!'); }
+        });
+
+        listaCartoes.addEventListener('click', async (evento) => {
+            const botao = evento.target.closest('[data-acao]');
+            if (!botao) return;
+            const id = botao.closest('[data-id]').dataset.id;
+            mostrarMensagemDaPagina('');
+
+            try {
+                if (botao.dataset.acao === 'padrao') {
+                    await CartoesStore.definirPadrao(id);
+                    mostrarMensagemDaPagina('Cartão padrão alterado.');
+                } else if (botao.dataset.acao === 'excluir') {
+                    const c = await CartoesStore.obter(id);
+                    const sim = await confirmarAcao({
+                        titulo: 'Excluir cartão?',
+                        texto: c ? `${NOMES_DAS_BANDEIRAS[c.bandeira] || 'Cartão'} final ${c.ultimos4} será removido da sua conta.` : 'Esse cartão será removido da sua conta.'
+                    });
+                    if (!sim) return;
+                    await CartoesStore.remover(id);
+                    mostrarMensagemDaPagina('Cartão excluído.');
+                }
+                await renderizarCartoes();
+            } catch (erro) {
+                mostrarMensagemDaPagina(erro.message || 'Algo deu errado. Tente novamente.', 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            atualizarCabecalhoConta();
+            atualizarBadgeCarrinho();
+            if (!(await exigirLogin())) return;
+            renderizarCartoes();
+        });
+    </script>
+</body>
+
+</html>

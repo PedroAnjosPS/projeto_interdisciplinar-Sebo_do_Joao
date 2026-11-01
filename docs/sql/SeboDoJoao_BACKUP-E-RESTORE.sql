@@ -11,7 +11,31 @@
 */
 
 -- === RESTORE === --
+-- Faz a consulta do arquivo backup. --
+RESTORE FILELISTONLY
+FROM DISK = N'/var/opt/mssql/backup/Sebo_Do_Joao.bak';
+
+
+-- Confirmação para ver se já não existe um banco de dados restaurado --
+SELECT name
+FROM sys.databases
+WHERE name = 'Sebo_Do_Joao_Restaurado';
+
+
+-- Faz o restore do banco de dados. --
 RESTORE DATABASE Sebo_Do_Joao_Restaurado
 FROM DISK = N'/var/opt/mssql/backup/Sebo_Do_Joao.bak'
 WITH MOVE 'Sebo_do_Joao'     TO '/var/opt/mssql/data/Sebo_Do_Joao_Restaurado.mdf',
      MOVE 'Sebo_do_Joao_log' TO '/var/opt/mssql/data/Sebo_Do_Joao_Restaurado.ldf';
+
+
+-- Deleta o banco de dados restaurado sem gerar conflitos --
+USE master;
+GO
+
+ALTER DATABASE Sebo_Do_Joao_Restaurado
+SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+GO
+
+DROP DATABASE Sebo_Do_Joao_Restaurado;
+GO

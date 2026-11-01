@@ -78,12 +78,16 @@ GO
 INSERT INTO categorias (nome) VALUES 
 ('Livros'),
 ('HQs'),
-('Disco de Vinil'),
+('Discos de Vinil'),
 ('Blu-rays'),
 ('DVDs'),
 ('CDs'),
 ('Fitas Cassetes')
 GO
+
+/*UPDATE Categorias SET nome = 'Discos de Vinil'
+Where nome = 'Disco de Vinil';
+GO*/
 
 -- Tabela Generos --
 INSERT INTO generos (nome) VALUES 
@@ -153,15 +157,15 @@ GO
 -- Tabela Pedidos --
 INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id) VALUES 
 (80.50, 1, 1, 1, 7),
-(45.50, 1, 2, 2, 8),
-(40.00, 1, 3, 3, 9),
-(25.00, 1, 4, 4, 10),
-(20.00, 1, 5, 5, 7),
-(50.00, 1, 6, 6, 8),
+(45.50, 1, 2, 2002, 8),
+(40.00, 1, 3, 1, 9),
+(25.00, 1, 4, 2002, 10),
+(20.00, 1, 5, 1, 7),
+(50.00, 1, 6, 2002, 8),
 (38.00, 1, 7, 1, 9),
-(30.00, 1, 8, 2, 10),
-(42.00, 1, 9, 3, 7),
-(49.90, 1, 10, 4, 8);
+(30.00, 1, 8, 2002, 10),
+(42.00, 1, 9, 1, 7),
+(49.90, 1, 10, 2002, 8);
 GO
 
 select * from pedidos
@@ -169,28 +173,28 @@ select * from produtos
 
 -- Tabela Item_Pedidos --
 INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VALUES 
-(1, 1, 1, 35.00),
-(1, 2, 1, 45.50),
-(2, 2, 1, 45.50),
-(3, 3, 1, 40.00),
-(4, 4, 1, 25.00),
-(5, 5, 1, 20.00),
-(6, 6, 1, 50.00),
-(7, 7, 1, 38.00),
-(8, 8, 1, 30.00),
-(9, 9, 1, 42.00);
+(1004, 1, 1, 35.00),
+(1005, 2, 1, 45.50),
+(1006, 3, 1, 45.50),
+(1007, 4, 1, 40.00),
+(1008, 5, 1, 25.00),
+(1009, 6, 1, 20.00),
+(1010, 7, 1, 50.00),
+(1011, 8, 1, 38.00),
+(1012, 9, 1, 30.00),
+(1013, 10, 1, 42.00);
 GO
 
 -- Tabela Pagamentos --
 INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, pedido_id) VALUES 
-(1, 1, 80.50, 1, 'PIX', '2026-10-15', 1),
-(1, 1, 45.50, 1, 'CARTAO_CREDITO', '2026-10-15', 2),
-(1, 1, 40.00, 1, 'BOLETO', '2026-10-18', 3),
-(1, 1, 25.00, 1, 'PIX', '2026-10-15', 4),
-(1, 1, 20.00, 1, 'CARTAO_DEBITO', '2026-10-15', 5),
-(1, 1, 50.00, 1, 'PIX', '2026-10-15', 6),
-(1, 1, 38.00, 1, 'BOLETO', '2026-10-20', 7),
-(1, 1, 30.00, 1, 'CARTAO_CREDITO', '2026-10-15', 8),
-(1, 1, 42.00, 1, 'PIX', '2026-10-15', 9),
-(1, 1, 49.90, 1, 'CARTAO_CREDITO', '2026-10-15', 10);
+(1, 1, 80.50, 1, 'PIX', '2026-10-15', 1004),
+(1, 1, 45.50, 1, 'CARTAO_CREDITO', '2026-10-15', 1005),
+(1, 1, 40.00, 1, 'BOLETO', '2026-10-18', 1006),
+(1, 1, 25.00, 1, 'PIX', '2026-10-15', 1007),
+(1, 1, 20.00, 1, 'CARTAO_DEBITO', '2026-10-15', 1008),
+(1, 1, 50.00, 1, 'PIX', '2026-10-15', 1009),
+(1, 1, 38.00, 1, 'BOLETO', '2026-10-20', 1010),
+(1, 1, 30.00, 1, 'CARTAO_CREDITO', '2026-10-15', 1011),
+(1, 1, 42.00, 1, 'PIX', '2026-10-15', 1012),
+(1, 1, 49.90, 1, 'CARTAO_CREDITO', '2026-10-15', 1013);
 GO

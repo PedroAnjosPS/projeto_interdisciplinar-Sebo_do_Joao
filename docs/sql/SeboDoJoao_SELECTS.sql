@@ -38,6 +38,7 @@ SELECT * FROM entregas ent ORDER BY ent.transportadora;
 
 -- Tabela Pedidos --
 SELECT * FROM pedidos pe ORDER BY pe.total DESC;
+SELECT * FROM pedidos pe;
 
 -- Tabela Item_Pedidos --
 SELECT pe.id ID_Pedido, prod.nome Produto, pe.total Total_Pedido  

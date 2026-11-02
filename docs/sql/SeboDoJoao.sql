@@ -81,9 +81,9 @@ CREATE TABLE enderecos
     complemento VARCHAR(100) NULL,
     bairro VARCHAR(100) NOT NULL,
     ativo BIT NOT NULL DEFAULT 1,     -- 1 = ativo, 0 = deixa de ser o endereço usado pelo cliente (não é o principal)
-    -- ALTERADO: nome amigável dado pelo cliente na tela (ex.: "Casa", "Trabalho"); se não informar, vale "Endereço"
+    -- Nome dado pelo cliente ao endereço (ex.: "Casa", "Trabalho"); se não informar, vale "Endereço"
     apelido VARCHAR(30) NOT NULL DEFAULT 'Endereço',
-    -- ALTERADO: 1 = endereço padrão (já vem selecionado no checkout); 0 = não é o padrão.
+    -- 1 = endereço padrão (já vem selecionado no checkout); 0 = não é o padrão.
     -- Regra de negócio (feita na aplicação/procedure): só 1 endereço padrão por cliente.
     padrao BIT NOT NULL DEFAULT 0,
     cep_numero VARCHAR(10) NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE cartoes
     final_numero CHAR(4) NOT NULL,    -- 4 últimos dígitos
     titular VARCHAR(100) NOT NULL,
     validade CHAR(5) NOT NULL,        -- formato MM/AA, igual à tela
-    -- ALTERADO: 1 = cartão padrão (já vem selecionado no checkout); 0 = não é o padrão.
+    -- 1 = cartão padrão (já vem selecionado no checkout); 0 = não é o padrão.
     -- Regra de negócio (feita na aplicação/procedure): só 1 cartão padrão por cliente.
     padrao BIT NOT NULL DEFAULT 0,
     cliente_id INT NOT NULL,
@@ -287,8 +287,9 @@ CREATE TABLE pagamentos
     CONSTRAINT ck_pagamentos_parcelas
         CHECK (quantidade_parcelas > 0),
 
+    -- 1 Pendente | 2 Aprovado | 3 Recusado | 4 Compra estornada (pedido cancelado depois de pago)
     CONSTRAINT ck_pagamentos_status
-        CHECK (status IN (1,2,3)),
+        CHECK (status IN (1,2,3,4)),
 
     CONSTRAINT fk_pagamentos_pedidos
         FOREIGN KEY (pedido_id)

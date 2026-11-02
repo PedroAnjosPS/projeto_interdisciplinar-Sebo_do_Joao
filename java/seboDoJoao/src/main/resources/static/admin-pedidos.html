@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<!-- NOVO: tela de pedidos para o FUNCIONÁRIO. Mostra todos os pedidos que estão no banco e permite
-     "andar" com a entrega e confirmar pagamentos pendentes (demonstração do fluxo de venda e entrega). -->
+<!-- Tela de pedidos para o funcionário. Mostra todos os pedidos que estão no banco e permite
+     avançar a entrega e confirmar pagamentos pendentes (demonstração do fluxo de venda e entrega). -->
 <body class="ec-page-vitrine" data-ec-admin hidden>
 
     <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
@@ -69,8 +69,8 @@
         function montarPedidoGestao(p) {
             const itens = p.itens.map((i) => `<li>${escaparHtml(i.nome)} <span class="ec-texto-suave">× ${i.quantidade}</span></li>`).join('');
             const parcelas = p.pagamento.tipo === 'pix' ? 'Pix' : `Cartão de crédito · ${p.pagamento.parcelas}x`;
-            // NOVO: para onde enviar o pedido. O endereço vem do banco (entregas.endereco_id) e mostra quem recebe,
-            // o telefone de contato e o endereço completo. É o dado de que o funcionário precisa para despachar.
+            // Para onde enviar o pedido. O endereço vem do banco (entregas.endereco_id) e mostra quem recebe,
+            // o telefone de contato e o endereço completo, que são os dados necessários para despachar.
             const e = p.endereco;
             const destino = e
                 ? `${escaparHtml(e.destinatario)} (${escaparHtml(e.telefone)}) · ${linhasDoEndereco(e).map(escaparHtml).join(' · ')}`

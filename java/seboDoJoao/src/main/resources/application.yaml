@@ -20,8 +20,7 @@ spring:
       static-locations: file:src/main/resources/static/,classpath:/static/
   jpa:
     hibernate:
-      # ALTERADO: de "update" para "none". Com "update" o Hibernate mexia sozinho nas colunas do banco
-      # ao iniciar (alargava varchar, tentava trocar int por bigint e gerava avisos). Agora a fonte da
-      # verdade é só o script docs/sql/SeboDoJoao.sql. (A linha "ddl-auto=none:show-sql" que existia
-      # aqui estava mal escrita e não tinha efeito nenhum, por isso foi removida.)
+      # "none" impede o Hibernate de alterar as tabelas do banco ao iniciar. Com "update" ele mexia
+      # sozinho nas colunas (alargava varchar, tentava trocar int por bigint e gerava avisos). Assim, a
+      # estrutura do banco vem somente do script docs/sql/SeboDoJoao.sql.
       ddl-auto: none

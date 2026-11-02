@@ -40,7 +40,7 @@ public class Pagamento {
     @Column(name = "data_pagamento", nullable = false)
     private LocalDate dataPagamento;
 
-    // NOVO: bandeira e 4 últimos dígitos do cartão usado (ficam null em Pix e boleto)
+    // Bandeira e 4 últimos dígitos do cartão usado (ficam null em Pix e boleto)
     @Column(name = "bandeira", length = 30)
     private String bandeira;
 

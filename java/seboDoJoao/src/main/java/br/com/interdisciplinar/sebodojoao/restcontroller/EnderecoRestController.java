@@ -17,7 +17,7 @@ import br.com.interdisciplinar.sebodojoao.service.EnderecoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: rotas dos endereços de entrega ("Meus endereços" e checkout).
+// Rotas dos endereços de entrega ("Meus endereços" e checkout).
 // Em TODAS as rotas, o cliente vem da SESSÃO de login (ControleDeAcesso), nunca do navegador:
 // cada cliente só enxerga e altera os próprios endereços.
 @RestController

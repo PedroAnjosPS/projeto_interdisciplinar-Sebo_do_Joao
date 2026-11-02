@@ -181,9 +181,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
-            if (!(await exigirLogin())) return;
-            // ALTERADO: os endereços agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
-            // expirado...), o aviso aparece na tela em vez de a página ficar em branco.
+            if (!(await exigirCliente())) return;
+            // Os endereços vêm do banco (via Java). Se der erro (servidor fora do ar, login expirado...),
+            // o aviso aparece na tela em vez de a página ficar em branco.
             try {
                 await renderizarEnderecos();
             } catch (erro) {

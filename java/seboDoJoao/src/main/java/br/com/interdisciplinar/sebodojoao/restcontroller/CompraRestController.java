@@ -19,10 +19,10 @@ import br.com.interdisciplinar.sebodojoao.service.CompraService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: rotas da compra, usadas pelo carrinho/checkout, por "Meus pedidos" e pelo painel do funcionário.
-// Por que uma rota nova e não a /api/pedidos? A /api/pedidos grava só a tabela pedidos. Uma compra de
-// verdade mexe em 4 tabelas ao mesmo tempo (entrega, pedido, itens, pagamentos) e no estoque, e isso
-// é feito de uma vez pela procedure sp_finalizar_compra.
+// Rotas da compra, usadas pelo checkout, por "Meus pedidos" e pelo painel do funcionário.
+// Elas existem separadas da /api/pedidos porque aquela rota grava só a tabela pedidos, enquanto uma
+// compra mexe em 4 tabelas ao mesmo tempo (entrega, pedido, itens e pagamentos) e no estoque. Tudo
+// isso é feito de uma vez pela procedure sp_finalizar_compra.
 //
 // Em TODAS as rotas, quem é a pessoa vem da SESSÃO de login (ControleDeAcesso), nunca do navegador.
 @RestController

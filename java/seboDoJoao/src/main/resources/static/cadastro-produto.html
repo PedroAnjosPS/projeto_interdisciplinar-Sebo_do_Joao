@@ -149,25 +149,38 @@
         // (e volta pra cá depois de entrar). A página fica escondida até a conferência.
         exigirAdmin();
 
-        // Quais gêneros fazem sentido pra cada categoria — é isso que faz o
-        // select de Gênero só mostrar opções relevantes (ex: escolhendo
-        // "Livros" não aparece "Rock").
+        // Lista de gêneros (os ids são os da tabela generos do banco). O "grupo" serve para
+        // separar as opções do select em Ficção, Não ficção e Musical.
         const GENEROS_BD = [
-            { id: 1, nome: 'Ficção Científica' }, { id: 2, nome: 'Terror' },
-            { id: 3, nome: 'Suspense' }, { id: 4, nome: 'Rock' },
-            { id: 5, nome: 'Heavy Metal' }, { id: 6, nome: 'Ação' },
-            { id: 7, nome: 'Aventura' }, { id: 8, nome: 'Rap' },
-            { id: 9, nome: 'Didático' }, { id: 10, nome: 'Biografia' }
+            { id: 1, nome: 'Ficção Científica', grupo: 'Ficção' }, { id: 2, nome: 'Terror', grupo: 'Ficção' },
+            { id: 3, nome: 'Suspense', grupo: 'Ficção' }, { id: 6, nome: 'Ação', grupo: 'Ficção' },
+            { id: 7, nome: 'Aventura', grupo: 'Ficção' }, { id: 11, nome: 'Romance', grupo: 'Ficção' },
+            { id: 12, nome: 'Fantasia', grupo: 'Ficção' }, { id: 13, nome: 'Drama', grupo: 'Ficção' },
+            { id: 14, nome: 'Comédia', grupo: 'Ficção' },
+            { id: 9, nome: 'Didático', grupo: 'Não ficção' }, { id: 10, nome: 'Biografia', grupo: 'Não ficção' },
+            { id: 15, nome: 'Auto-ajuda', grupo: 'Não ficção' }, { id: 16, nome: 'Científico', grupo: 'Não ficção' },
+            { id: 17, nome: 'Documentário', grupo: 'Não ficção' },
+            { id: 4, nome: 'Rock', grupo: 'Musical' }, { id: 5, nome: 'Heavy Metal', grupo: 'Musical' },
+            { id: 8, nome: 'Rap', grupo: 'Musical' }, { id: 18, nome: 'Pop', grupo: 'Musical' },
+            { id: 19, nome: 'MPB', grupo: 'Musical' }, { id: 20, nome: 'Jazz', grupo: 'Musical' }
         ];
 
+        // Quais gêneros cada categoria aceita (é isso que faz o select de Gênero mostrar só
+        // opções que combinam com o produto). Livros e HQs têm gêneros de ficção e de não ficção;
+        // Vinil e CD são só de música; Blu-ray, DVD e Fita Cassete podem ser filme (ficção ou
+        // documentário) ou música (show, álbum).
+        const GENEROS_LIVROS = [1, 2, 3, 6, 7, 11, 12, 13, 14, 9, 10, 15, 16];
+        const GENEROS_MUSICAIS = [4, 5, 8, 18, 19, 20];
+        const GENEROS_FILMES = [1, 2, 3, 6, 7, 11, 12, 13, 14, 10, 17];
+
         const GENEROS_POR_CATEGORIA = {
-            '1': [1, 2, 3, 9, 10], // Livros
-            '2': [6, 7, 1, 2],     // HQs
-            '3': [4, 5, 8],        // Vinil
-            '4': [1, 2, 3, 6, 7],  // Blu-rays
-            '5': [1, 2, 3, 6, 7],  // DVDs
-            '6': [4, 5, 8],        // CDs
-            '7': [4, 8]            // Fitas
+            '1': GENEROS_LIVROS,                                   // Livros
+            '2': [1, 2, 3, 6, 7, 12, 13, 14, 10],                 // HQs
+            '3': GENEROS_MUSICAIS,                                 // Vinil
+            '4': [...GENEROS_FILMES, ...GENEROS_MUSICAIS],         // Blu-rays
+            '5': [...GENEROS_FILMES, ...GENEROS_MUSICAIS],         // DVDs
+            '6': GENEROS_MUSICAIS,                                 // CDs
+            '7': [...GENEROS_FILMES, ...GENEROS_MUSICAIS]          // Fitas
         };
 
         const campoImagem = document.getElementById('campo-imagem');
@@ -195,11 +208,16 @@
             }
 
             campoGenero.disabled = false;
-            campoGenero.innerHTML = '<option value="" disabled' + (generoParaManter ? '' : ' selected') + '>Selecione o gênero</option>' +
-                GENEROS_BD.filter(g => idsPermitidos.includes(g.id)).map((opcao) => {
+            // Monta as opções separadas por grupo (Ficção, Não ficção, Musical), mostrando só os grupos que têm gêneros permitidos
+            const grupos = ['Ficção', 'Não ficção', 'Musical'].map((grupo) => {
+                const opcoes = GENEROS_BD.filter(g => g.grupo === grupo && idsPermitidos.includes(g.id)).map((opcao) => {
                     const selecionado = (String(opcao.id) === String(generoParaManter)) ? ' selected' : '';
                     return `<option value="${opcao.id}"${selecionado}>${opcao.nome}</option>`;
                 }).join('');
+                return opcoes ? `<optgroup label="${grupo}">${opcoes}</optgroup>` : '';
+            }).join('');
+
+            campoGenero.innerHTML = '<option value="" disabled' + (generoParaManter ? '' : ' selected') + '>Selecione o gênero</option>' + grupos;
         }
 
         campoCategoria.addEventListener('change', () => atualizarOpcoesDeGenero(campoCategoria.value));

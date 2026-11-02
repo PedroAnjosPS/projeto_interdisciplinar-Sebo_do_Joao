@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.interdisciplinar.sebodojoao.model.Cartao;
 
-// NOVO: consultas da tabela cartoes.
+// Consultas da tabela cartoes.
 public interface CartaoRepository extends JpaRepository<Cartao, Long> {
 
     // Cartões do cliente: o padrão primeiro e, depois, do mais novo para o mais antigo

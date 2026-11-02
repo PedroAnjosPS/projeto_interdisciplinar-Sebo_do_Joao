@@ -107,7 +107,7 @@ SELECT * FROM pagamentos pag ORDER BY pag.pedido_id;
 
 
 -- As informações dos clientes cadastrados --
--- ALTERADO: o endereço não fica mais na tabela usuarios (ele foi para a tabela enderecos). Por isso, --
+-- O endereço fica na tabela enderecos (e não em usuarios). Por isso, --
 -- esta consulta traz o endereço PADRÃO de cada cliente (enderecos.padrao = 1 e ativo = 1). --
 -- LEFT JOIN: o cliente aparece mesmo que ainda não tenha endereço cadastrado. --
 SELECT
@@ -136,7 +136,7 @@ LEFT JOIN ufs uf
     ON cid.uf_sigla = uf.sigla;
 GO
 
--- Tabela Enderecos (NOVA) --
+-- Tabela Enderecos --
 -- Todos os endereços ativos, com cliente, CEP, cidade e UF. --
 SELECT en.id AS Id_Endereco, uc.nome AS Cliente, en.apelido AS Apelido,
        CASE en.padrao WHEN 1 THEN 'SIM' ELSE 'NAO' END AS Padrao,
@@ -151,7 +151,7 @@ WHERE en.ativo = 1
 ORDER BY uc.nome, en.padrao DESC, en.id;
 GO
 
--- Tabela Cartoes (NOVA) --
+-- Tabela Cartoes --
 -- Só bandeira, final do cartão, titular e validade. O número completo e o CVV nunca são guardados. --
 SELECT ca.id AS Id_Cartao, uc.nome AS Cliente, ca.bandeira AS Bandeira, ca.final_numero AS Final,
        ca.titular AS Titular, ca.validade AS Validade,
@@ -161,7 +161,7 @@ INNER JOIN usuarios uc    ON uc.id = ca.cliente_id
 ORDER BY uc.nome, ca.padrao DESC, ca.id;
 GO
 
--- Tabela Item_Carrinhos (NOVA) --
+-- Tabela Item_Carrinhos --
 -- O carrinho de cada cliente. O preço é sempre o preço ATUAL do produto (o preço só é congelado --
 -- quando a compra vira pedido, na tabela item_pedidos). --
 SELECT uc.nome AS Cliente, prod.nome AS Produto, ic.quantidade AS Quantidade,

@@ -1,6 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.dto;
 
-// NOVO: o "formulário" que o site envia para salvar um endereço (criar ou editar).
+// O "formulário" que o site envia para salvar um endereço (criar ou editar).
 // Repare no que NÃO vem aqui: o ID do cliente (o Java pega da sessão de login).
 // "cidade" e "uf" vêm como texto; o Java procura (ou cria) a UF, a cidade e o CEP nas tabelas do banco.
 public record EnderecoRequestDTO(

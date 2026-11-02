@@ -30,8 +30,8 @@ const UsuarioStore = (() => {
         // A API devolve a senha junto com os dados do cliente; ela não precisa (nem deve) ficar guardada no navegador
         const { senha, ...semSenha } = dadosUsuario;
         localStorage.setItem(CHAVE_SESSAO, JSON.stringify(semSenha));
-        // ALTERADO: o carrinho do visitante deixou de ser juntado aqui. Este método roda também ao atualizar o
-        // perfil, e a junção agora é uma chamada ao servidor (assíncrona). Ela acontece só no login, em entrar().
+        // O carrinho do visitante não é juntado aqui, pois este método também roda ao atualizar o perfil.
+        // A junção é uma chamada ao servidor e acontece só no login, na função entrar().
     }
     
     function lerSessao() {
@@ -86,17 +86,17 @@ const UsuarioStore = (() => {
         let dadosUsuario = await resposta.json();
 
         // O /api/login só devolve id, nome, e-mail e perfil. Pro perfil, o checkout e o resto das
-        // telas, buscamos o restante (CPF, telefone, data de nascimento, foto...) uma vez só, aqui.
-        if (dadosUsuario.perfil === PERFIL_CLIENTE) {
-            try {
-                const completa = await fetch(`/api/clientes/${dadosUsuario.id}`);
-                if (completa.ok) dadosUsuario = { ...(await completa.json()), perfil: PERFIL_CLIENTE };
-            } catch (erro) { /* sem os dados extras a pessoa entra do mesmo jeito */ }
-        }
+        // telas, buscamos o restante uma vez só, aqui: CPF, telefone, data de nascimento e foto
+        // do cliente, ou o código do funcionário (o "número do crachá").
+        try {
+            const rotaCompleta = dadosUsuario.perfil === PERFIL_CLIENTE ? '/api/clientes' : '/api/funcionarios';
+            const completa = await fetch(`${rotaCompleta}/${dadosUsuario.id}`);
+            if (completa.ok) dadosUsuario = { ...(await completa.json()), perfil: dadosUsuario.perfil };
+        } catch (erro) { /* sem os dados extras a pessoa entra do mesmo jeito */ }
 
         iniciarSessao(dadosUsuario);
 
-        // NOVO: o que a pessoa pôs no carrinho como visitante é enviado para o carrinho da conta, que fica no
+        // O que a pessoa pôs no carrinho como visitante é enviado para o carrinho da conta, que fica no
         // banco de dados (CarrinhoStore fica em vitrine.js). Só vale para cliente; funcionário não usa carrinho.
         if (dadosUsuario.perfil === PERFIL_CLIENTE && typeof CarrinhoStore !== 'undefined' && dadosUsuario.id != null) {
             await CarrinhoStore.juntarVisitanteNaConta(dadosUsuario.id);
@@ -165,14 +165,12 @@ const UsuarioStore = (() => {
         return lerSessao();
     }
 
-    //Função para trocar a senha do administrador
-    //Função para trocar a senha do administrador
+    // Troca a senha da conta logada (cliente ou funcionário), cada um pela sua rota
     async function alterarSenha(senhaAtual, novaSenha, confirmacao) {
         const usuarioLogado = lerSessao();
         if (!usuarioLogado) throw new Error("Você precisa estar logado para alterar a senha!");
 
-        // A verificação (senhaAtual !== usuarioLogado.senha) FOI REMOVIDA DAQUI.
-        // Agora a senha atual é conferida no servidor (mesma rota do login), sem guardar senha no navegador.
+        // A senha atual é conferida no servidor (mesma rota do login), sem guardar senha no navegador.
         if (!(await senhaConfere(usuarioLogado.email, senhaAtual))) {
             throw new Error('A senha atual está incorreta.');
         }
@@ -188,10 +186,8 @@ const UsuarioStore = (() => {
             throw new Error('A confirmação não é igual à nova senha!');
         }
 
-        const dadosAtualizados = {
-            ...usuarioLogado,
-            senha: novaSenha
-        };
+        // Só a senha é enviada: os demais campos que não vierem no JSON são mantidos como estão no banco.
+        const dadosAtualizados = { senha: novaSenha };
 
         const rota = usuarioLogado.perfil === PERFIL_CLIENTE ? '/api/clientes' : '/api/funcionarios';
 

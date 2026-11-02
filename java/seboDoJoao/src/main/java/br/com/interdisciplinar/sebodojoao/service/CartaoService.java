@@ -16,7 +16,7 @@ import br.com.interdisciplinar.sebodojoao.repository.CartaoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: as regras dos cartões salvos do cliente (tela "Meus cartões" e checkout).
+// As regras dos cartões salvos do cliente (tela "Meus cartões" e checkout).
 //
 // SEGURANÇA: o número completo e o CVV nunca chegam aqui nem são guardados. O site manda só a bandeira,
 // os 4 últimos dígitos, o nome do titular e a validade. Quem é o cliente vem da SESSÃO de login e

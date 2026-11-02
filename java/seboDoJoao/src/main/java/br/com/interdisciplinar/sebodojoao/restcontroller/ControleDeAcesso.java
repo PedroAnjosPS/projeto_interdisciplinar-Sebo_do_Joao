@@ -16,8 +16,8 @@ public final class ControleDeAcesso {
     public static final String PERFIL_FUNCIONARIO = "FUNCIONARIO";
 
     private static final String ATRIBUTO_PERFIL = "perfilUsuario";
-    // ALTERADO: a sessão passa a guardar também o ID de quem fez login. Antes só o perfil era guardado
-    // e o Java não sabia "qual" cliente estava comprando; sem isso, dava para mandar o ID de outra pessoa.
+    // Nome do atributo da sessão que guarda o ID de quem fez login. Com ele, o Java sabe qual cliente
+    // está comprando, sem precisar confiar em um ID enviado pelo navegador.
     private static final String ATRIBUTO_ID = "idUsuario";
 
     private ControleDeAcesso() { }
@@ -26,20 +26,20 @@ public final class ControleDeAcesso {
         sessao.setAttribute(ATRIBUTO_PERFIL, perfil);
     }
 
-    // ALTERADO (novo): guarda na sessão (no servidor) o ID do usuário que entrou.
+    // Guarda na sessão (no servidor) o ID do usuário que entrou.
     public static void registrarUsuario(HttpSession sessao, Long id) {
         sessao.setAttribute(ATRIBUTO_ID, id);
     }
 
     // Só Cliente logado pode comprar. A checagem libera um único perfil, em vez de barrar
     // apenas o Funcionário: assim, uma chamada sem login também é recusada.
-    // ALTERADO: agora devolve o ID do cliente logado (antes não devolvia nada). Quem chama usa esse
-    // ID, e não um ID vindo do navegador, para saber de quem é a compra.
+    // Devolve o ID do cliente logado. Quem chama usa esse ID, e não um vindo do navegador,
+    // para saber de quem é a compra.
     public static Long exigirCliente(HttpSession sessao) {
         Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
 
-        // ALTERADO: as mensagens eram só sobre "comprar". Agora esta mesma checagem protege também o carrinho,
-        // os endereços e os cartões, então o texto ficou genérico.
+        // As mensagens são genéricas porque esta mesma checagem protege a compra, o carrinho,
+        // os endereços e os cartões.
         if (perfil == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "É preciso fazer login.");
         }
@@ -51,8 +51,8 @@ public final class ControleDeAcesso {
         return lerId(sessao);
     }
 
-    // ALTERADO (novo): o contrário de exigirCliente. Usada nas telas de gestão de pedidos,
-    // que só o Funcionário pode usar (ver a entrega andar, por exemplo).
+    // O contrário de exigirCliente: usada nas telas de gestão de pedidos, que só o funcionário
+    // pode usar (para fazer a entrega avançar, por exemplo).
     public static Long exigirFuncionario(HttpSession sessao) {
         Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
 
@@ -67,7 +67,7 @@ public final class ControleDeAcesso {
         return lerId(sessao);
     }
 
-    // Lê o ID guardado na sessão. Se não existir (ex.: sessão criada antes desta alteração), pede novo login.
+    // Lê o ID guardado na sessão. Se não existir (ex.: sessão antiga), pede um novo login.
     private static Long lerId(HttpSession sessao) {
         Object id = sessao.getAttribute(ATRIBUTO_ID);
 

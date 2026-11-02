@@ -190,9 +190,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
-            if (!(await exigirLogin())) return;
-            // ALTERADO: os cartões agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
-            // expirado...), o aviso aparece na tela em vez de a página ficar em branco.
+            if (!(await exigirCliente())) return;
+            // Os cartões vêm do banco (via Java). Se der erro (servidor fora do ar, login expirado...),
+            // o aviso aparece na tela em vez de a página ficar em branco.
             try {
                 await renderizarCartoes();
             } catch (erro) {

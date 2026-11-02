@@ -115,9 +115,9 @@
         }
 
         function textoDoPagamento(pg) {
-            // ALTERADO: o banco guarda a forma ("PIX" ou cartão de crédito), as parcelas e também a bandeira e o
-            // final do cartão usado (pagamentos.bandeira / final_cartao). Pedidos antigos, feitos antes dessas
-            // colunas existirem, podem não ter esses dois dados: nesse caso aparece só "Cartão de crédito".
+            // O banco guarda a forma ("PIX" ou cartão de crédito), as parcelas e também a bandeira e o
+            // final do cartão usado (pagamentos.bandeira / final_cartao). Se esses dois dados não existirem,
+            // aparece só "Cartão de crédito".
             if (pg.tipo === 'pix') return 'Pix';
             const nome = pg.bandeira ? (NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão') : 'Cartão de crédito';
             const final = pg.ultimos4 ? ` final ${pg.ultimos4}` : '';
@@ -127,7 +127,7 @@
             return `${nome}${final} · ${parcelas}`;
         }
 
-        // ALTERADO: a situação do pagamento agora vem do banco (tabela pagamentos): Pendente, Aprovado ou Recusado.
+        // A situação do pagamento vem do banco (tabela pagamentos): Pendente, Aprovado, Recusado ou Estornado.
         function montarBlocoPix(p) {
             if (p.pagamento.status === 'Aprovado') {
                 return `<section class="ec-ped-bloco ec-ped-pix-pago">
@@ -158,7 +158,7 @@
                 </section>`;
         }
 
-        // NOVO: texto e cor de cada situação do pedido (os nomes vêm do banco)
+        // Texto e cor de cada situação do pedido (os nomes vêm do banco)
         const ROTULOS_STATUS = {
             'Aguardando pagamento': { texto: 'Aguardando pagamento', classe: 'ec-status-aguardando' },
             'Processando': { texto: 'Pagamento aprovado · em preparação', classe: 'ec-status-ok' },
@@ -167,9 +167,13 @@
         };
 
         function montarPedidoCompleto(p, nome) {
-            const e = p.endereco; // ALTERADO: agora vem do banco (entregas.endereco_id); só seria null se faltasse o endereço
+            const e = p.endereco; // vem do banco (entregas.endereco_id); só seria null se faltasse o endereço
             const [linha1, linha2, linha3] = e ? linhasDoEndereco(e) : ['', '', ''];
-            const rotulo = ROTULOS_STATUS[p.status] || { texto: p.status, classe: 'ec-status-aguardando' };
+            const rotulo = { ...(ROTULOS_STATUS[p.status] || { texto: p.status, classe: 'ec-status-aguardando' }) };
+            // Com a entrega já em trânsito, o pedido não está mais em preparação
+            if (p.status === PedidosStore.STATUS_PROCESSANDO && p.entrega.status === 'Em transito') {
+                rotulo.texto = 'Pagamento aprovado · em trânsito';
+            }
             const nomesEntrega = { 'Pendente': 'Pendente', 'Preparando': 'Preparando o envio', 'Em transito': 'Em trânsito', 'Entregue': 'Entregue', 'Cancelado': 'Cancelada' };
             const situacaoEntrega = nomesEntrega[p.entrega.status] || p.entrega.status;
             const itens = p.itens.map((i) => `
@@ -204,7 +208,7 @@
                             <h3 class="ec-ped-bloco-titulo"><i class="fas fa-truck me-2"></i>Entrega</h3>
                             <p class="mb-1"><strong>${escaparHtml(p.frete.nome)}</strong> · ${p.frete.preco ? formatarPreco(p.frete.preco) : 'Grátis'}</p>
                             <p class="ec-texto-suave mb-2">${escaparHtml(p.frete.prazoTexto)}</p>
-                            <!-- NOVO: situação da entrega, direto da tabela entregas -->
+                            <!-- Situação da entrega, lida da tabela entregas -->
                             <p class="mb-2">Situação: <span class="ec-status ${p.entrega.status === 'Entregue' ? 'ec-status-ok' : 'ec-status-aguardando'}">${escaparHtml(situacaoEntrega)}</span></p>
                             ${p.entrega.codigoRastreio ? `<p class="mb-2">Código de rastreio: <strong>${escaparHtml(p.entrega.codigoRastreio)}</strong></p>` : ''}
                             ${e ? `<p class="mb-0"><strong>${escaparHtml(e.destinatario)}</strong><br>
@@ -213,6 +217,7 @@
                         <section class="ec-ped-bloco">
                             <h3 class="ec-ped-bloco-titulo"><i class="fas fa-wallet me-2"></i>Pagamento</h3>
                             <p class="mb-3">${escaparHtml(textoDoPagamento(p.pagamento))}</p>
+                            ${p.pagamento.status === 'Estornado' ? '<p class="mb-3"><span class="ec-status ec-status-aguardando">Compra estornada</span></p>' : ''}
                             <dl class="ec-resumo-valores mb-0">
                                 <div><dt>Produtos</dt><dd>${formatarPreco(p.subtotal)}</dd></div>
                                 <div><dt>Frete</dt><dd>${p.frete.preco ? formatarPreco(p.frete.preco) : 'Grátis'}</dd></div>
@@ -232,7 +237,7 @@
 
         async function renderizarPedido(usuario) {
             const area = document.getElementById('pedido-conteudo');
-            // ALTERADO: o pedido agora vem do banco (via Java). Se o servidor falhar, mostra o aviso em vez de tela vazia.
+            // O pedido vem do banco (via Java). Se o servidor falhar, mostra o aviso em vez de tela vazia.
             let pedido;
             try {
                 pedido = await PedidosStore.obter(parametros.get('id'));
@@ -253,7 +258,7 @@
 
             const mostrarErro = (erro) => { document.getElementById('pedido-erro').textContent = erro.message; };
 
-            // NOVO: botão "Cancelar pedido" (o banco confere se ainda dá tempo e devolve o estoque)
+            // Botão "Cancelar pedido" (o banco confere se ainda dá tempo e devolve o estoque)
             const botaoCancelar = document.getElementById('pedido-cancelar');
             if (botaoCancelar) {
                 botaoCancelar.addEventListener('click', async () => {
@@ -304,7 +309,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
-            const usuario = await exigirLogin();
+            const usuario = await exigirCliente();
             if (!usuario) return;
             renderizarPedido(usuario);
         });

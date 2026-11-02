@@ -7,18 +7,18 @@
 -- correspondente e retorna o ID do pedido criado para a aplicação Java. --
 CREATE PROCEDURE dbo.sp_finalizar_compra
     @cliente_id INT,
-    -- ALTERADO: novo parâmetro obrigatório: o endereço de entrega escolhido (tabela enderecos). --
-    -- Ele é gravado na entrega (entregas.endereco_id). --
+    -- Endereço de entrega escolhido pelo cliente (tabela enderecos). --
+    -- Ele é gravado na entrega, na coluna entregas.endereco_id. --
     @endereco_id INT,
     @itens_json NVARCHAR(MAX),
     @forma_pagamento VARCHAR(50),
     @quantidade_parcelas INT = 1,
     @transportadora VARCHAR(100) = 'Correios (PAC)',
     @prazo_dias INT = 7,
-    -- ALTERADO: novo parâmetro opcional com o valor do frete escolhido no site (padrão 0 = sem frete). --
-    -- Antes o total do pedido era só a soma dos produtos e o frete mostrado na tela não ficava registrado. --
+    -- Valor do frete escolhido no site (opcional; 0 significa sem frete). --
+    -- Ele é somado ao total do pedido e fica registrado na entrega. --
     @valor_frete DECIMAL(10,2) = 0,
-    -- ALTERADO: bandeira e 4 últimos dígitos do cartão usado (opcionais; ficam NULL no PIX e no boleto). --
+    -- Bandeira e 4 últimos dígitos do cartão usado (opcionais; ficam NULL no PIX e no boleto). --
     -- São copiados para cada parcela em pagamentos, para o histórico não depender do cartão salvo. --
     @bandeira VARCHAR(30) = NULL,
     @final_cartao CHAR(4) = NULL,
@@ -34,8 +34,8 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM clientes WHERE usuario_id = @cliente_id)
             THROW 50001, 'Cliente não encontrado!', 1;
 
-        -- ALTERADO (novo): o endereço de entrega precisa existir, pertencer a ESTE cliente e estar ativo --
-        -- (não vale um endereço "excluído" na tela nem o endereço de outra pessoa). Código 50009. --
+        -- Verifica se o endereço de entrega existe, pertence a este cliente e está ativo --
+        -- (um endereço "excluído" na tela ou de outra pessoa não é aceito). Código de erro 50009. --
         IF NOT EXISTS (SELECT 1 FROM enderecos
                        WHERE id = @endereco_id AND cliente_id = @cliente_id AND ativo = 1)
             THROW 50009, 'Endereço de entrega inválido!', 1;
@@ -46,8 +46,8 @@ BEGIN
 
         -- Valida a quantidade de parcelas permitida --
         -- Somente o cartão de crédito permite parcelamento, em até @max_parcelas vezes --
-        -- ALTERADO: o limite (3) estava escrito direto na condição. Agora fica nesta variável, que é o --
-        -- ÚNICO lugar a mudar se a loja resolver aumentar o número de parcelas no futuro. --
+        -- O limite de parcelas (3) fica guardado nesta variável, então é o único lugar a mudar --
+        -- caso a loja resolva aumentar a quantidade de parcelas no futuro. --
         DECLARE @max_parcelas INT = 3;
 
         IF @quantidade_parcelas < 1 OR @quantidade_parcelas > @max_parcelas OR
@@ -55,7 +55,7 @@ BEGIN
             THROW 50006, 'Quantidade de parcelas inválida!', 1;
 
 
-        -- ALTERADO: o frete não pode ser negativo (nem nulo). Código 50008 para o Java identificar o erro. --
+        -- Verifica se o frete é válido: não pode ser negativo nem nulo. O código 50008 permite ao Java identificar o erro. --
         IF @valor_frete IS NULL OR @valor_frete < 0
             THROW 50008, 'Valor de frete inválido!', 1;
 
@@ -114,10 +114,9 @@ BEGIN
 
 
         -- Cadastra a entrega com status inicial 1 e calcula a previsão de entrega --
-        -- ALTERADO: data_postagem agora entra como NULL. Sem isso, a coluna usava GETDATE() e a entrega --
-        -- nascia "postada" no momento da compra. A data é preenchida por sp_avancar_entrega (em trânsito). --
-        -- ALTERADO: a entrega agora também guarda o valor do frete (valor_frete) e o endereço de destino --
-        -- (endereco_id), que antes não tinham onde ser registrados. --
+        -- A data de postagem entra como NULL: ela só é preenchida pela procedure sp_avancar_entrega, --
+        -- quando a entrega passa para "em trânsito". Aqui também são gravados o valor do frete --
+        -- (valor_frete) e o endereço de destino (endereco_id). --
         INSERT INTO entregas (transportadora, status, data_postagem, data_previsao_entrega, valor_frete, endereco_id)
         VALUES (
             @transportadora,
@@ -152,9 +151,8 @@ BEGIN
 
 
         -- Calcula o valor total do pedido utilizando a função fn_total_pedido --
-        -- ALTERADO: soma o frete ao total (produtos + frete). O valor do frete de um pedido pode ser --
-        -- recuperado depois fazendo: pedidos.total - dbo.fn_total_pedido(id). As parcelas do pagamento --
-        -- também passam a usar este total, que é o mesmo valor que a pessoa viu na tela de finalizar compra. --
+        -- O total do pedido é a soma dos produtos mais o frete. As parcelas do pagamento são calculadas --
+        -- sobre esse mesmo total, que é o valor mostrado ao cliente na tela de finalizar a compra. --
         DECLARE @total DECIMAL(10,2) = dbo.fn_total_pedido(@pedido_id) + @valor_frete;
 
         -- Atualiza o valor total do pedido cadastrado anteriormente --
@@ -187,7 +185,7 @@ BEGIN
             CASE
                 WHEN @status_pagamento = 2 THEN CAST(GETDATE() AS DATE)
             END,
-            -- ALTERADO: bandeira e final do cartão só são gravados quando o pagamento é no cartão --
+            -- A bandeira e o final do cartão só são gravados quando o pagamento é no cartão --
             CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @bandeira END,
             CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @final_cartao END,
             @pedido_id
@@ -308,8 +306,9 @@ GO
 
 -- 3-) Permite que o cliente cancele seu próprio pedido enquanto a entrega --
 -- ainda não estiver em trânsito. Verifica se o pedido pertence ao cliente --
--- informado e se ainda atende às condições de cancelamento. Atualiza os --
--- pagamentos pendentes, cancela a entrega e altera o status do pedido. --
+-- informado e se ainda atende às condições de cancelamento. Estorna os --
+-- pagamentos aprovados, recusa os pendentes, cancela a entrega e altera o --
+-- status do pedido. --
 -- A devolução dos produtos ao estoque é realizada automaticamente pela --
 -- trigger tr_pedidos_devolver_estoque. --
 CREATE PROCEDURE dbo.sp_cancelar_pedido
@@ -347,7 +346,13 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        -- Altera os pagamentos que ainda estão pendentes para recusados --
+        -- Os pagamentos que já foram aprovados são estornados (4), pois o dinheiro volta para o cliente --
+        UPDATE pagamentos
+        SET status = 4
+        WHERE pedido_id = @pedido_id
+          AND status = 2;
+
+        -- Os que ainda estavam pendentes viram recusados (3), pois nunca chegaram a ser pagos --
         UPDATE pagamentos
         SET status = 3
         WHERE pedido_id = @pedido_id

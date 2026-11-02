@@ -485,8 +485,8 @@
             }
             estado.subtotal = estado.itens.reduce((soma, { produto, quantidade }) => soma + produto.preco * quantidade, 0);
 
-            // ALTERADO: cartões e endereços agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
-            // expirado...), o aviso aparece na tela e a compra fica bloqueada, em vez de a página ficar pela metade.
+            // Cartões e endereços vêm do banco (via Java). Se der erro (servidor fora do ar, login expirado...),
+            // o aviso aparece na tela e a compra fica bloqueada, em vez de a página ficar pela metade.
             try {
                 estado.cartoes = await CartoesStore.listar();
                 const cartaoInicial = estado.cartoes.find((c) => c.padrao && !validadeJaVenceu(c.validade))

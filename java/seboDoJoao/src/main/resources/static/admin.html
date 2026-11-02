@@ -58,7 +58,7 @@
                     <p id="admin-total-produtos" class="ec-conta-card-descricao">Editar ou remover itens</p>
                 </a>
             </div>
-            <!-- NOVO: acesso à tela de pedidos da loja (vendas, pagamentos e entregas) -->
+            <!-- Acesso à tela de pedidos da loja (vendas, pagamentos e entregas) -->
             <div class="col">
                 <a href="admin-pedidos.html" class="ec-conta-card text-decoration-none h-100">
                     <i class="fas fa-truck-fast ec-conta-card-icone"></i>
@@ -83,8 +83,11 @@
             // Sem login de administrador, vai pro admin-login.html
             if (!(await exigirAdmin())) return;
 
-            const admin = await UsuarioStore.obter();
-            document.getElementById('admin-logado-como').textContent = 'Logado como ' + admin.email;
+            // Sessões antigas podem não ter o código do funcionário guardado, então ele é buscado no banco
+            let admin = await UsuarioStore.obter();
+            if (!admin.codigoFuncionario) admin = await UsuarioStore.recarregar();
+            document.getElementById('admin-logado-como').textContent =
+                'Logado como ' + admin.email + ' · Código do funcionário: ' + (admin.codigoFuncionario || '—');
 
             // Mostra no card quantos produtos a loja tem
             const produtos = await ProdutosStore.listar();

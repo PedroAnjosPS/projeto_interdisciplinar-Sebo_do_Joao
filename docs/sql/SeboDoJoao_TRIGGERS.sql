@@ -22,8 +22,8 @@ BEGIN
 		WHERE	prod.estoque < itens_agrupados.quantidade_total 
 	)
 	BEGIN
-		-- ALTERADO: o código do erro era 50001, o mesmo de "Cliente não encontrado!" na procedure --
-		-- sp_finalizar_compra. Como o Java identifica o erro pelo código, cada erro precisa de um número próprio. --
+		-- Cada erro precisa de um código próprio, pois o Java identifica o problema por ele. --
+		-- O 50001 já é usado por "Cliente não encontrado!" na procedure sp_finalizar_compra, por isso este é o 50007. --
 		;THROW 50007, 'Estoque é insuficiente para realizar o pedido!', 1;
 	END;
 

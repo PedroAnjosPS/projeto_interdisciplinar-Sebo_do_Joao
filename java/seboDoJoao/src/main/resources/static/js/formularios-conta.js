@@ -166,8 +166,6 @@ function abrirModalEndereco(existente = null) {
                             <div id="erro-end-uf" class="ec-form-erro" role="alert"></div>
                         </div>
 
-                        <!-- ALTERADO: os campos "Quem vai receber" e "Telefone de contato" foram REMOVIDOS. O banco não guarda mais
-                             esses dois dados no endereço: quem recebe é a própria pessoa da conta (nome e telefone do cadastro). -->
                         ${campoDeFormulario({ id: 'end-apelido', rotulo: 'Nome do endereço (opcional)', classe: 'col-12',
                             placeholder: 'Casa, Trabalho...', atributos: 'maxlength="30"' })}
 
@@ -193,7 +191,7 @@ function abrirModalEndereco(existente = null) {
         const $ = (id) => el.querySelector('#' + id);
         const campos = ['cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'apelido'];
 
-        // Preenche os campos (na edição). ALTERADO: não há mais nome/telefone para sugerir (campos removidos).
+        // Preenche os campos com os dados do endereço (quando está editando um que já existe)
         const base = existente || {};
         campos.forEach((campo) => { if (base[campo] != null) $('end-' + campo).value = base[campo]; });
         $('end-sem-numero').checked = Boolean(existente && existente.semNumero);

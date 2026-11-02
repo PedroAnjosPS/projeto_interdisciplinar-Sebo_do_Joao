@@ -17,7 +17,7 @@ import br.com.interdisciplinar.sebodojoao.repository.ItemCarrinhoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: o carrinho de compras do cliente logado, guardado na tabela item_carrinhos.
+// O carrinho de compras do cliente logado, guardado na tabela item_carrinhos.
 //
 // O que o carrinho NÃO faz: ele não baixa o estoque (isso só acontece na compra, pela trigger do banco)
 // e não guarda preço (o preço é sempre o atual do produto). Mesmo assim, ele confere o estoque ao

@@ -94,9 +94,16 @@
             return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
         }
 
-        // ALTERADO: os status agora são os do banco (tabela pedidos): Aguardando pagamento, Processando,
-        // Concluido e Cancelado. Verde = pagamento já aprovado; o resto usa a cor de "atenção".
-        const TEXTO_DO_STATUS = { 'Processando': 'Em preparação', 'Concluido': 'Concluído' };
+        // Os status são os do banco (tabela pedidos): Aguardando pagamento, Processando, Concluido
+        // e Cancelado. Verde = pagamento já aprovado; o resto usa a cor de "atenção".
+        // No status "Processando" o texto depende da entrega: em trânsito o pedido já saiu da loja,
+        // senão ainda está sendo preparado.
+        function textoDoStatus(pedido) {
+            if (pedido.status === PedidosStore.STATUS_PROCESSANDO) {
+                return pedido.entrega.status === 'Em transito' ? 'Em trânsito' : 'Em preparação';
+            }
+            return pedido.status === PedidosStore.STATUS_CONCLUIDO ? 'Concluído' : pedido.status;
+        }
         function classeDoStatus(status) {
             return status === PedidosStore.STATUS_PROCESSANDO || status === PedidosStore.STATUS_CONCLUIDO
                 ? 'ec-status-ok' : 'ec-status-aguardando';
@@ -116,7 +123,7 @@
                             <h3 class="ec-ped-codigo">Pedido ${escaparHtml(p.codigo)}</h3>
                             <p class="ec-texto-suave mb-0">${escaparHtml(dataDoPedido(p.criadoEm))}</p>
                         </div>
-                        <span class="ec-status ${classeDoStatus(p.status)}">${escaparHtml(TEXTO_DO_STATUS[p.status] || p.status)}</span>
+                        <span class="ec-status ${classeDoStatus(p.status)}">${escaparHtml(textoDoStatus(p))}</span>
                     </header>
                     <ul class="ec-ped-itens">${linhas}${resto}</ul>
                     <footer class="ec-ped-rodape">
@@ -132,9 +139,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
-            if (!(await exigirLogin())) return;
+            if (!(await exigirCliente())) return;
 
-            // ALTERADO: a lista agora vem do banco (via Java). Se der erro, mostra o aviso na tela.
+            // A lista vem do banco (via Java). Se der erro, mostra o aviso na tela.
             let pedidos;
             try {
                 pedidos = await PedidosStore.listar();

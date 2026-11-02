@@ -20,7 +20,7 @@ import br.com.interdisciplinar.sebodojoao.repository.EnderecoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.UFRepository;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: as regras dos endereços de entrega do cliente (tela "Meus endereços" e checkout).
+// As regras dos endereços de entrega do cliente (tela "Meus endereços" e checkout).
 //
 // Como o endereço é guardado: a tabela enderecos guarda a rua, o número, o bairro etc. e o NÚMERO DO CEP.
 // A cidade e a UF ficam nas tabelas ceps -> cidades -> ufs. Por isso, ao salvar um endereço, este serviço:

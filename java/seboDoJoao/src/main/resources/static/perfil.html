@@ -128,6 +128,8 @@
             // E-mail só aparece (somenteLeitura): quem troca é a tela Segurança e Privacidade,
             // que pede a senha da conta antes de mudar.
             { chave: 'email', rotulo: 'E-mail', icone: 'fa-envelope', somenteLeitura: true },
+            // Código do funcionário (como o número do crachá): só existe para funcionário e não pode ser alterado
+            { chave: 'codigoFuncionario', rotulo: 'Código do funcionário', icone: 'fa-id-badge', somenteLeitura: true },
             { chave: 'cpf', rotulo: 'CPF', icone: 'fa-id-card', tipo: 'text', placeholder: '000.000.000-00',
               atributos: 'inputmode="numeric" maxlength="14" autocomplete="off"', mascara: formatarCpf, validar: erroDoCpf },
             { chave: 'telefone', rotulo: 'Telefone', icone: 'fa-phone', tipo: 'tel', placeholder: '(00) 00000-0000',
@@ -190,7 +192,7 @@
                 const valor = campo.mascara ? campo.mascara(valorGuardado) : valorGuardado;
 
                 if (!modoEdicao || campo.somenteLeitura) {
-                    const dica = modoEdicao && campo.somenteLeitura
+                    const dica = modoEdicao && campo.chave === 'email'
                         ? `<div class="ec-profile-dica">Para trocar o e-mail, use <a href="seguranca.html" class="ec-link-accent">Segurança e Privacidade</a>.</div>`
                         : '';
                     const exibicao = campo.chave === 'dataNascimento' ? formatarDataBR(valor) : valor;
@@ -238,9 +240,8 @@
 
         // ===== Foto de perfil =====
 
-        // A foto é salva na hora em que é escolhida, igual ao botão de remover. Antes ela só
-        // era enviada no botão Salvar, que nem aparece fora do modo de edição: a imagem
-        // aparecia na tela, mas era perdida ao sair da página.
+        // A foto é salva na hora em que é escolhida, igual ao botão de remover, porque o botão
+        // Salvar nem aparece fora do modo de edição.
         const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024; // mesmo limite do application.yaml
 
         // Atualiza o avatar na tela e no menu
@@ -352,6 +353,9 @@
                 // A lista de campos editáveis também precisa do filtro: sem isso, a tela procuraria
                 // os campos ocultos ao clicar em Editar ou Salvar e pararia com erro.
                 CAMPOS_EDITAVEIS_PERFIL = CAMPOS_PERFIL.filter((campo) => !campo.somenteLeitura);
+            } else {
+                // O código do funcionário não existe para o cliente
+                CAMPOS_PERFIL = CAMPOS_PERFIL.filter((campo) => campo.chave !== 'codigoFuncionario');
             }
 
             renderizarPerfil(false);

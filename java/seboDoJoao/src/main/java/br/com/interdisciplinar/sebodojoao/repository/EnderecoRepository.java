@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.interdisciplinar.sebodojoao.model.Endereco;
 
-// NOVO: consultas da tabela enderecos. O Spring monta o SQL a partir do nome do método
+// Consultas da tabela enderecos. O Spring monta o SQL a partir do nome do método
 // (ex.: "findByCliente_IdAndAtivoTrue..." vira "WHERE cliente_id = ? AND ativo = 1").
 public interface EnderecoRepository extends JpaRepository<Endereco, Long> {
 

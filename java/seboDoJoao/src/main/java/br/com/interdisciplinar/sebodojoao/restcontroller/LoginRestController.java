@@ -33,7 +33,7 @@ public class LoginRestController {
             Cliente cliente = clienteOpt.get();
             // Guarda o perfil no servidor: é nele que as regras de compra vão confiar (ver ControleDeAcesso)
             ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_CLIENTE);
-            // ALTERADO: também guarda o ID do cliente na sessão (usado nas compras e em "Meus pedidos")
+            // Guarda também o ID do cliente na sessão (usado nas compras, no carrinho e em "Meus pedidos")
             ControleDeAcesso.registrarUsuario(sessao, cliente.getId());
             return ResponseEntity.ok(new LoginResponseDTO(cliente.getId(), cliente.getNome(),
                                                             cliente.getEmail(), ControleDeAcesso.PERFIL_CLIENTE,
@@ -45,7 +45,7 @@ public class LoginRestController {
         if (funcionarioOpt.isPresent()) {
             Funcionario funcionario = funcionarioOpt.get();
             ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_FUNCIONARIO);
-            // ALTERADO: o ID do funcionário também fica na sessão
+            // O ID do funcionário também fica guardado na sessão
             ControleDeAcesso.registrarUsuario(sessao, funcionario.getId());
             return ResponseEntity.ok(new LoginResponseDTO(funcionario.getId(), funcionario.getNome(),
                                                             funcionario.getEmail(), ControleDeAcesso.PERFIL_FUNCIONARIO,

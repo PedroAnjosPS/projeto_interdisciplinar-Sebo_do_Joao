@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import br.com.interdisciplinar.sebodojoao.model.ItemCarrinho;
 import br.com.interdisciplinar.sebodojoao.model.ItemCarrinhoId;
 
-// NOVO: consultas da tabela item_carrinhos (o carrinho de cada cliente).
+// Consultas da tabela item_carrinhos (o carrinho de cada cliente).
 public interface ItemCarrinhoRepository extends JpaRepository<ItemCarrinho, ItemCarrinhoId> {
 
     // O carrinho do cliente, na ordem em que os itens foram sendo adicionados

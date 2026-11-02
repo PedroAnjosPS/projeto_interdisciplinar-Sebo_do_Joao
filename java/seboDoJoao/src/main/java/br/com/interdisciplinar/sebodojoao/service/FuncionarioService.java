@@ -12,7 +12,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FuncionarioService {
-    // ALTERADO: o CepRepository saiu daqui, pois o funcionário não tem mais CEP/endereço cadastrado.
     private final FuncionarioRepository funcionarioRepository;
 
     public List<FuncionarioResponseDTO> listarTodos() {

@@ -21,9 +21,8 @@ SELECT pe.id AS pedido_id, pe.data, pe.total,
 			WHEN 4 THEN 'Entregue'
 			WHEN 5 THEN 'Cancelado'
 		END AS status_entrega,
-		-- ALTERADO: colunas novas no FINAL da view (as antigas continuam iguais, então quem já usa a view não é afetado): --
-		-- (destinatário e telefone_entrega são o nome e o telefone da conta do cliente: o endereço não guarda mais esses dados) --
-		-- o valor do frete (entregas.valor_frete) e o endereço de entrega (tabelas enderecos, ceps, cidades). --
+		-- Colunas com o frete e o endereço de entrega (tabelas enderecos, ceps e cidades). --
+		-- O destinatario e o telefone_entrega são o nome e o telefone da conta do cliente. --
 		en.valor_frete,
 		uc.nome AS destinatario, uc.telefone AS telefone_entrega, ed.logradouro, ed.numero AS numero_endereco,
 		ed.complemento, ed.bairro, ed.cep_numero, ci.nome AS cidade, ci.uf_sigla AS uf
@@ -33,7 +32,7 @@ INNER JOIN	usuarios uc			ON uc.id			=	cl.usuario_id
 INNER JOIN	funcionarios fu		ON fu.usuario_id	=	pe.funcionario_id
 INNER JOIN	usuarios uf			ON uf.id			=	fu.usuario_id
 LEFT JOIN	entregas en			ON en.id			=   pe.entrega_id
--- ALTERADO: junta o endereço da entrega, com o CEP, a cidade e a UF dele --
+-- Junta o endereço da entrega com o seu CEP, a cidade e a UF --
 LEFT JOIN	enderecos ed		ON ed.id			=   en.endereco_id
 LEFT JOIN	ceps ce				ON ce.numero_cep	=   ed.cep_numero
 LEFT JOIN	cidades ci			ON ci.id			=   ce.cidade_id;

@@ -13,7 +13,7 @@ public record EntregaRequestDTO(
         LocalDate dataPrevisaoEntrega,
         LocalDateTime dataEntrega,
         StatusEntrega status,
-        // NOVO: valor do frete e endereço de destino da entrega (colunas valor_frete e endereco_id)
+        // Valor do frete e endereço de destino da entrega (colunas valor_frete e endereco_id)
         BigDecimal valorFrete,
         Long enderecoId
 ) { }

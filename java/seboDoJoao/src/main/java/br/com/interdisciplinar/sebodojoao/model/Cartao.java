@@ -3,7 +3,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-// NOVO: representa a tabela "cartoes": um cartão salvo por um cliente.
+// Representa a tabela "cartoes": um cartão salvo por um cliente.
 // ATENÇÃO À SEGURANÇA: o número completo e o código de segurança (CVV) NUNCA são guardados.
 // Só ficam a bandeira, os 4 últimos dígitos, o nome do titular e a validade.
 @Entity

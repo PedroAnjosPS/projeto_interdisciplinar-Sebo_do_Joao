@@ -17,8 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClienteService {
     private final ClienteRepository clienteRepository;
-    // ALTERADO: o CepRepository saiu (o cliente não tem mais CEP direto). Entraram estes três, usados só
-    // na exclusão da conta: o cliente tem endereços, cartões e carrinho, que precisam sair junto com ele.
+    // Estes três repositórios são usados na exclusão da conta: o cliente tem endereços, cartões
+    // e carrinho, que precisam ser apagados junto com ele.
     private final EnderecoRepository enderecoRepository;
     private final CartaoRepository cartaoRepository;
     private final ItemCarrinhoRepository itemCarrinhoRepository;
@@ -131,9 +131,9 @@ public class ClienteService {
         );
     }
 
-    // ALTERADO: antes só apagava o cliente. Agora apaga também o que pertence a ele (carrinho, cartões e endereços),
-    // tudo numa transação só (se algo falhar, nada é apagado). Se o cliente já tiver pedidos, o banco
-    // recusa a exclusão (o histórico de compras precisa ser mantido) e a transação inteira é desfeita.
+    // Exclui o cliente e também o que pertence a ele (carrinho, cartões e endereços), tudo numa transação
+    // só: se algo falhar, nada é apagado. Se o cliente já tiver pedidos, o banco recusa a exclusão
+    // (o histórico de compras precisa ser mantido) e a transação inteira é desfeita.
     @Transactional
     public void excluir(Long id) {
         itemCarrinhoRepository.apagarDoCliente(id);

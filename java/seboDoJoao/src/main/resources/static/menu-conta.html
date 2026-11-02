@@ -74,6 +74,7 @@
             <div>
                 <h2 id="conta-nome" class="ec-conta-nome mb-1">&nbsp;</h2>
                 <p id="conta-email" class="ec-conta-email mb-0">&nbsp;</p>
+                <p id="conta-codigo" class="ec-conta-email mb-0 d-none"></p>
             </div>
         </div>
 
@@ -93,14 +94,14 @@
                     <p class="ec-conta-card-descricao">E-mail, senha, cookies e exclusão da conta</p>
                     </a>
                 </div>
-                <div class="col">
+                <div class="col" data-ec-so-cliente>
                     <a href="enderecos.html" class="ec-conta-card text-decoration-none h-100">
                     <i class="fas fa-location-dot ec-conta-card-icone"></i>
                     <h3 class="ec-conta-card-titulo">Endereço</h3>
                     <p class="ec-conta-card-descricao">Endereços salvos em sua conta</p>
                     </a>
                 </div>
-                <div class="col">
+                <div class="col" data-ec-so-cliente>
                     <a href="cartoes.html" class="ec-conta-card text-decoration-none h-100">
                     <i class="fas fa-credit-card ec-conta-card-icone"></i>
                     <h3 class="ec-conta-card-titulo">Cartões</h3>
@@ -134,6 +135,15 @@
 
             document.getElementById('conta-nome').textContent = usuario.nome;
             document.getElementById('conta-email').textContent = usuario.email;
+
+            // O código do funcionário só é mostrado (não dá para alterar). Sessões antigas
+            // podem não tê-lo guardado, então ele é buscado no banco nesse caso.
+            if (UsuarioStore.ehAdmin(usuario)) {
+                const completo = usuario.codigoFuncionario ? usuario : await UsuarioStore.recarregar();
+                const campoCodigo = document.getElementById('conta-codigo');
+                campoCodigo.textContent = 'Código do funcionário: ' + (completo.codigoFuncionario || '—');
+                campoCodigo.classList.remove('d-none');
+            }
 
             // Foto de perfil no lugar do ícone (se o usuário já colocou uma)
             if (usuario.fotoPerfil) {

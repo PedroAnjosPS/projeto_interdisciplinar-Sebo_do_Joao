@@ -21,9 +21,9 @@ INSERT INTO ufs (sigla, nome) VALUES
 ('ES', 'Espírito Santo');
 GO
 
--- ALTERADO: os 17 estados que faltavam. Agora as 27 UFs do Brasil estão cadastradas. --
--- Motivo: ao salvar um endereço, o Java procura a UF informada nesta tabela (ela precisa existir, pois a --
--- coluna "nome" é obrigatória) e cria sozinho a cidade e o CEP que ainda não estiverem cadastrados. --
+-- Demais estados do Brasil, completando as 27 UFs. --
+-- Ao salvar um endereço, o Java procura a UF informada nesta tabela (ela precisa existir) e --
+-- cadastra sozinho a cidade e o CEP que ainda não estiverem cadastrados. --
 INSERT INTO ufs (sigla, nome) VALUES
 ('AC', 'Acre'),
 ('AL', 'Alagoas'),
@@ -73,8 +73,8 @@ INSERT INTO ceps (numero_cep, cidade_id) VALUES
 GO
 
 -- Tabela Usuarios --
--- ALTERADO: a tabela usuarios não tem mais logradouro, bairro e cep_numero. O endereço agora fica na --
--- tabela enderecos (veja mais abaixo), que pertence ao cliente. Funcionários não têm endereço cadastrado. --
+-- A tabela usuarios guarda só os dados da conta. O endereço fica na tabela enderecos (mais abaixo), --
+-- que pertence ao cliente. Os funcionários não têm endereço cadastrado. --
 INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
 ('João da Silva', 'joao.silva@email.com', 'hash123', 1, '(17) 99111-2222'),
 ('Maria Oliveira', 'maria.oliveira@email.com', 'hash123', 1, '(11) 98222-3333'),
@@ -90,9 +90,8 @@ GO
 
 -- Tabela Clientes --
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES 
--- ALTERADO: os CPFs abaixo mantêm os mesmos 9 primeiros números de antes, mas com os 2 dígitos --
--- verificadores corretos. Antes (ex.: 111.222.333-44) o site os recusava como "CPF inválido" --
--- e o cliente não conseguia salvar o perfil. --
+-- Os CPFs abaixo têm os dois dígitos verificadores corretos. O site recusa CPFs inválidos, --
+-- então CPFs de exemplo com dígitos errados impediriam o cliente de salvar o perfil. --
 (1, '1985-04-12', '111.222.333-96'),
 (2, '1992-09-25', '222.333.444-05'),
 (3, '1978-12-03', '333.444.555-08'),
@@ -110,10 +109,9 @@ INSERT INTO funcionarios (usuario_id, codigo_funcionario, admin) VALUES
 GO
 
 -- Tabela Enderecos --
--- NOVO: endereços de entrega dos clientes (1 a 6). O endereço de cada cliente é o que antes ficava --
--- na tabela usuarios (rua, bairro e CEP); o João tem um segundo endereço para demonstrar que um --
--- cliente pode ter vários. "padrao" = 1 marca o endereço que já vem escolhido no checkout (só um por cliente). --
--- Os endereços também são usados pelas entregas (veja a tabela entregas, coluna endereco_id). --
+-- Endereços de entrega dos clientes (1 a 6). O João tem dois endereços, para mostrar que um --
+-- cliente pode ter vários. "padrao" = 1 marca o endereço que já vem escolhido no checkout --
+-- (só um por cliente). Estes endereços também são usados pelas entregas (coluna endereco_id). --
 INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, padrao, cep_numero, cliente_id) VALUES
 ('Rua das Flores',  '100',  NULL,       'Centro',      1, 'Casa',      1, '15010-000', 1), -- 1
 ('Av. Brasil',      '2500', 'Sala 12',  'Boa Vista',   1, 'Trabalho',  0, '15010-000', 1), -- 2
@@ -125,8 +123,8 @@ INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, 
 GO
 
 -- Tabela Cartoes --
--- NOVO: cartões salvos pelos clientes. Só ficam a bandeira, os 4 últimos dígitos, o nome do titular e a --
--- validade (MM/AA). O número completo e o CVV NUNCA são guardados. "padrao" = 1: cartão já escolhido no checkout. --
+-- Cartões salvos pelos clientes. Ficam guardados só a bandeira, os 4 últimos dígitos, o nome do titular --
+-- e a validade (MM/AA). O número completo e o CVV nunca são guardados. "padrao" = 1: cartão já escolhido no checkout. --
 INSERT INTO cartoes (bandeira, final_numero, titular, validade, padrao, cliente_id) VALUES
 ('visa',       '4242', 'JOAO DA SILVA',   '12/30', 1, 1),
 ('mastercard', '5555', 'MARIA OLIVEIRA',  '08/29', 1, 2),
@@ -160,15 +158,25 @@ INSERT INTO generos (nome) VALUES
 ('Aventura'),
 ('Rap'),
 ('Didático'),
-('Biografia')
+('Biografia'),
+('Romance'),
+('Fantasia'),
+('Drama'),
+('Comédia'),
+('Auto-ajuda'),
+('Científico'),
+('Documentário'),
+('Pop'),
+('MPB'),
+('Jazz')
 GO
 
 -- Tabela Produtos --
 INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, genero_id, funcionario_id) VALUES 
 -- Categoria: Livros (1)
-('Dom Casmurro', 'Edição clássica de Machado de Assis.', 5, 35.00, 1, 1, 9, 7),         -- Gênero: Didático (9)
+('Dom Casmurro', 'Edição clássica de Machado de Assis.', 5, 35.00, 1, 1, 11, 7),        -- Gênero: Romance (11)
 ('2001: Uma Odisséia no Espaço', 'Obra-prima de Arthur C. Clarke.', 3, 45.50, 1, 1, 1, 7),                -- Gênero: Ficção Científica (1)
-('Uma Breve História do Tempo', 'Física por Stephen Hawking.', 2, 40.00, 1, 1, 9, 7),       -- Gênero: Didático (9)
+('Uma Breve História do Tempo', 'Física por Stephen Hawking.', 2, 40.00, 1, 1, 16, 7),     -- Gênero: Científico (16)
 -- Categoria: HQs (2)
 ('Batman: O Cavaleiro das Trevas', 'HQ clássica da DC Comics.', 4, 55.00, 1, 2, 6, 7), -- Gênero: Ação (6)
 ('The Sandman Vol. 1', 'Obra de Neil Gaiman.', 6, 60.00, 1, 2, 7, 7),                  -- Gênero: Aventura (7)
@@ -197,12 +205,12 @@ INSERT INTO imagem_produtos (caminho, produto_id) VALUES
 ('/imagens/produtos/imagemProduto7.jpg', 7),
 ('/imagens/produtos/imagemProduto8.jpg', 8),
 ('/imagens/produtos/imagemProduto9.jpg', 9),
-('/imagens/produtos/ImagemProduto10.jpg', 10); -- ALTERADO: o arquivo se chama "ImagemProduto10.jpg" (I maiúsculo); em sistemas que diferenciam maiúsculas o caminho antigo não achava a imagem
+('/imagens/produtos/ImagemProduto10.jpg', 10); -- o arquivo se chama "ImagemProduto10.jpg" (com I maiúsculo); em sistemas que diferenciam maiúsculas de minúsculas o caminho precisa ser idêntico
 GO
 
 -- Tabela Item_Carrinhos --
--- NOVO: carrinhos de compras que ainda não viraram pedido (clientes 3 e 4). Guarda só o produto e a --
--- quantidade; o preço é sempre o preço atual do produto, e o estoque só é baixado quando a compra é finalizada. --
+-- Carrinhos de compras que ainda não viraram pedido (clientes 3 e 4). Guardam só o produto e a --
+-- quantidade: o preço é sempre o preço atual do produto, e o estoque só é baixado quando a compra é finalizada. --
 INSERT INTO item_carrinhos (cliente_id, produto_id, quantidade) VALUES
 (3, 1, 1),
 (3, 5, 2),
@@ -210,12 +218,11 @@ INSERT INTO item_carrinhos (cliente_id, produto_id, quantidade) VALUES
 GO
 
 -- Tabela Entregas --
--- ALTERADO (nova coluna endereco_id): cada entrega aponta para o endereço do cliente que fez o pedido. --
--- O valor do frete (valor_frete) não foi informado: vale o padrão 0, porque os totais dos pedidos abaixo --
--- são só a soma dos itens (compras com retirada/frete grátis). --
--- ALTERADO: antes todas as entregas estavam "Pendente (1)", mas já tinham código de rastreio, e a --
--- data de postagem era a do dia em que o script rodava. Agora cada entrega tem um status coerente --
--- com o seu pedido, seguindo a mesma regra da procedure sp_avancar_entrega: --
+-- Cada entrega aponta para o endereço do cliente que fez o pedido (coluna endereco_id). --
+-- O valor do frete (valor_frete) não é informado e vale o padrão 0, pois os totais dos pedidos abaixo --
+-- são só a soma dos itens (compras com retirada ou frete grátis). --
+-- O status de cada entrega é coerente com o do seu pedido, seguindo a mesma regra da procedure --
+-- sp_avancar_entrega: --
 --   * link, código e data de postagem só existem quando a entrega está EM TRÂNSITO (3) ou ENTREGUE (4); --
 --   * a data de entrega só existe quando a entrega foi concluída (4). --
 -- A entrega N pertence ao pedido N (entrega 1 -> pedido 1, entrega 2 -> pedido 2...). --
@@ -234,13 +241,10 @@ INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, da
 GO
 
 -- Tabela Pedidos --
--- ALTERADO: --
---   * cliente_id 2002 não existe neste script (os clientes são os IDs 1 a 6); trocado por 2; --
---   * o total de cada pedido agora é a soma dos seus itens (veja a tabela item_pedidos); --
---   * "data" passou a ser informada (antes valia o dia em que o script rodava, depois dos vencimentos e --
---     das previsões de entrega); --
---   * o status acompanha os pagamentos e a entrega: 1 Aguardando pagamento (há pagamento pendente), --
---     2 Processando (todos os pagamentos aprovados), 3 Concluído (entrega entregue), 4 Cancelado. --
+-- O total de cada pedido é a soma dos seus itens (veja a tabela item_pedidos). --
+-- A data de cada pedido é informada, para ficar anterior aos vencimentos e às previsões de entrega. --
+-- O status acompanha os pagamentos e a entrega: 1 Aguardando pagamento (há pagamento pendente), --
+-- 2 Processando (todos os pagamentos aprovados), 3 Concluído (entrega entregue), 4 Cancelado. --
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) VALUES
 ('2026-10-05T10:15:00',  80.50, 3,  1, 1, 7),   -- 1: Concluído
 ('2026-10-08T14:30:00',  45.50, 3,  2, 2, 8),   -- 2: Concluído
@@ -258,12 +262,10 @@ select * from pedidos
 select * from produtos
 
 -- Tabela Item_Pedidos --
--- ALTERADO: --
---   * os pedidos agora são 1 a 10 (antes apontavam para 1004 a 1013, que só existiam no banco antigo); --
---   * o preço de cada item é o preço do produto cadastrado (antes eram valores sem relação com ele); --
---   * os pedidos 1 e 10 têm dois produtos e o produto 2 e o produto 8 aparecem em mais de um pedido, --
---     o que demonstra o relacionamento N x N entre pedidos e produtos; --
---   * o pedido 7 tem 2 unidades do produto 7. --
+-- O preço de cada item é o preço do produto cadastrado. --
+-- Os pedidos 1 e 10 têm dois produtos, e os produtos 2 e 8 aparecem em mais de um pedido, --
+-- o que demonstra o relacionamento N x N entre pedidos e produtos. --
+-- O pedido 7 tem 2 unidades do produto 7. --
 INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VALUES
 (1,  1, 1,  35.00),
 (1,  2, 1,  45.50),
@@ -279,10 +281,10 @@ INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VAL
 (10, 8, 1,  30.00);
 GO
 
--- ALTERADO: baixa do estoque dos produtos vendidos. As triggers só são criadas depois deste arquivo, --
--- então a baixa é feita aqui, no mesmo cálculo da trigger tr_item_pedidos_baixa_estoque. --
--- Pedidos cancelados (status 4) não consomem estoque. Os dados da tabela produtos não foram mexidos: --
--- o estoque inserido lá é o estoque inicial. --
+-- Baixa do estoque dos produtos vendidos. As triggers só são criadas depois deste arquivo, --
+-- então a baixa é feita aqui, com o mesmo cálculo da trigger tr_item_pedidos_baixa_estoque. --
+-- Pedidos cancelados (status 4) não consomem estoque. O estoque informado na tabela produtos --
+-- é o estoque inicial, antes dessas vendas. --
 UPDATE prod SET prod.estoque = prod.estoque - vendidos.quantidade_total
 FROM produtos prod
 INNER JOIN (
@@ -295,17 +297,15 @@ INNER JOIN (
 GO
 
 -- Tabela Pagamentos --
--- ALTERADO: --
---   * pedido_id agora é 1 a 10 (antes 1004 a 1013); --
---   * a soma das parcelas de cada pedido é igual ao total do pedido; --
---   * "CARTAO_DEBITO" não é uma forma aceita pelo sistema (só PIX, CARTAO_CREDITO e BOLETO); --
---   * parcelamento só no cartão de crédito e em até 3 vezes (regra da loja); os centavos sobram na --
---     última parcela, como na função fn_parcelas (ex.: 70,00 em 3x = 23,33 + 23,33 + 23,34); --
---   * o status acompanha o pedido: pagamento APROVADO (2) tem data_pagamento; PENDENTE (1) não tem; --
---     o boleto do pedido cancelado (7) ficou RECUSADO (3), como faz a procedure sp_cancelar_pedido; --
---   * os vencimentos não são mais anteriores à data do pedido. --
--- ALTERADO: duas colunas novas, bandeira e final_cartao: guardam a bandeira e os 4 últimos dígitos do cartão usado no pagamento (NULL em PIX e boleto). --
--- Status: 1 Pendente | 2 Aprovado | 3 Recusado --
+-- A soma das parcelas de cada pedido é igual ao total do pedido. --
+-- As formas de pagamento aceitas pelo sistema são PIX, CARTAO_CREDITO e BOLETO. --
+-- O parcelamento só existe no cartão de crédito, em até 3 vezes (regra da loja), e os centavos --
+-- sobram na última parcela, como na função fn_parcelas (ex.: 70,00 em 3x = 23,33 + 23,33 + 23,34). --
+-- O status acompanha o pedido: pagamento APROVADO (2) tem data_pagamento e PENDENTE (1) não tem. --
+-- O boleto do pedido cancelado (7) ficou RECUSADO (3), como faz a procedure sp_cancelar_pedido. --
+-- Os vencimentos nunca são anteriores à data do pedido. --
+-- As colunas bandeira e final_cartao guardam a bandeira e os 4 últimos dígitos do cartão usado (NULL em PIX e boleto). --
+-- Status: 1 Pendente | 2 Aprovado | 3 Recusado | 4 Compra estornada (pagamento aprovado de pedido cancelado) --
 INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, data_pagamento, bandeira, final_cartao, pedido_id) VALUES
 (1, 2,  80.50, 1, 'PIX',            '2026-10-05', '2026-10-05', NULL, NULL, 1),
 (1, 2,  45.50, 1, 'CARTAO_CREDITO', '2026-10-08', '2026-10-08', 'mastercard', '5555', 2),

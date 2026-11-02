@@ -36,7 +36,9 @@ const ProdutosStore = (() => {
     };
     const NOMES_GENEROS = {
         1: 'Ficção Científica', 2: 'Terror', 3: 'Suspense', 4: 'Rock', 5: 'Heavy Metal',
-        6: 'Ação', 7: 'Aventura', 8: 'Rap', 9: 'Didático', 10: 'Biografia'
+        6: 'Ação', 7: 'Aventura', 8: 'Rap', 9: 'Didático', 10: 'Biografia',
+        11: 'Romance', 12: 'Fantasia', 13: 'Drama', 14: 'Comédia', 15: 'Auto-ajuda',
+        16: 'Científico', 17: 'Documentário', 18: 'Pop', 19: 'MPB', 20: 'Jazz'
     };
 
     function completarProduto(produto) {

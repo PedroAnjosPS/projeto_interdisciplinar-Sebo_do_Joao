@@ -1,6 +1,6 @@
 package br.com.interdisciplinar.sebodojoao.dto;
 
-// NOVO: um endereço no formato que o site recebe do Java. A cidade e a UF vêm das tabelas
+// Um endereço no formato que o site recebe do Java. A cidade e a UF vêm das tabelas
 // ceps -> cidades -> ufs (o endereço guarda só o número do CEP).
 public record EnderecoResponseDTO(
         Long id,

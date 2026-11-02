@@ -4,8 +4,8 @@ import br.com.interdisciplinar.sebodojoao.model.StatusUsuario;
 
 import java.time.LocalDate;
 
-// ALTERADO: os campos bairro, logradouro e cepNumero foram removidos: o endereço agora fica na tabela
-// enderecos (veja EnderecoRequestDTO e EnderecoResponseDTO), e não mais junto dos dados da conta.
+// O endereço não faz parte destes dados: ele fica na tabela enderecos
+// (veja EnderecoRequestDTO e EnderecoResponseDTO).
 public record ClienteRequestDTO(
         String nome,
         String email,

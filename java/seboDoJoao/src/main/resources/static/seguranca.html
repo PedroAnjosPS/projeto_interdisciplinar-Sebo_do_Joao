@@ -178,7 +178,7 @@
                     <i class="fas fa-cookie-bite ec-seguranca-icone"></i>
                     <div>
                         <h3 id="titulo-cookies" class="ec-seguranca-titulo">Cookies e dados do navegador</h3>
-                        <p class="ec-seguranca-descricao">
+                        <p id="descricao-cookies" class="ec-seguranca-descricao">
                             O site guarda neste navegador o seu carrinho e dados temporários de navegação.
                             Apagar não exclui a sua conta nem encerra o seu login.
                         </p>
@@ -383,6 +383,8 @@
 
         // --- Cookies ---
         async function mostrarResumoCookies() {
+            // Funcionário não tem carrinho, então não há nada para dizer sobre ele
+            if (UsuarioStore.ehAdmin(UsuarioStore.lerSessao())) return;
             const itens = await CarrinhoStore.contarItens();
             document.getElementById('resumo-cookies').textContent = itens === 0
                 ? 'Seu carrinho está vazio.'
@@ -443,7 +445,12 @@
             document.getElementById('senha-usuario-oculto').value = usuario.email;
 
             // O administrador não pode excluir a própria conta
-            if (UsuarioStore.ehAdmin(usuario)) document.getElementById('secao-excluir').remove();
+            if (UsuarioStore.ehAdmin(usuario)) {
+                document.getElementById('secao-excluir').remove();
+                document.getElementById('descricao-cookies').textContent =
+                    'O site guarda neste navegador dados temporários de navegação. ' +
+                    'Apagar não exclui a sua conta nem encerra o seu login.';
+            }
 
             mostrarResumoCookies();
             atualizarCabecalhoConta();

@@ -3,7 +3,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-// NOVO: representa a tabela "enderecos" do banco: um endereço de entrega de um cliente.
+// Representa a tabela "enderecos" do banco: um endereço de entrega de um cliente.
 // Um cliente pode ter vários endereços. A cidade e a UF não ficam aqui: ficam nas tabelas
 // ceps -> cidades -> ufs (o endereço aponta para o CEP, e o CEP aponta para a cidade).
 @Entity
@@ -45,8 +45,7 @@ public class Endereco {
     @Column(name = "padrao", nullable = false)
     private Boolean padrao = false;
 
-    // ALTERADO: os campos "destinatario" e "telefone" foram removidos. Quem recebe é o próprio cliente
-    // (nome e telefone ficam na conta dele, em usuarios).
+    // Quem recebe a entrega é o próprio cliente: o nome e o telefone ficam na conta dele (tabela usuarios).
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cep_numero", nullable = false)

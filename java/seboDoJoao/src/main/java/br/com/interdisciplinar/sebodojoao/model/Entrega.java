@@ -36,11 +36,11 @@ public class Entrega {
     @Column(name = "data_entrega", nullable = false)
     private LocalDateTime dataEntrega;
 
-    // NOVO: valor do frete desta entrega (pedidos.total = produtos + frete)
+    // Valor do frete desta entrega (pedidos.total = produtos + frete)
     @Column(name = "valor_frete", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorFrete = BigDecimal.ZERO;
 
-    // NOVO: para onde a entrega vai (tabela enderecos)
+    // Para onde a entrega vai (tabela enderecos)
     @ManyToOne
     @JoinColumn(name = "endereco_id", nullable = false)
     private Endereco endereco;

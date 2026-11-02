@@ -16,7 +16,7 @@ import br.com.interdisciplinar.sebodojoao.service.CarrinhoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: rotas do carrinho de compras do cliente logado (tabela item_carrinhos).
+// Rotas do carrinho de compras do cliente logado (tabela item_carrinhos).
 // O cliente vem da SESSÃO de login: cada pessoa só enxerga e altera o próprio carrinho.
 // Quem ainda não fez login usa um carrinho temporário no navegador (ver CarrinhoStore, em vitrine.js).
 @RestController

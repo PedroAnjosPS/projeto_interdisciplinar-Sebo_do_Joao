@@ -16,7 +16,7 @@ import br.com.interdisciplinar.sebodojoao.service.CartaoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: rotas dos cartões salvos ("Meus cartões" e checkout). O cliente vem da SESSÃO de login.
+// Rotas dos cartões salvos ("Meus cartões" e checkout). O cliente vem da SESSÃO de login.
 // Nenhuma rota recebe ou devolve o número completo do cartão nem o CVV (eles não existem no banco).
 @RestController
 @RequestMapping("/api/cartoes")

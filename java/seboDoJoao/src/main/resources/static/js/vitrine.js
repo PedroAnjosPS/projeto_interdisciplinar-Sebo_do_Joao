@@ -11,7 +11,7 @@
 //   1. Máscaras e validações (CPF, telefone, nome, e-mail, nascimento, CEP, endereço, cartão)
 //   2. CarrinhoStore  — carrinho de compras (no banco para cliente logado; no navegador para visitante)
 //   3. EnderecosStore, CartoesStore e PedidosStore — endereços, cartões e pedidos da conta
-//      (ALTERADO: agora todos conversam com a API Java e ficam gravados no banco de dados)
+//      (todos conversam com a API Java e ficam gravados no banco de dados)
 //   4. Funções de apoio (preço, badge do carrinho, cabeçalho logado/deslogado)
 //   5. Aviso rápido (toast) e card de produto
 //   6. Área do administrador (exigirAdmin, sair, mostrar senha)
@@ -204,8 +204,8 @@ function errosDoEndereco(e) {
     };
 
     if (texto(e.apelido).length > 30) erros.apelido = 'Use no máximo 30 caracteres.';
-    // ALTERADO: a conferência de "destinatário" e "telefone" foi removida: o endereço não tem mais esses campos
-    // (quem recebe é a pessoa da conta, com o nome e o telefone do cadastro).
+    // O endereço não tem destinatário nem telefone próprios: quem recebe é a pessoa da conta,
+    // com o nome e o telefone do cadastro.
 
     const erroCep = erroDoCep(e.cep);
     if (erroCep) erros.cep = erroCep;
@@ -324,13 +324,12 @@ function erroDoTitularDoCartao(texto) {
 }
 // ===== FIM: mascaras-e-validacoes =====
 
-// ProdutosStore agora fica em js/produtos-store.js (conversa com a API /api/produtos).
+// O ProdutosStore fica em js/produtos-store.js (conversa com a API /api/produtos).
 
 // ===== INÍCIO: carrinho-store =====
 // Camada de acesso ao carrinho de compras (mesma ideia do ProdutosStore).
 //
-// ALTERADO (bloco inteiro): antes o carrinho de TODO mundo ficava só no localStorage do navegador.
-// Agora existem dois carrinhos, e este arquivo escolhe o certo sozinho:
+// Existem dois tipos de carrinho, e este arquivo escolhe o certo sozinho:
 //   - CLIENTE LOGADO  -> o carrinho fica no BANCO DE DADOS (tabela item_carrinhos), pela API /api/carrinho.
 //                        Assim ele acompanha a conta em qualquer computador ou navegador.
 //   - VISITANTE (sem login) -> carrinho temporário no navegador (localStorage), porque ainda não há conta
@@ -339,7 +338,7 @@ function erroDoTitularDoCartao(texto) {
 //   - FUNCIONÁRIO     -> não usa carrinho (não compra).
 // Só guardamos { id, quantidade } de cada item. Nome, preço e imagem vêm do ProdutosStore na hora de
 // mostrar a tela, assim o preço nunca fica desatualizado.
-// As telas continuam chamando as mesmas funções de antes (listar, adicionar, remover...): não mudou nada para elas.
+// As telas só chamam as funções daqui (listar, adicionar, remover...) e não precisam saber onde o carrinho fica guardado.
 const CarrinhoStore = (() => {
     const PREFIXO = 'sebo_do_joao_carrinho';
     const CHAVE_LOCALSTORAGE = PREFIXO; // carrinho do visitante (nome antigo, mantido)
@@ -516,14 +515,13 @@ const CarrinhoStore = (() => {
 // ===== FIM: carrinho-store =====
 
 
-// UsuarioStore agora fica em js/usuario-store.js (conversa com a API /api/login e /api/clientes).
+// O UsuarioStore fica em js/usuario-store.js (conversa com a API /api/login e /api/clientes).
 
 // ===== INÍCIO: enderecos-cartoes-pedidos =====
 // Endereços, cartões e pedidos da conta logada. Mesma ideia dos outros Stores: as telas só
 // chamam estas funções, e cada uma faz uma chamada à API Java (/api/enderecos, /api/cartoes,
-// /api/compras), que grava no SQL Server. ALTERADO: antes endereços e cartões ficavam no
-// localStorage; agora tudo está no banco, e o Java usa o login da sessão para saber quem é o
-// dono (cada conta só enxerga os próprios registros).
+// /api/compras), que grava no SQL Server. O Java usa o login da sessão para saber quem é o
+// dono dos dados (cada conta só enxerga os próprios registros).
 
 // Devolve a conta logada ou avisa que precisa entrar
 async function usuarioLogadoOuErro() {
@@ -533,10 +531,9 @@ async function usuarioLogadoOuErro() {
 }
 
 // ----- Endereços -----
-// ALTERADO (bloco inteiro): antes os endereços ficavam só no localStorage do navegador. Agora são gravados
-// no BANCO (tabela enderecos), pela API /api/enderecos. Quem é o dono vem do login (o Java usa a sessão),
-// então cada conta só enxerga os próprios endereços. As funções são as mesmas de antes (listar, obter,
-// salvar, definirPadrao, remover), por isso as telas quase não mudaram.
+// Os endereços ficam gravados no banco (tabela enderecos), pela API /api/enderecos. Quem é o dono
+// vem do login (o Java usa a sessão), então cada conta só enxerga os próprios endereços.
+// As funções são listar, obter, salvar, definirPadrao e remover.
 //
 // Dois "formatos" de endereço convivem:
 //   - o do BANCO/Java:  { logradouro, numero (null = sem número), complemento, ... }
@@ -549,7 +546,7 @@ const EnderecosStore = (() => {
         return {
             id: e.id,
             apelido: e.apelido,
-            // ALTERADO: o banco não guarda mais destinatário e telefone no endereço. Para as telas que ainda mostram
+            // O banco não guarda destinatário e telefone no endereço. Para as telas que mostram
             // "nome · telefone" junto do endereço, usamos o nome e o telefone da conta logada (cadastro).
             destinatario: (UsuarioStore.lerSessao() || {}).nome || '',
             telefone: (UsuarioStore.lerSessao() || {}).telefone || '',
@@ -632,10 +629,9 @@ const EnderecosStore = (() => {
 })();
 
 // ----- Cartões -----
-// ALTERADO (bloco inteiro): antes os cartões ficavam só no localStorage do navegador. Agora são gravados no
-// BANCO (tabela cartoes), pela API /api/cartoes. Continua valendo a regra de segurança: o número completo e o
-// CVV são conferidos aqui e JOGADOS FORA na hora; só a bandeira, os 4 últimos dígitos, o nome e a validade
-// seguem para o Java e para o banco.
+// Os cartões ficam gravados no banco (tabela cartoes), pela API /api/cartoes. Por segurança, o número
+// completo e o CVV são conferidos aqui e descartados na hora: só a bandeira, os 4 últimos dígitos,
+// o nome e a validade seguem para o Java e para o banco.
 const CartoesStore = (() => {
     const LIMITE = 6; // o Java confere o mesmo limite (CartaoService.LIMITE)
 
@@ -745,8 +741,8 @@ function calcularOpcoesDeFrete(cep, subtotal) {
         `Chegará entre ${formatarDataCurta(somarDiasUteis(hoje, min))} e ${formatarDataCurta(somarDiasUteis(hoje, max))}`;
     const gratis = subtotal >= VALOR_PARA_FRETE_GRATIS;
 
-    // ALTERADO: cada opção ganhou "prazoDias" (o prazo máximo, em dias úteis). Ele é enviado ao Java na
-    // compra e o banco usa para calcular a data de previsão de entrega (entregas.data_previsao_entrega).
+    // Cada opção tem "prazoDias" (o prazo máximo, em dias úteis). Ele é enviado ao Java na compra e o
+    // banco o usa para calcular a data de previsão de entrega (entregas.data_previsao_entrega).
     return [
         {
             id: 'economico', nome: 'Econômico', preco: gratis ? 0 : tabela.eco[0],
@@ -762,8 +758,8 @@ function calcularOpcoesDeFrete(cep, subtotal) {
 }
 
 // Parcelas sem juros: até 3x, com parcela mínima de R$ 20
-// ALTERADO: o limite era 6 e agora é 3, igual à regra do banco (@max_parcelas na procedure
-// sp_finalizar_compra). Se a regra de negócio mudar, altere os dois lugares.
+// O limite (3) é o mesmo da regra do banco (@max_parcelas na procedure sp_finalizar_compra).
+// Se a regra de negócio mudar, é preciso alterar os dois lugares.
 const MAX_PARCELAS = 3;
 function calcularParcelas(total) {
     const maximo = Math.max(1, Math.min(MAX_PARCELAS, Math.floor(total / 20)));
@@ -771,11 +767,9 @@ function calcularParcelas(total) {
 }
 
 // ----- Pedidos -----
-// ALTERADO (bloco inteiro): antes o pedido era montado e guardado só no localStorage do navegador
-// (nada chegava ao banco e o estoque era baixado "na mão"). Agora o pedido é enviado ao Java
-// (POST /api/compras), que chama a procedure sp_finalizar_compra e grava de uma vez as tabelas
-// entregas, pedidos, item_pedidos e pagamentos. O estoque é baixado pelo próprio banco (trigger).
-// Os nomes das funções continuam os mesmos (listar, obter, criar...), por isso as telas mudam pouco.
+// O pedido é enviado ao Java (POST /api/compras), que chama a procedure sp_finalizar_compra e grava
+// de uma vez as tabelas entregas, pedidos, item_pedidos e pagamentos. O estoque é baixado pelo próprio
+// banco (trigger). As funções são listar, obter, criar, cancelar e as usadas pelo painel do funcionário.
 
 // Fala com o Java e trata os erros de um jeito só (usado por pedidos, entregas e painel do funcionário).
 //  - O Java responde erros como {"mensagem": "..."}; essa mensagem é mostrada para a pessoa.
@@ -811,10 +805,9 @@ const PedidosStore = (() => {
     const STATUS_CONCLUIDO = 'Concluido';
     const STATUS_CANCELADO = 'Cancelado';
 
-    // ALTERADO: antes o endereço de entrega e a bandeira/final do cartão ficavam anotados no navegador
-    // ("extras"), porque o banco não tinha onde guardá-los. Agora eles têm lugar próprio (entregas.endereco_id
-    // e pagamentos.bandeira/final_cartao), então tudo vem do banco e as anotações locais foram REMOVIDAS.
-    // Esta chave só continua aqui para apagar as anotações que versões antigas deixaram no navegador.
+    // O endereço de entrega e a bandeira/final do cartão ficam no banco (entregas.endereco_id e
+    // pagamentos.bandeira/final_cartao). Esta chave só existe para apagar anotações que versões
+    // antigas do site deixaram no navegador.
     const CHAVE_EXTRAS = 'sebo_do_joao_pedidos_extras';
 
     // Ícone de cada categoria (o banco devolve só o nome da categoria)
@@ -823,13 +816,11 @@ const PedidosStore = (() => {
         'blu-rays': 'fa-compact-disc', 'dvds': 'fa-film', 'cds': 'fa-compact-disc', 'fitas cassetes': 'fa-cassette-tape'
     };
 
-    // ALTERADO: lerExtras() e guardarExtras() foram REMOVIDAS (não há mais o que anotar no navegador).
-    // No lugar, as anotações antigas são apagadas uma vez, quando este arquivo é carregado.
+    // Apaga as anotações antigas ao carregar este arquivo.
     try { localStorage.removeItem(CHAVE_EXTRAS); } catch (erro) { /* navegador sem localStorage: nada a limpar */ }
 
     // Código "copia e cola" de exemplo (parece um Pix de verdade, mas é fictício).
-    // ALTERADO: antes usava números aleatórios e o código ficava guardado no pedido. Agora o pedido vem
-    // do banco (que não guarda o código), então ele é calculado a partir do código do pedido: o mesmo
+    // O banco não guarda o código Pix, então ele é calculado a partir do código do pedido: o mesmo
     // pedido sempre mostra o mesmo código, mesmo se a página for aberta de novo.
     function gerarCodigoPix(total, codigoDoPedido) {
         const valor = Number(total).toFixed(2);
@@ -850,8 +841,8 @@ const PedidosStore = (() => {
         const pg = dto.pagamento || {};
         const ehPix = pg.forma === 'PIX';
 
-        // ALTERADO: o endereço de entrega agora vem do banco (dto.endereco). Aqui ele é traduzido para o
-        // mesmo formato que as telas já usam (rua, numero, semNumero...), igual ao EnderecosStore.
+        // O endereço de entrega vem do banco (dto.endereco) e é traduzido para o mesmo formato
+        // usado pelas telas (rua, numero, semNumero...), igual ao EnderecosStore.
         const end = dto.endereco;
         const endereco = end && end.logradouro ? {
             destinatario: end.destinatario, telefone: end.telefone, cep: end.cep,
@@ -886,7 +877,7 @@ const PedidosStore = (() => {
                 status: pg.statusPagamento,
                 parcelas: pg.parcelas || 1,
                 valorParcela: Number(pg.valorParcela),
-                // ALTERADO: bandeira e final do cartão agora vêm do banco (pagamentos.bandeira / final_cartao)
+                // Bandeira e final do cartão vêm do banco (pagamentos.bandeira / final_cartao)
                 bandeira: pg.bandeira || '',
                 ultimos4: pg.finalCartao || '',
                 pixCodigo: ehPix ? gerarCodigoPix(dto.total, dto.codigo) : undefined
@@ -986,8 +977,8 @@ const PedidosStore = (() => {
                 transportadora: frete.nome,   // vai para entregas.transportadora
                 prazoDias: frete.prazoDias,   // o banco calcula a data de previsão de entrega
                 valorFrete: frete.preco,      // entra no total do pedido e das parcelas (e fica em entregas.valor_frete)
-                // NOVO: o endereço escolhido (o banco confere se é deste cliente) e, no cartão, só a bandeira e os
-                // 4 últimos dígitos (vão para pagamentos.bandeira e pagamentos.final_cartao). O número e o CVV NÃO são enviados.
+                // O endereço escolhido (o banco confere se é deste cliente) e, no cartão, só a bandeira e os
+                // 4 últimos dígitos (vão para pagamentos.bandeira e pagamentos.final_cartao). O número e o CVV não são enviados.
                 enderecoId: endereco.id,
                 bandeira: cartaoUsado ? cartaoUsado.bandeira : null,
                 finalCartao: cartaoUsado ? cartaoUsado.ultimos4 : null
@@ -998,28 +989,27 @@ const PedidosStore = (() => {
         if (pagamento.cartaoNovo && pagamento.cartaoNovo.salvar) {
             try { await CartoesStore.salvar(pagamento.cartaoNovo); } catch (erro) { /* já salvo ou limite: a compra segue */ }
         }
-        // ALTERADO: não é mais preciso "anotar" o endereço e o cartão no navegador (guardarExtras foi removida):
-        // o endereço e o cartão do pedido já ficaram gravados no banco e voltam na resposta.
+        // O endereço e o cartão do pedido já ficaram gravados no banco e voltam na resposta.
 
-        // O carrinho (que agora é do banco, para quem está logado) é esvaziado
+        // Esvazia o carrinho (que, para quem está logado, fica no banco)
         await CarrinhoStore.limpar();
         return converter(pedidoCriado);
     }
 
     // Só pra demonstração: "paga" um Pix pendente (no mundo real quem avisa é o banco/gateway).
-    // ALTERADO: agora o Java marca as parcelas como aprovadas no banco e a trigger muda o pedido para "Processando".
+    // O Java marca as parcelas como aprovadas no banco e a trigger muda o pedido para "Processando".
     async function simularPagamentoDoPix(id) {
         await usuarioLogadoOuErro();
         return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/simular-pagamento`, { method: 'POST' }));
     }
 
-    // NOVO: cancela o pedido (procedure sp_cancelar_pedido). O estoque volta pela trigger.
+    // Cancela o pedido (procedure sp_cancelar_pedido). O estoque volta pela trigger.
     async function cancelar(id) {
         await usuarioLogadoOuErro();
         return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/cancelar`, { method: 'POST' }));
     }
 
-    // NOVO: usadas só pelo painel do funcionário (admin-pedidos.html)
+    // Usadas só pelo painel do funcionário (admin-pedidos.html)
     async function listarTodos() {
         return (await chamarApi('/api/compras/gestao')).map(converter);
     }
@@ -1030,7 +1020,6 @@ const PedidosStore = (() => {
         return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/aprovar-pagamento`, { method: 'POST' }));
     }
 
-    // ALTERADO: removerDaConta() foi removida daqui (não há mais anotações locais de pedidos).
     return {
         CHAVE_EXTRAS, STATUS_AGUARDANDO, STATUS_PROCESSANDO, STATUS_CONCLUIDO, STATUS_CANCELADO,
         listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega, aprovarPagamento
@@ -1038,9 +1027,9 @@ const PedidosStore = (() => {
 })();
 
 // Tudo que pertence a uma conta que está sendo excluída.
-// ALTERADO: endereços, cartões, carrinho e pedidos agora ficam no banco, e quem apaga o que é da conta
-// (endereços, cartões e carrinho) é o Java, na hora de excluir o cliente. Aqui sobra só limpar o que ainda
-// possa ter ficado neste navegador (o carrinho antigo de visitante/conta).
+// Endereços, cartões, carrinho e pedidos ficam no banco, e quem apaga o que é da conta (endereços,
+// cartões e carrinho) é o Java, na hora de excluir o cliente. Aqui só resta limpar o que possa ter
+// ficado neste navegador (o carrinho antigo de visitante ou da conta).
 function apagarDadosDaConta(usuarioId) {
     CarrinhoStore.apagarDaConta(usuarioId);
 }
@@ -1114,6 +1103,19 @@ async function exigirLogin() {
     const paginaAtual = location.pathname.split('/').pop() + location.search;
     location.replace('login.html?voltar=' + encodeURIComponent(paginaAtual));
     return null;
+}
+
+// Para as telas que só o cliente usa (endereços, cartões, pedidos): sem login a pessoa vai para o
+// login, e o funcionário volta para o painel do administrador. Devolve o usuário, ou null se redirecionou.
+async function exigirCliente() {
+    const usuario = await exigirLogin();
+    if (!usuario) return null;
+
+    if (UsuarioStore.ehAdmin(usuario)) {
+        location.replace('admin.html');
+        return null;
+    }
+    return usuario;
 }
 
 // Monta os links de categoria com os nomes do banco. A busca filtra comparando o nome que vem
@@ -1198,7 +1200,7 @@ async function comprarProduto(id) {
     } else if (resultado.motivo === 'estoque') {
         avisar('Você já tem todas as unidades disponíveis desse produto no carrinho.', true);
     } else if (resultado.motivo === 'sessao') {
-        // NOVO: o carrinho de quem está logado fica no banco; se o servidor não reconhece o login (por exemplo,
+        // O carrinho de quem está logado fica no banco; se o servidor não reconhece o login (por exemplo,
         // foi reiniciado) ou está fora do ar, a pessoa recebe o motivo em vez de "produto indisponível".
         avisar(resultado.mensagem || 'Não foi possível adicionar ao carrinho. Entre novamente e tente de novo.', false);
     } else {

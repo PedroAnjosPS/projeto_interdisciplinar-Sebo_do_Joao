@@ -5,10 +5,13 @@ import br.com.interdisciplinar.sebodojoao.dto.ClienteResponseDTO;
 import br.com.interdisciplinar.sebodojoao.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -63,6 +66,19 @@ public class ClienteRestController {
         );
 
         return ResponseEntity.ok(clienteService.atualizar(id, dto));
+    }
+
+    // Atualiza dados da conta enviados em JSON (é a rota usada na troca de senha). Só o próprio
+    // cliente logado pode alterar a sua conta; o id da URL precisa ser o mesmo da sessão.
+    @PutMapping("/{id}")
+    public ClienteResponseDTO atualizarPorJson(@PathVariable Long id, @RequestBody ClienteRequestDTO dto, HttpSession sessao) {
+        Long clienteLogado = ControleDeAcesso.exigirCliente(sessao);
+
+        if (!clienteLogado.equals(id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode alterar a sua própria conta.");
+        }
+
+        return clienteService.atualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")

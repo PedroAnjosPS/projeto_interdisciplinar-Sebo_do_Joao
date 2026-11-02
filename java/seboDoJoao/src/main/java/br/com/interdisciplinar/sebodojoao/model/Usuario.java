@@ -32,8 +32,8 @@ public abstract class Usuario {
     @Column(name = "status", nullable = false)
     private StatusUsuario status = StatusUsuario.ATIVO;
 
-    // ALTERADO: logradouro, bairro e cep foram REMOVIDOS daqui. O endereço agora é uma tabela própria
-    // (enderecos, ver Endereco.java) e pertence ao Cliente: um cliente pode ter vários endereços.
+    // O endereço não faz parte do usuário: ele é uma tabela própria (enderecos, ver Endereco.java)
+    // e pertence ao Cliente, que pode ter vários endereços.
     @Column(name = "telefone", nullable = false, length = 20)
     private String telefone;
 

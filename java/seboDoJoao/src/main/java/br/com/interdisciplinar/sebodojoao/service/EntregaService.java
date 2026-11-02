@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EntregaService {
     private final EntregaRepository entregaRepository;
-    // NOVO: usado para achar o endereço de destino (a entrega agora aponta para a tabela enderecos)
+    // Usado para achar o endereço de destino da entrega (tabela enderecos)
     private final EnderecoRepository enderecoRepository;
 
     public List<EntregaResponseDTO> listarTodos() {
@@ -55,9 +55,8 @@ public class EntregaService {
         entregaRepository.deleteById(id);
     }
 
-    // ALTERADO: o preenchimento da entrega e a montagem da resposta ficavam repetidos em cada método.
-    // Agora estão em dois métodos (preencher e paraDto), e as colunas novas (valor_frete e endereco_id)
-    // só precisaram ser acrescentadas aqui.
+    // Os métodos preencher e paraDto evitam repetir código: um copia os dados recebidos para a entrega
+    // (inclusive o valor do frete e o endereço de destino) e o outro monta a resposta enviada ao site.
     private void preencher(Entrega entrega, EntregaRequestDTO dto) {
         entrega.setTransportadora(dto.transportadora());
         entrega.setLinkRastreio(dto.linkRastreio());

@@ -17,7 +17,7 @@ import br.com.interdisciplinar.sebodojoao.dto.CompraRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.CompraResponseDTO;
 import lombok.RequiredArgsConstructor;
 
-// NOVO: é aqui que a compra do site chega ao banco de dados.
+// Aqui é onde a compra do site chega ao banco de dados.
 //
 // Em vez de gravar pedido, itens, pagamentos e entrega "na mão" (4 tabelas, vários passos),
 // este serviço CHAMA AS PROCEDURES que criamos no SQL Server:
@@ -62,12 +62,12 @@ public class CompraService {
         int prazoDias = dto.prazoDias() == null ? 7 : Math.max(0, dto.prazoDias());
         BigDecimal frete = dto.valorFrete() == null ? BigDecimal.ZERO : dto.valorFrete();
 
-        // NOVO: o endereço de entrega é obrigatório (o banco confere se ele existe, está ativo e é deste cliente)
+        // O endereço de entrega é obrigatório (o banco confere se ele existe, está ativo e é deste cliente)
         if (dto.enderecoId() == null) {
             throw erro(HttpStatus.BAD_REQUEST, "Escolha um endereço de entrega.");
         }
 
-        // NOVO: bandeira e final do cartão (só no pagamento com cartão). O final precisa ter exatamente 4 números.
+        // Bandeira e final do cartão (só no pagamento com cartão). O final precisa ter exatamente 4 números.
         String bandeira = null;
         String finalCartao = null;
         if ("CARTAO_CREDITO".equals(forma)) {
@@ -187,7 +187,7 @@ public class CompraService {
     private static final String SELECT_PEDIDO =
         "SELECT pedido_id, data, total, status_pedido, cliente_id, cliente, funcionario, "
         + "transportadora, codigo_rastreio, data_previsao_entrega, status_entrega, "
-        // ALTERADO: colunas novas da view (endereço de entrega)
+        // Colunas novas da view (endereço de entrega)
         + "destinatario, telefone_entrega, logradouro, numero_endereco, complemento, bairro, cep_numero, cidade, uf "
         + "FROM dbo.vw_pedidos_detalhados";
 
@@ -217,12 +217,14 @@ public class CompraService {
             boolean temPendente = false;
             if (!parcelas.isEmpty()) {
                 boolean recusado = false;
+                boolean estornado = false;
                 for (Map<String, Object> p : parcelas) {
                     int st = ((Number) p.get("status")).intValue();
                     if (st == 1) temPendente = true;
                     if (st == 3) recusado = true;
+                    if (st == 4) estornado = true;
                 }
-                String resumo = recusado ? "Recusado" : temPendente ? "Pendente" : "Aprovado";
+                String resumo = estornado ? "Estornado" : recusado ? "Recusado" : temPendente ? "Pendente" : "Aprovado";
                 Map<String, Object> primeira = parcelas.get(0);
                 pagamento = new CompraResponseDTO.Pagamento((String) primeira.get("forma_pagamento"),
                     ((Number) primeira.get("quantidade_parcelas")).intValue(), (BigDecimal) primeira.get("valor"), resumo,
@@ -240,7 +242,7 @@ public class CompraService {
                 (String) l.get("transportadora"), statusEntrega, (String) l.get("codigo_rastreio"),
                 previsao == null ? null : previsao.toString());
 
-            // NOVO: endereço de entrega, lido da view (que junta entregas, enderecos, ceps, cidades)
+            // Endereço de entrega, lido da view (que junta entregas, enderecos, ceps, cidades)
             CompraResponseDTO.Endereco endereco = new CompraResponseDTO.Endereco(
                 (String) l.get("destinatario"), (String) l.get("telefone_entrega"), (String) l.get("logradouro"),
                 (String) l.get("numero_endereco"), (String) l.get("complemento"), (String) l.get("bairro"),

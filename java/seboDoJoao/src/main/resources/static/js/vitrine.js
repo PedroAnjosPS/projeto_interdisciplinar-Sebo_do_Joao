@@ -715,56 +715,180 @@ function calcularOpcoesDeFrete(cep, subtotal) {
         `Chegará entre ${formatarDataCurta(somarDiasUteis(hoje, min))} e ${formatarDataCurta(somarDiasUteis(hoje, max))}`;
     const gratis = subtotal >= VALOR_PARA_FRETE_GRATIS;
 
+    // ALTERADO: cada opção ganhou "prazoDias" (o prazo máximo, em dias úteis). Ele é enviado ao Java na
+    // compra e o banco usa para calcular a data de previsão de entrega (entregas.data_previsao_entrega).
     return [
         {
             id: 'economico', nome: 'Econômico', preco: gratis ? 0 : tabela.eco[0],
-            prazoTexto: prazo(tabela.eco[1], tabela.eco[2]),
+            prazoTexto: prazo(tabela.eco[1], tabela.eco[2]), prazoDias: tabela.eco[2],
             observacao: gratis ? `Frete grátis em compras a partir de ${formatarPreco(VALOR_PARA_FRETE_GRATIS)}` : ''
         },
-        { id: 'expresso', nome: 'Expresso', preco: tabela.exp[0], prazoTexto: prazo(tabela.exp[1], tabela.exp[2]), observacao: '' },
+        { id: 'expresso', nome: 'Expresso', preco: tabela.exp[0], prazoTexto: prazo(tabela.exp[1], tabela.exp[2]), prazoDias: tabela.exp[2], observacao: '' },
         {
-            id: 'retirada', nome: 'Retirar com o vendedor', preco: 0,
+            id: 'retirada', nome: 'Retirar com o vendedor', preco: 0, prazoDias: 0,
             prazoTexto: 'Combine a retirada com o Sebo do João depois da compra', observacao: ''
         }
     ];
 }
 
-// Parcelas sem juros: até 6x, com parcela mínima de R$ 20
+// Parcelas sem juros: até 3x, com parcela mínima de R$ 20
+// ALTERADO: o limite era 6 e agora é 3, igual à regra do banco (@max_parcelas na procedure
+// sp_finalizar_compra). Se a regra de negócio mudar, altere os dois lugares.
+const MAX_PARCELAS = 3;
 function calcularParcelas(total) {
-    const maximo = Math.max(1, Math.min(6, Math.floor(total / 20)));
+    const maximo = Math.max(1, Math.min(MAX_PARCELAS, Math.floor(total / 20)));
     return Array.from({ length: maximo }, (_, i) => ({ quantidade: i + 1, valor: total / (i + 1) }));
 }
 
 // ----- Pedidos -----
+// ALTERADO (bloco inteiro): antes o pedido era montado e guardado só no localStorage do navegador
+// (nada chegava ao banco e o estoque era baixado "na mão"). Agora o pedido é enviado ao Java
+// (POST /api/compras), que chama a procedure sp_finalizar_compra e grava de uma vez as tabelas
+// entregas, pedidos, item_pedidos e pagamentos. O estoque é baixado pelo próprio banco (trigger).
+// Os nomes das funções continuam os mesmos (listar, obter, criar...), por isso as telas mudam pouco.
+
+// Fala com o Java e trata os erros de um jeito só (usado por pedidos, entregas e painel do funcionário).
+//  - O Java responde erros como {"mensagem": "..."}; essa mensagem é mostrada para a pessoa.
+//  - Erro 401 = o Java não reconhece o login (por exemplo, o servidor foi reiniciado). Nesse caso a
+//    conta é desconectada aqui também, para a pessoa entrar de novo em vez de ficar "meio logada".
+async function chamarApi(url, opcoes = {}) {
+    let resposta;
+    try {
+        resposta = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opcoes });
+    } catch (erro) {
+        throw new Error('Não foi possível falar com o servidor. Confira a conexão e tente novamente.');
+    }
+
+    let corpo = null;
+    try { corpo = await resposta.json(); } catch (erro) { /* resposta sem corpo */ }
+
+    if (resposta.status === 401) {
+        UsuarioStore.sair();
+        throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+    }
+    if (!resposta.ok) {
+        const erro = new Error((corpo && corpo.mensagem) || 'Não foi possível concluir a operação. Tente novamente.');
+        erro.status = resposta.status;
+        throw erro;
+    }
+    return corpo;
+}
+
 const PedidosStore = (() => {
-    const CHAVE = 'sebo_do_joao_pedidos';
+    // Status que o banco devolve em pedidos.status (via view vw_pedidos_detalhados)
     const STATUS_AGUARDANDO = 'Aguardando pagamento';
-    const STATUS_APROVADO = 'Pagamento aprovado';
+    const STATUS_PROCESSANDO = 'Processando';
+    const STATUS_CONCLUIDO = 'Concluido';
+    const STATUS_CANCELADO = 'Cancelado';
 
-    async function listar() {
-        const usuario = await UsuarioStore.obter();
-        if (!usuario) return [];
-        return lerLista(CHAVE)
-            .filter((p) => String(p.usuarioId) === String(usuario.id))
-            .sort((a, b) => b.id - a.id);
+    // O banco ainda não tem onde guardar o endereço de entrega nem a bandeira/final do cartão usado.
+    // Por isso, só estes dois detalhes ficam anotados no navegador (um por pedido), para a tela do
+    // pedido continuar mostrando esses dados. Tudo o mais (itens, valores, status) vem do banco.
+    const CHAVE_EXTRAS = 'sebo_do_joao_pedidos_extras';
+
+    // Ícone de cada categoria (o banco devolve só o nome da categoria)
+    const ICONES_POR_CATEGORIA = {
+        'livros': 'fa-book-open', 'hqs': 'fa-mask', 'discos de vinil': 'fa-record-vinyl',
+        'blu-rays': 'fa-compact-disc', 'dvds': 'fa-film', 'cds': 'fa-compact-disc', 'fitas cassetes': 'fa-cassette-tape'
+    };
+
+    function lerExtras() {
+        try {
+            const extras = JSON.parse(localStorage.getItem(CHAVE_EXTRAS) || '{}');
+            return extras && typeof extras === 'object' ? extras : {};
+        } catch (erro) {
+            return {};
+        }
     }
 
-    async function obter(id) {
-        return (await listar()).find((p) => String(p.id) === String(id)) || null;
+    function guardarExtras(clienteId, pedidoId, dados) {
+        try {
+            const extras = lerExtras();
+            extras[`${clienteId}_${pedidoId}`] = dados;
+            localStorage.setItem(CHAVE_EXTRAS, JSON.stringify(extras));
+        } catch (erro) { /* sem espaço no navegador: o pedido já está no banco, só perde o endereço na tela */ }
     }
 
-    // Código "copia e cola" de exemplo (parece um Pix de verdade, mas é fictício)
+    // Código "copia e cola" de exemplo (parece um Pix de verdade, mas é fictício).
+    // ALTERADO: antes usava números aleatórios e o código ficava guardado no pedido. Agora o pedido vem
+    // do banco (que não guarda o código), então ele é calculado a partir do código do pedido: o mesmo
+    // pedido sempre mostra o mesmo código, mesmo se a página for aberta de novo.
     function gerarCodigoPix(total, codigoDoPedido) {
-        const valor = total.toFixed(2);
-        const aleatorio = Array.from(crypto.getRandomValues(new Uint8Array(8)))
-            .map((b) => b.toString(16).padStart(2, '0')).join('');
+        const valor = Number(total).toFixed(2);
+        let h = 2166136261;
+        let aleatorio = '';
+        for (let n = 0; n < 8; n++) {
+            for (const c of codigoDoPedido + n) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+            aleatorio += (h & 255).toString(16).padStart(2, '0');
+        }
         return '00020126580014br.gov.bcb.pix0136' + aleatorio + '-sebo-do-joao-demo' +
             '5204000053039865406' + valor.replace('.', '') + '5802BR5913SEBO DO JOAO6009SAO PAULO' +
             '62' + String(4 + codigoDoPedido.length).padStart(2, '0') + '05' + String(codigoDoPedido.length).padStart(2, '0') + codigoDoPedido + '6304DEMO';
     }
 
-    // Monta o pedido a partir do carrinho. TUDO é conferido de novo aqui (preços, estoque,
-    // frete, parcelas...) em vez de confiar na tela: no backend é o servidor que faz isso.
+    // Converte o pedido que veio do Java (CompraResponseDTO) para o formato que as telas já usam.
+    function converter(dto) {
+        const extras = lerExtras()[`${dto.clienteId}_${dto.id}`] || {};
+        const entrega = dto.entrega || {};
+        const pg = dto.pagamento || {};
+        const ehPix = pg.forma === 'PIX';
+
+        // "2026-11-07" -> "07/11/2026"
+        const previsao = entrega.previsao ? entrega.previsao.split('-').reverse().join('/') : '';
+
+        return {
+            id: dto.id,
+            codigo: dto.codigo,
+            criadoEm: dto.data,
+            status: dto.statusPedido,
+            cliente: dto.cliente,
+            funcionario: dto.funcionario,
+            itens: dto.itens.map((i) => ({
+                id: i.produtoId, nome: i.produto, preco: Number(i.precoUnitario), quantidade: i.quantidade,
+                categoria: i.categoria, icone: ICONES_POR_CATEGORIA[String(i.categoria).toLowerCase()] || 'fa-box'
+            })),
+            subtotal: Number(dto.subtotalProdutos),
+            frete: {
+                nome: entrega.transportadora || 'Entrega', preco: Number(dto.valorFrete),
+                prazoTexto: previsao ? `Previsão de entrega: ${previsao}` : ''
+            },
+            total: Number(dto.total),
+            endereco: extras.endereco || null,
+            entrega: { status: entrega.statusEntrega, codigoRastreio: entrega.codigoRastreio },
+            pagamento: {
+                tipo: ehPix ? 'pix' : 'cartao',
+                status: pg.statusPagamento,
+                parcelas: pg.parcelas || 1,
+                valorParcela: Number(pg.valorParcela),
+                bandeira: extras.cartao ? extras.cartao.bandeira : '',
+                ultimos4: extras.cartao ? extras.cartao.ultimos4 : '',
+                pixCodigo: ehPix ? gerarCodigoPix(dto.total, dto.codigo) : undefined
+            },
+            podeCancelar: dto.podeCancelar,
+            podePagar: dto.podePagar,
+            podeAvancarEntrega: dto.podeAvancarEntrega
+        };
+    }
+
+    // Pedidos da conta logada (o Java usa o login da sessão para saber de quem são)
+    async function listar() {
+        const usuario = await UsuarioStore.obter();
+        if (!usuario) return [];
+        return (await chamarApi('/api/compras')).map(converter);
+    }
+
+    async function obter(id) {
+        try {
+            return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}`));
+        } catch (erro) {
+            if (erro.status === 404) return null; // pedido inexistente ou de outra pessoa
+            throw erro;
+        }
+    }
+
+    // Monta o pedido a partir do carrinho. A tela e este código conferem o que dá (estoque, cartão,
+    // parcelas...) para avisar rápido, mas quem decide de verdade é o banco: ele usa o preço
+    // cadastrado do produto, confere o estoque e desfaz tudo se algo falhar.
     //   pagamento: { tipo: 'cartao', cartaoId | cartaoNovo: { numero, titular, validade, salvar }, cvv, parcelas }
     //              ou { tipo: 'pix' }
     async function criar({ enderecoId, freteId, pagamento }) {
@@ -795,7 +919,9 @@ const PedidosStore = (() => {
         const total = subtotal + frete.preco;
 
         // ----- pagamento -----
-        let pagamentoFinal;
+        let formaPagamento;   // o nome que o banco entende: 'PIX' ou 'CARTAO_CREDITO'
+        let parcelasEscolhidas = 1;
+        let cartaoUsado = null;
         if (pagamento && pagamento.tipo === 'cartao') {
             let cartao;
             if (pagamento.cartaoId != null) {
@@ -814,84 +940,76 @@ const PedidosStore = (() => {
             const parcelas = calcularParcelas(total).find((p) => p.quantidade === Number(pagamento.parcelas));
             if (!parcelas) throw new Error('Escolha o número de parcelas.');
 
-            if (pagamento.cartaoNovo && pagamento.cartaoNovo.salvar) {
-                try { await CartoesStore.salvar(pagamento.cartaoNovo); } catch (erro) { /* já salvo ou limite: a compra segue */ }
-            }
-            pagamentoFinal = {
-                tipo: 'cartao', bandeira: cartao.bandeira, ultimos4: cartao.ultimos4,
-                parcelas: parcelas.quantidade, valorParcela: parcelas.valor
-            };
+            formaPagamento = 'CARTAO_CREDITO';
+            parcelasEscolhidas = parcelas.quantidade;
+            cartaoUsado = { bandeira: cartao.bandeira, ultimos4: cartao.ultimos4 };
         } else if (pagamento && pagamento.tipo === 'pix') {
-            pagamentoFinal = { tipo: 'pix' };
+            formaPagamento = 'PIX';
         } else {
             throw new Error('Escolha uma forma de pagamento.');
         }
 
-        // ----- grava o pedido e dá baixa no estoque -----
-        const todos = lerLista(CHAVE);
-        const id = proximoIdDaLista(todos);
-        const codigo = 'SJ-' + String(id).padStart(5, '0');
-        if (pagamentoFinal.tipo === 'pix') pagamentoFinal.pixCodigo = gerarCodigoPix(total, codigo);
+        // ----- envia a compra ao Java (que grava no banco) -----
+        const pedidoCriado = await chamarApi('/api/compras', {
+            method: 'POST',
+            body: JSON.stringify({
+                itens: itens.map(({ produto, quantidade }) => ({ produtoId: produto.id, quantidade })),
+                formaPagamento,
+                parcelas: parcelasEscolhidas,
+                transportadora: frete.nome,   // vai para entregas.transportadora
+                prazoDias: frete.prazoDias,   // o banco calcula a data de previsão de entrega
+                valorFrete: frete.preco       // entra no total do pedido e das parcelas
+            })
+        });
 
-        const pedido = {
-            id, codigo, usuarioId: usuario.id, criadoEm: new Date().toISOString(),
-            status: pagamentoFinal.tipo === 'pix' ? STATUS_AGUARDANDO : STATUS_APROVADO,
-            itens: itens.map(({ produto, quantidade }) => ({
-                id: produto.id, nome: produto.nome, preco: produto.preco, quantidade,
-                categoria: produto.categoria || '', icone: produto.icone || 'fa-box'
-            })),
-            subtotal,
-            frete: { id: frete.id, nome: frete.nome, preco: frete.preco, prazoTexto: frete.prazoTexto },
-            total,
-            endereco: { ...endereco, id: undefined, usuarioId: undefined, padrao: undefined },
-            pagamento: pagamentoFinal
-        };
-        todos.push(pedido);
-        salvarLista(CHAVE, todos);
-
-        for (const { produto, quantidade } of itens) {
-            if (typeof produto.estoque === 'number') await darBaixaNoEstoque(produto, quantidade);
+        // Só depois de o banco confirmar é que o cartão novo é salvo (se a pessoa quis) e o carrinho esvazia
+        if (pagamento.cartaoNovo && pagamento.cartaoNovo.salvar) {
+            try { await CartoesStore.salvar(pagamento.cartaoNovo); } catch (erro) { /* já salvo ou limite: a compra segue */ }
         }
+        const { id: _id, usuarioId: _usuarioId, padrao: _padrao, ...enderecoSemIds } = endereco;
+        guardarExtras(pedidoCriado.clienteId, pedidoCriado.id, { endereco: enderecoSemIds, cartao: cartaoUsado });
+
         await CarrinhoStore.limpar();
-        return pedido;
+        return converter(pedidoCriado);
     }
 
-    // Dá baixa no estoque pela API de produtos (a mesma rota de edição que o administrador usa:
-    // POST multipart /api/produtos/{id}, que pede todos os campos). Se a baixa falhar, a compra já
-    // foi registrada e segue; o ideal é a baixa ficar com o backend, dentro do POST /api/pedidos.
-    async function darBaixaNoEstoque(produto, quantidade) {
-        try {
-            const dados = new FormData();
-            dados.append('nome', produto.nome);
-            dados.append('categoriaId', produto.categoriaId);
-            dados.append('generoId', produto.generoId);
-            dados.append('funcionarioId', produto.funcionarioId);
-            dados.append('preco', produto.preco);
-            dados.append('estoque', Math.max(0, produto.estoque - quantidade));
-            dados.append('status', produto.status || 'DISPONIVEL');
-            dados.append('descricao', produto.descricao || '');
-            await ProdutosStore.atualizar(produto.id, dados);
-        } catch (erro) {
-            console.warn(`Não consegui dar baixa no estoque do produto ${produto.id}.`, erro);
-        }
-    }
-
-    // Só pra demonstração: "paga" um Pix pendente (no mundo real quem avisa é o banco/gateway)
+    // Só pra demonstração: "paga" um Pix pendente (no mundo real quem avisa é o banco/gateway).
+    // ALTERADO: agora o Java marca as parcelas como aprovadas no banco e a trigger muda o pedido para "Processando".
     async function simularPagamentoDoPix(id) {
-        const usuario = await usuarioLogadoOuErro();
-        const todos = lerLista(CHAVE);
-        const pedido = todos.find((p) => String(p.id) === String(id) && String(p.usuarioId) === String(usuario.id));
-        if (!pedido || pedido.status !== STATUS_AGUARDANDO) return pedido || null;
-        pedido.status = STATUS_APROVADO;
-        salvarLista(CHAVE, todos);
-        return pedido;
+        await usuarioLogadoOuErro();
+        return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/simular-pagamento`, { method: 'POST' }));
     }
 
+    // NOVO: cancela o pedido (procedure sp_cancelar_pedido). O estoque volta pela trigger.
+    async function cancelar(id) {
+        await usuarioLogadoOuErro();
+        return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/cancelar`, { method: 'POST' }));
+    }
+
+    // NOVO: usadas só pelo painel do funcionário (admin-pedidos.html)
+    async function listarTodos() {
+        return (await chamarApi('/api/compras/gestao')).map(converter);
+    }
+    async function avancarEntrega(id) {
+        return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/avancar-entrega`, { method: 'POST' }));
+    }
+    async function aprovarPagamento(id) {
+        return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/aprovar-pagamento`, { method: 'POST' }));
+    }
+
+    // Quando uma conta é excluída, apaga também as anotações locais dos pedidos dela
     function removerDaConta(usuarioId) {
-        salvarLista(CHAVE, lerLista(CHAVE).filter((p) => String(p.usuarioId) !== String(usuarioId)));
+        try {
+            const extras = lerExtras();
+            Object.keys(extras).forEach((chave) => { if (chave.startsWith(`${usuarioId}_`)) delete extras[chave]; });
+            localStorage.setItem(CHAVE_EXTRAS, JSON.stringify(extras));
+        } catch (erro) { /* nada a fazer */ }
     }
 
-    return { CHAVE, STATUS_AGUARDANDO, STATUS_APROVADO, listar, obter, criar, simularPagamentoDoPix, removerDaConta };
+    return {
+        CHAVE_EXTRAS, STATUS_AGUARDANDO, STATUS_PROCESSANDO, STATUS_CONCLUIDO, STATUS_CANCELADO,
+        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega, aprovarPagamento, removerDaConta
+    };
 })();
 
 // Tudo que pertence a uma conta que está sendo excluída

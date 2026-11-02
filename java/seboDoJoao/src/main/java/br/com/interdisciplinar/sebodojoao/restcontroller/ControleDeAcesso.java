@@ -16,6 +16,9 @@ public final class ControleDeAcesso {
     public static final String PERFIL_FUNCIONARIO = "FUNCIONARIO";
 
     private static final String ATRIBUTO_PERFIL = "perfilUsuario";
+    // ALTERADO: a sessão passa a guardar também o ID de quem fez login. Antes só o perfil era guardado
+    // e o Java não sabia "qual" cliente estava comprando; sem isso, dava para mandar o ID de outra pessoa.
+    private static final String ATRIBUTO_ID = "idUsuario";
 
     private ControleDeAcesso() { }
 
@@ -23,9 +26,16 @@ public final class ControleDeAcesso {
         sessao.setAttribute(ATRIBUTO_PERFIL, perfil);
     }
 
+    // ALTERADO (novo): guarda na sessão (no servidor) o ID do usuário que entrou.
+    public static void registrarUsuario(HttpSession sessao, Long id) {
+        sessao.setAttribute(ATRIBUTO_ID, id);
+    }
+
     // Só Cliente logado pode comprar. A checagem libera um único perfil, em vez de barrar
     // apenas o Funcionário: assim, uma chamada sem login também é recusada.
-    public static void exigirCliente(HttpSession sessao) {
+    // ALTERADO: agora devolve o ID do cliente logado (antes não devolvia nada). Quem chama usa esse
+    // ID, e não um ID vindo do navegador, para saber de quem é a compra.
+    public static Long exigirCliente(HttpSession sessao) {
         Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
 
         if (perfil == null) {
@@ -35,5 +45,34 @@ public final class ControleDeAcesso {
         if (!PERFIL_CLIENTE.equals(perfil)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Contas de funcionário não podem realizar compras.");
         }
+
+        return lerId(sessao);
+    }
+
+    // ALTERADO (novo): o contrário de exigirCliente. Usada nas telas de gestão de pedidos,
+    // que só o Funcionário pode usar (ver a entrega andar, por exemplo).
+    public static Long exigirFuncionario(HttpSession sessao) {
+        Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
+
+        if (perfil == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "É preciso fazer login.");
+        }
+
+        if (!PERFIL_FUNCIONARIO.equals(perfil)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Somente funcionários podem fazer isso.");
+        }
+
+        return lerId(sessao);
+    }
+
+    // Lê o ID guardado na sessão. Se não existir (ex.: sessão criada antes desta alteração), pede novo login.
+    private static Long lerId(HttpSession sessao) {
+        Object id = sessao.getAttribute(ATRIBUTO_ID);
+
+        if (!(id instanceof Long)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão expirada. Faça login novamente.");
+        }
+
+        return (Long) id;
     }
 }

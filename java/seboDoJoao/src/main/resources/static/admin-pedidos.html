@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Pedidos da loja - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<!-- NOVO: tela de pedidos para o FUNCIONÁRIO. Mostra todos os pedidos que estão no banco e permite
+     "andar" com a entrega e confirmar pagamentos pendentes (demonstração do fluxo de venda e entrega). -->
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
+        <a href="admin.html" class="ec-admin-logo text-decoration-none">
+            <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+        <span class="ec-admin-header-titulo d-none d-lg-inline">Área do administrador</span>
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu do administrador">
+            <a href="admin.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="mb-4">
+            <h2 class="ec-admin-title fw-bold mb-1">PEDIDOS DA LOJA</h2>
+            <p class="ec-conta-email mb-0">Acompanhe as vendas e faça a entrega andar: Pendente &gt; Preparando &gt; Em trânsito &gt; Entregue.</p>
+        </div>
+
+        <p id="gestao-erro" class="text-danger" role="alert"></p>
+        <div id="lista-gestao" class="d-flex flex-column gap-4"></div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <script src="js/produtos-store.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script>
+        // ===== Pedidos da loja (painel do funcionário) =====
+        const NOMES_ENTREGA = { 'Pendente': 'Pendente', 'Preparando': 'Preparando', 'Em transito': 'Em trânsito', 'Entregue': 'Entregue', 'Cancelado': 'Cancelada' };
+        // Texto do botão = o que vai acontecer com a entrega ao clicar
+        const PROXIMO_PASSO = { 'Pendente': 'Começar a preparar', 'Preparando': 'Enviar (em trânsito)', 'Em transito': 'Marcar como entregue' };
+
+        function dataCurta(iso) {
+            return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function montarPedidoGestao(p) {
+            const itens = p.itens.map((i) => `<li>${escaparHtml(i.nome)} <span class="ec-texto-suave">× ${i.quantidade}</span></li>`).join('');
+            const parcelas = p.pagamento.tipo === 'pix' ? 'Pix' : `Cartão de crédito · ${p.pagamento.parcelas}x`;
+
+            // Os botões só aparecem quando o banco permite a ação (os campos podePagar / podeAvancarEntrega)
+            const botoes = [
+                p.podePagar ? `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-3" data-acao="pagar" data-id="${p.id}">Confirmar pagamento</button>` : '',
+                p.podeAvancarEntrega ? `<button type="button" class="btn ec-btn-dark ec-btn-pill px-3" data-acao="avancar" data-id="${p.id}">${escaparHtml(PROXIMO_PASSO[p.entrega.status] || 'Avançar entrega')}</button>` : ''
+            ].join('');
+
+            return `
+                <article class="ec-ped-card" id="pedido-${p.id}">
+                    <header class="ec-ped-topo">
+                        <div>
+                            <h3 class="ec-ped-codigo">Pedido ${escaparHtml(p.codigo)}</h3>
+                            <p class="ec-texto-suave mb-0">${escaparHtml(dataCurta(p.criadoEm))} · ${escaparHtml(p.cliente)} · atendente: ${escaparHtml(p.funcionario)}</p>
+                        </div>
+                        <span class="ec-status ${p.status === 'Aguardando pagamento' || p.status === 'Cancelado' ? 'ec-status-aguardando' : 'ec-status-ok'}">${escaparHtml(p.status === 'Concluido' ? 'Concluído' : p.status)}</span>
+                    </header>
+                    <ul class="ec-ped-itens">${itens}</ul>
+                    <p class="mb-1"><strong>Pagamento:</strong> ${escaparHtml(parcelas)} · ${escaparHtml(p.pagamento.status)}</p>
+                    <p class="mb-1"><strong>Entrega:</strong> ${escaparHtml(p.frete.nome)} · ${escaparHtml(NOMES_ENTREGA[p.entrega.status] || p.entrega.status)}${p.entrega.codigoRastreio ? ` · rastreio ${escaparHtml(p.entrega.codigoRastreio)}` : ''}</p>
+                    <footer class="ec-ped-rodape">
+                        <div><span class="ec-texto-suave">Total</span> <strong class="ec-ped-total">${formatarPreco(p.total)}</strong></div>
+                        <div class="d-flex gap-2 flex-wrap">${botoes}</div>
+                    </footer>
+                </article>`;
+        }
+
+        async function carregarPedidos() {
+            try {
+                const pedidos = await PedidosStore.listarTodos();
+                document.getElementById('lista-gestao').innerHTML = pedidos.length
+                    ? pedidos.map(montarPedidoGestao).join('')
+                    : '<div class="ec-vazio"><i class="fas fa-box-open"></i><p>Nenhum pedido ainda.</p></div>';
+            } catch (erro) {
+                document.getElementById('gestao-erro').textContent = erro.message;
+            }
+        }
+
+        // Um único "ouvinte" para os botões de todos os pedidos
+        document.getElementById('lista-gestao').addEventListener('click', async (evento) => {
+            const botao = evento.target.closest('button[data-acao]');
+            if (!botao) return;
+            botao.disabled = true;
+            document.getElementById('gestao-erro').textContent = '';
+            try {
+                if (botao.dataset.acao === 'pagar') await PedidosStore.aprovarPagamento(botao.dataset.id);
+                else await PedidosStore.avancarEntrega(botao.dataset.id);
+                await carregarPedidos(); // recarrega para mostrar o novo status vindo do banco
+            } catch (erro) {
+                document.getElementById('gestao-erro').textContent = erro.message;
+                botao.disabled = false;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!(await exigirAdmin())) return; // só Funcionário entra aqui
+            carregarPedidos();
+        });
+    </script>
+</body>
+
+</html>

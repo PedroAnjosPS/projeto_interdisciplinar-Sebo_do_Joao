@@ -20,6 +20,8 @@ spring:
       static-locations: file:src/main/resources/static/,classpath:/static/
   jpa:
     hibernate:
-      ddl-auto: update
-
-      ddl-auto=none:show-sql: true
+      # ALTERADO: de "update" para "none". Com "update" o Hibernate mexia sozinho nas colunas do banco
+      # ao iniciar (alargava varchar, tentava trocar int por bigint e gerava avisos). Agora a fonte da
+      # verdade é só o script docs/sql/SeboDoJoao.sql. (A linha "ddl-auto=none:show-sql" que existia
+      # aqui estava mal escrita e não tinha efeito nenhum, por isso foi removida.)
+      ddl-auto: none

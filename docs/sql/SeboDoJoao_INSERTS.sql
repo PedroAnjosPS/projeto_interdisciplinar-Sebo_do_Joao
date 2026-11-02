@@ -65,12 +65,15 @@ GO
 
 -- Tabela Clientes --
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES 
-(1, '1985-04-12', '111.222.333-44'),
-(2, '1992-09-25', '222.333.444-55'),
-(3, '1978-12-03', '333.444.555-66'),
-(4, '1995-06-18', '444.555.666-77'),
-(5, '1988-11-30', '555.666.777-88'),
-(6, '2000-01-15', '666.777.888-99');
+-- ALTERADO: os CPFs abaixo mantêm os mesmos 9 primeiros números de antes, mas com os 2 dígitos --
+-- verificadores corretos. Antes (ex.: 111.222.333-44) o site os recusava como "CPF inválido" --
+-- e o cliente não conseguia salvar o perfil. --
+(1, '1985-04-12', '111.222.333-96'),
+(2, '1992-09-25', '222.333.444-05'),
+(3, '1978-12-03', '333.444.555-08'),
+(4, '1995-06-18', '444.555.666-19'),
+(5, '1988-11-30', '555.666.777-20'),
+(6, '2000-01-15', '666.777.888-30');
 GO
 
 -- Tabela Funcionarios --

@@ -115,21 +115,26 @@
         }
 
         function textoDoPagamento(pg) {
+            // ALTERADO: o banco guarda a forma ("PIX" ou cartão de crédito) e as parcelas. A bandeira e o final
+            // do cartão só aparecem se este navegador as anotou na hora da compra (ver PedidosStore.criar).
             if (pg.tipo === 'pix') return 'Pix';
-            const nome = NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão';
+            const nome = pg.bandeira ? (NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão') : 'Cartão de crédito';
+            const final = pg.ultimos4 ? ` final ${pg.ultimos4}` : '';
             const parcelas = pg.parcelas === 1
                 ? `1x de ${formatarPreco(pg.valorParcela)}`
                 : `${pg.parcelas}x de ${formatarPreco(pg.valorParcela)} sem juros`;
-            return `${nome} final ${pg.ultimos4} · ${parcelas}`;
+            return `${nome}${final} · ${parcelas}`;
         }
 
+        // ALTERADO: a situação do pagamento agora vem do banco (tabela pagamentos): Pendente, Aprovado ou Recusado.
         function montarBlocoPix(p) {
-            const aguardando = p.status === PedidosStore.STATUS_AGUARDANDO;
-            if (!aguardando) {
+            if (p.pagamento.status === 'Aprovado') {
                 return `<section class="ec-ped-bloco ec-ped-pix-pago">
                     <i class="fas fa-circle-check me-2"></i>Pix recebido. Obrigado!
                 </section>`;
             }
+            // Pedido cancelado (pagamento recusado): não há mais nada a pagar
+            if (!p.podePagar) return '';
             return `
                 <section class="ec-ped-bloco">
                     <h3 class="ec-ped-bloco-titulo"><i class="fas fa-qrcode me-2"></i>Pague com Pix</h3>
@@ -152,24 +157,35 @@
                 </section>`;
         }
 
+        // NOVO: texto e cor de cada situação do pedido (os nomes vêm do banco)
+        const ROTULOS_STATUS = {
+            'Aguardando pagamento': { texto: 'Aguardando pagamento', classe: 'ec-status-aguardando' },
+            'Processando': { texto: 'Pagamento aprovado · em preparação', classe: 'ec-status-ok' },
+            'Concluido': { texto: 'Concluído', classe: 'ec-status-ok' },
+            'Cancelado': { texto: 'Cancelado', classe: 'ec-status-aguardando' }
+        };
+
         function montarPedidoCompleto(p, nome) {
-            const e = p.endereco;
-            const [linha1, linha2, linha3] = linhasDoEndereco(e);
+            const e = p.endereco; // pode ser null: o banco não guarda endereço (só este navegador, ver PedidosStore)
+            const [linha1, linha2, linha3] = e ? linhasDoEndereco(e) : ['', '', ''];
+            const rotulo = ROTULOS_STATUS[p.status] || { texto: p.status, classe: 'ec-status-aguardando' };
+            const nomesEntrega = { 'Pendente': 'Pendente', 'Preparando': 'Preparando o envio', 'Em transito': 'Em trânsito', 'Entregue': 'Entregue', 'Cancelado': 'Cancelada' };
+            const situacaoEntrega = nomesEntrega[p.entrega.status] || p.entrega.status;
             const itens = p.itens.map((i) => `
                 <li class="ec-ped-linha-item">
                     <span class="ec-ped-miniatura"><i class="fas ${escaparHtml(i.icone)}"></i></span>
                     <span class="flex-grow-1">${escaparHtml(i.nome)}<br><small class="ec-texto-suave">${i.quantidade} un. × ${formatarPreco(i.preco)}</small></span>
                     <strong>${formatarPreco(i.preco * i.quantidade)}</strong>
                 </li>`).join('');
-            const aprovado = p.status === PedidosStore.STATUS_APROVADO;
+            const cancelado = p.status === PedidosStore.STATUS_CANCELADO;
 
             return `
                 <section class="ec-ped-banner">
-                    <i class="fas ${aprovado || p.pagamento.tipo === 'pix' ? 'fa-circle-check' : 'fa-clock'} ec-ped-banner-icone"></i>
+                    <i class="fas ${cancelado ? 'fa-circle-xmark' : p.status === PedidosStore.STATUS_AGUARDANDO ? 'fa-clock' : 'fa-circle-check'} ec-ped-banner-icone"></i>
                     <div>
-                        <h2 class="ec-ped-banner-titulo">${pedidoNovo ? 'Pedido confirmado!' : `Pedido ${escaparHtml(p.codigo)}`}</h2>
-                        <p class="mb-0">${pedidoNovo ? `Obrigado pela compra, ${escaparHtml(nome)}. ` : ''}Pedido <strong>${escaparHtml(p.codigo)}</strong>
-                            · <span class="ec-status ${aprovado ? 'ec-status-ok' : 'ec-status-aguardando'}">${escaparHtml(p.status)}</span></p>
+                        <h2 class="ec-ped-banner-titulo">${cancelado ? 'Pedido cancelado' : pedidoNovo ? 'Pedido confirmado!' : `Pedido ${escaparHtml(p.codigo)}`}</h2>
+                        <p class="mb-0">${pedidoNovo && !cancelado ? `Obrigado pela compra, ${escaparHtml(nome)}. ` : ''}Pedido <strong>${escaparHtml(p.codigo)}</strong>
+                            · <span class="ec-status ${rotulo.classe}">${escaparHtml(rotulo.texto)}</span></p>
                     </div>
                 </section>
 
@@ -186,9 +202,12 @@
                         <section class="ec-ped-bloco">
                             <h3 class="ec-ped-bloco-titulo"><i class="fas fa-truck me-2"></i>Entrega</h3>
                             <p class="mb-1"><strong>${escaparHtml(p.frete.nome)}</strong> · ${p.frete.preco ? formatarPreco(p.frete.preco) : 'Grátis'}</p>
-                            <p class="ec-texto-suave">${escaparHtml(p.frete.prazoTexto)}</p>
-                            <p class="mb-0"><strong>${escaparHtml(e.destinatario)}</strong><br>
-                                ${escaparHtml(linha1)}<br>${escaparHtml(linha2)}<br>${escaparHtml(linha3)}</p>
+                            <p class="ec-texto-suave mb-2">${escaparHtml(p.frete.prazoTexto)}</p>
+                            <!-- NOVO: situação da entrega, direto da tabela entregas -->
+                            <p class="mb-2">Situação: <span class="ec-status ${p.entrega.status === 'Entregue' ? 'ec-status-ok' : 'ec-status-aguardando'}">${escaparHtml(situacaoEntrega)}</span></p>
+                            ${p.entrega.codigoRastreio ? `<p class="mb-2">Código de rastreio: <strong>${escaparHtml(p.entrega.codigoRastreio)}</strong></p>` : ''}
+                            ${e ? `<p class="mb-0"><strong>${escaparHtml(e.destinatario)}</strong><br>
+                                ${escaparHtml(linha1)}<br>${escaparHtml(linha2)}<br>${escaparHtml(linha3)}</p>` : ''}
                         </section>
                         <section class="ec-ped-bloco">
                             <h3 class="ec-ped-bloco-titulo"><i class="fas fa-wallet me-2"></i>Pagamento</h3>
@@ -202,7 +221,9 @@
                     </div>
                 </div>
 
+                <p id="pedido-erro" class="text-danger text-center mt-3 mb-0" role="alert"></p>
                 <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+                    ${p.podeCancelar ? '<button type="button" id="pedido-cancelar" class="btn ec-btn-outline-primary ec-btn-pill px-4">Cancelar pedido</button>' : ''}
                     <a href="pedidos.html" class="btn ec-btn-outline-primary ec-btn-pill px-4">Meus pedidos</a>
                     <a href="index.html" class="btn ec-btn-dark ec-btn-pill px-4">Continuar comprando</a>
                 </div>`;
@@ -210,7 +231,16 @@
 
         async function renderizarPedido(usuario) {
             const area = document.getElementById('pedido-conteudo');
-            const pedido = await PedidosStore.obter(parametros.get('id'));
+            // ALTERADO: o pedido agora vem do banco (via Java). Se o servidor falhar, mostra o aviso em vez de tela vazia.
+            let pedido;
+            try {
+                pedido = await PedidosStore.obter(parametros.get('id'));
+            } catch (erro) {
+                area.innerHTML = `<div class="ec-vazio"><i class="fas fa-triangle-exclamation"></i>
+                    <p>${escaparHtml(erro.message)}</p>
+                    <a href="pedidos.html" class="btn ec-btn-dark ec-btn-pill px-4">Meus pedidos</a></div>`;
+                return;
+            }
             if (!pedido) {
                 area.innerHTML = `<div class="ec-vazio"><i class="fas fa-box-open"></i>
                     <p>Não encontramos esse pedido na sua conta.</p>
@@ -220,7 +250,30 @@
             area.innerHTML = montarPedidoCompleto(pedido, usuario.nome.split(' ')[0]);
             document.title = `Pedido ${pedido.codigo} - Sebo do João`;
 
-            if (pedido.pagamento.tipo === 'pix' && pedido.status === PedidosStore.STATUS_AGUARDANDO) {
+            const mostrarErro = (erro) => { document.getElementById('pedido-erro').textContent = erro.message; };
+
+            // NOVO: botão "Cancelar pedido" (o banco confere se ainda dá tempo e devolve o estoque)
+            const botaoCancelar = document.getElementById('pedido-cancelar');
+            if (botaoCancelar) {
+                botaoCancelar.addEventListener('click', async () => {
+                    // Sem confirm() do navegador: o primeiro clique pede confirmação no próprio botão
+                    if (botaoCancelar.dataset.confirmar !== '1') {
+                        botaoCancelar.dataset.confirmar = '1';
+                        botaoCancelar.textContent = 'Clique de novo para confirmar o cancelamento';
+                        return;
+                    }
+                    botaoCancelar.disabled = true;
+                    try {
+                        await PedidosStore.cancelar(pedido.id);
+                        renderizarPedido(usuario);
+                    } catch (erro) {
+                        botaoCancelar.disabled = false;
+                        mostrarErro(erro);
+                    }
+                });
+            }
+
+            if (pedido.pagamento.tipo === 'pix' && pedido.podePagar) {
                 desenharQrIlustrativo(document.getElementById('pix-qr'), pedido.pagamento.pixCodigo);
 
                 document.getElementById('pix-copiar').addEventListener('click', async (evento) => {
@@ -237,8 +290,12 @@
                 });
 
                 document.getElementById('pix-simular').addEventListener('click', async () => {
-                    await PedidosStore.simularPagamentoDoPix(pedido.id);
-                    renderizarPedido(usuario);
+                    try {
+                        await PedidosStore.simularPagamentoDoPix(pedido.id);
+                        renderizarPedido(usuario);
+                    } catch (erro) {
+                        mostrarErro(erro);
+                    }
                 });
             }
         }

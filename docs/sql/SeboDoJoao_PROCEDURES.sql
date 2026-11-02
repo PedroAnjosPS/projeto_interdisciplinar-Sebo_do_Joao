@@ -11,6 +11,9 @@ CREATE PROCEDURE dbo.sp_finalizar_compra
     @quantidade_parcelas INT = 1,
     @transportadora VARCHAR(100) = 'Correios (PAC)',
     @prazo_dias INT = 7,
+    -- ALTERADO: novo parâmetro opcional com o valor do frete escolhido no site (padrão 0 = sem frete). --
+    -- Antes o total do pedido era só a soma dos produtos e o frete mostrado na tela não ficava registrado. --
+    @valor_frete DECIMAL(10,2) = 0,
     @pedido_id INT OUTPUT
 AS
 BEGIN
@@ -37,6 +40,10 @@ BEGIN
             (@forma_pagamento <> 'CARTAO_CREDITO' AND @quantidade_parcelas <> 1)
             THROW 50006, 'Quantidade de parcelas inválida!', 1;
 
+
+        -- ALTERADO: o frete não pode ser negativo (nem nulo). Código 50008 para o Java identificar o erro. --
+        IF @valor_frete IS NULL OR @valor_frete < 0
+            THROW 50008, 'Valor de frete inválido!', 1;
 
         -- Armazena temporariamente os produtos e suas quantidades recebidas em JSON --
         -- Agrupa produtos repetidos, somando suas respectivas quantidades --
@@ -127,7 +134,10 @@ BEGIN
 
 
         -- Calcula o valor total do pedido utilizando a função fn_total_pedido --
-        DECLARE @total DECIMAL(10,2) = dbo.fn_total_pedido(@pedido_id);
+        -- ALTERADO: soma o frete ao total (produtos + frete). O valor do frete de um pedido pode ser --
+        -- recuperado depois fazendo: pedidos.total - dbo.fn_total_pedido(id). As parcelas do pagamento --
+        -- também passam a usar este total, que é o mesmo valor que a pessoa viu na tela de finalizar compra. --
+        DECLARE @total DECIMAL(10,2) = dbo.fn_total_pedido(@pedido_id) + @valor_frete;
 
         -- Atualiza o valor total do pedido cadastrado anteriormente --
         UPDATE pedidos SET total = @total WHERE id = @pedido_id;

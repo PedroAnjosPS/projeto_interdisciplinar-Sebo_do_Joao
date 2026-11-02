@@ -39,25 +39,14 @@ CREATE TABLE usuarios
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     status INT NULL DEFAULT 1,
-    logradouro VARCHAR(255),
-    bairro VARCHAR(100),
     telefone VARCHAR(20),
     data_cadastro DATETIME DEFAULT GETDATE(),
     foto_perfil VARCHAR(255) NULL,
-    cep_numero VARCHAR(10) NULL,
-
-    CONSTRAINT fk_usuarios_ceps FOREIGN KEY (cep_numero)
-        REFERENCES ceps(numero_cep),
 
     CONSTRAINT ck_usuarios_status
         CHECK (status IN (1,2))
 )
 GO
-
--- Alteração da tabela de usuários - Adição da coluna referente a foto de perfil --
-/* ALTER TABLE usuarios
-ADD foto_perfil VARCHAR(255) NULL;
-GO */
 
 CREATE TABLE clientes
 (
@@ -80,6 +69,48 @@ CREATE TABLE funcionarios
     CONSTRAINT fk_funcionarios_usuarios
         FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id)
+)
+GO
+
+-- No front-end marca ativo = 0, para não quebrar o histórico das entregas.
+CREATE TABLE enderecos
+(
+    id INT NOT NULL PRIMARY KEY IDENTITY,
+    logradouro VARCHAR(255) NOT NULL,
+    numero VARCHAR(10) NULL,          -- NULL = opção "Sem número" da tela
+    complemento VARCHAR(100) NULL,
+    bairro VARCHAR(100) NOT NULL,
+    ativo BIT NOT NULL DEFAULT 1,     -- 1 = ativo, 0 = deixa de ser o endereço usado pelo cliente (não é o principal)
+    cep_numero VARCHAR(10) NOT NULL,
+    cliente_id INT NOT NULL,
+
+    CONSTRAINT fk_enderecos_ceps
+        FOREIGN KEY (cep_numero)
+        REFERENCES ceps(numero_cep),
+
+    CONSTRAINT fk_enderecos_clientes
+        FOREIGN KEY (cliente_id)
+        REFERENCES clientes(usuario_id)
+)
+GO
+
+-- Nunca guardar o número completo nem o CVV: só os 4 últimos dígitos.
+CREATE TABLE cartoes
+(
+    id INT NOT NULL PRIMARY KEY IDENTITY,
+    bandeira VARCHAR(30) NOT NULL,
+    final_numero CHAR(4) NOT NULL,    -- 4 últimos dígitos
+    titular VARCHAR(100) NOT NULL,
+    validade CHAR(5) NOT NULL,        -- formato MM/AA, igual à tela
+    cliente_id INT NOT NULL,
+
+    CONSTRAINT ck_cartoes_validade
+    CHECK (validade LIKE '0[1-9]/[0-9][0-9]'    -- 01 a 09
+        OR validade LIKE '1[0-2]/[0-9][0-9]'),  -- 10 a 12
+
+    CONSTRAINT fk_cartoes_clientes
+        FOREIGN KEY (cliente_id)
+        REFERENCES clientes(usuario_id)
 )
 GO
 
@@ -132,8 +163,6 @@ CREATE TABLE produtos
 )
 GO
 
--- ALTER TABLE produtos ALTER COLUMN descricao VARCHAR(MAX); --
-
 CREATE TABLE imagem_produtos
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,
@@ -155,10 +184,19 @@ CREATE TABLE entregas
     codigo_rastreio VARCHAR(100),
     data_postagem DATETIME DEFAULT GETDATE(),
     data_previsao_entrega DATE,
-    data_entrega DATETIME,    
+    data_entrega DATETIME,
+    valor_frete DECIMAL(10,2) NOT NULL DEFAULT 0,  -- frete fica na tabela de entregas (pedidos.total = produtos + frete)
+    endereco_id INT NOT NULL,                       -- destino da entrega
 
     CONSTRAINT ck_entregas_status
-        CHECK (status IN (1,2,3,4,5))
+        CHECK (status IN (1,2,3,4,5)),
+
+    CONSTRAINT ck_entregas_valor_frete
+        CHECK (valor_frete >= 0),
+
+    CONSTRAINT fk_entregas_enderecos
+        FOREIGN KEY (endereco_id)
+        REFERENCES enderecos(id)
 )
 GO
 
@@ -229,6 +267,10 @@ CREATE TABLE pagamentos
     forma_pagamento VARCHAR(50) NOT NULL,
     data_vencimento DATE NOT NULL,
     data_pagamento DATE,
+    -- Cópia dos dados do cartão usado (bandeira e final_cartao), para o histórico não depender somente de cartões
+    -- (o cliente pode pagar com cartão não salvo ou apagar o cartão depois). NULL para Pix/boleto.
+    bandeira VARCHAR(30) NULL,
+    final_cartao CHAR(4) NULL,
     pedido_id INT NOT NULL,
 
     CONSTRAINT ck_pagamentos_valor
@@ -243,5 +285,31 @@ CREATE TABLE pagamentos
     CONSTRAINT fk_pagamentos_pedidos
         FOREIGN KEY (pedido_id)
         REFERENCES pedidos(id)
+)
+GO
+
+-- Carrinho de compras do cliente.
+-- Separado de item_pedidos: não baixa estoque (a trigger é só de item_pedidos),
+-- não congela preço (usa produtos.preco atual) e não exige pedido.
+CREATE TABLE item_carrinhos
+(
+    cliente_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT NOT NULL DEFAULT 1,
+
+    CONSTRAINT pk_item_carrinhos
+        PRIMARY KEY (cliente_id, produto_id),
+
+    CONSTRAINT ck_item_carrinhos_quantidade
+        CHECK (quantidade > 0),
+
+    CONSTRAINT fk_item_carrinhos_clientes
+        FOREIGN KEY (cliente_id)
+        REFERENCES clientes(usuario_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_item_carrinhos_produtos
+        FOREIGN KEY (produto_id)
+        REFERENCES produtos(id)
 )
 GO

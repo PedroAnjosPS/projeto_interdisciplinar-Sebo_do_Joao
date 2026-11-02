@@ -62,7 +62,7 @@ public class FuncionarioRestController {
         }
 
         FuncionarioRequestDTO dto = new FuncionarioRequestDTO(
-                nome, email, null, telefone, null, null, null, null, caminhoFoto, null, null
+                nome, email, null, telefone, null, caminhoFoto, null, null
         );
 
         return funcionarioService.atualizar(id, dto);

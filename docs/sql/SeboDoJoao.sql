@@ -64,7 +64,7 @@ CREATE TABLE funcionarios
 (
     usuario_id INT PRIMARY KEY NOT NULL,
     codigo_funcionario VARCHAR(50) UNIQUE  NOT NULL,
-    admin BIT NOT NULL DEFAULT 0 -- 0 será padrão (assim, admitindo que nem todo funcionário será um administrador)
+    admin BIT NOT NULL DEFAULT 0, -- 0 será padrão (assim, admitindo que nem todo funcionário será um administrador)
 
     CONSTRAINT fk_funcionarios_usuarios
         FOREIGN KEY (usuario_id)
@@ -72,7 +72,7 @@ CREATE TABLE funcionarios
 )
 GO
 
--- No front-end marca ativo = 0, para não quebrar o histórico das entregas.
+-- No front-end fica ativo = 0, para não quebrar o histórico das entregas.
 CREATE TABLE enderecos
 (
     id INT NOT NULL PRIMARY KEY IDENTITY,

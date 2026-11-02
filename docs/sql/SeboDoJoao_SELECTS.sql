@@ -107,28 +107,69 @@ SELECT * FROM pagamentos pag ORDER BY pag.pedido_id;
 
 
 -- As informações dos clientes cadastrados --
-SELECT 
+-- ALTERADO: o endereço não fica mais na tabela usuarios (ele foi para a tabela enderecos). Por isso, --
+-- esta consulta traz o endereço PADRÃO de cada cliente (enderecos.padrao = 1 e ativo = 1). --
+-- LEFT JOIN: o cliente aparece mesmo que ainda não tenha endereço cadastrado. --
+SELECT
     uc.id AS Id_Cliente,
     uc.nome AS Cliente,
     uc.email AS Email,
     CONCAT(
-        uc.logradouro, ', ',
-        uc.bairro, ' - ',
+        en.logradouro, ', ', ISNULL(en.numero, 's/n'), ' - ',
+        en.bairro, ' - ',
         cid.nome, ', ',
         uf.sigla, ' - ',
-        uc.cep_numero
+        en.cep_numero
     ) AS Endereco,
     cli.data_nascimento AS Data_Nascimento,
     cli.cpf AS CPF
 FROM usuarios uc
 INNER JOIN clientes cli
     ON uc.id = cli.usuario_id
+LEFT JOIN enderecos en
+    ON en.cliente_id = cli.usuario_id AND en.padrao = 1 AND en.ativo = 1
 LEFT JOIN ceps cep
-    ON uc.cep_numero = cep.numero_cep
+    ON en.cep_numero = cep.numero_cep
 LEFT JOIN cidades cid
     ON cep.cidade_id = cid.id
 LEFT JOIN ufs uf
     ON cid.uf_sigla = uf.sigla;
+GO
+
+-- Tabela Enderecos (NOVA) --
+-- Todos os endereços ativos, com cliente, CEP, cidade e UF. --
+SELECT en.id AS Id_Endereco, uc.nome AS Cliente, en.apelido AS Apelido,
+       CASE en.padrao WHEN 1 THEN 'SIM' ELSE 'NAO' END AS Padrao,
+       uc.telefone AS Telefone,
+       en.logradouro AS Logradouro, ISNULL(en.numero, 's/n') AS Numero, en.complemento AS Complemento,
+       en.bairro AS Bairro, cid.nome AS Cidade, cid.uf_sigla AS UF, en.cep_numero AS CEP
+FROM enderecos en
+INNER JOIN usuarios uc    ON uc.id = en.cliente_id
+INNER JOIN ceps cep       ON cep.numero_cep = en.cep_numero
+INNER JOIN cidades cid    ON cid.id = cep.cidade_id
+WHERE en.ativo = 1
+ORDER BY uc.nome, en.padrao DESC, en.id;
+GO
+
+-- Tabela Cartoes (NOVA) --
+-- Só bandeira, final do cartão, titular e validade. O número completo e o CVV nunca são guardados. --
+SELECT ca.id AS Id_Cartao, uc.nome AS Cliente, ca.bandeira AS Bandeira, ca.final_numero AS Final,
+       ca.titular AS Titular, ca.validade AS Validade,
+       CASE ca.padrao WHEN 1 THEN 'SIM' ELSE 'NAO' END AS Padrao
+FROM cartoes ca
+INNER JOIN usuarios uc    ON uc.id = ca.cliente_id
+ORDER BY uc.nome, ca.padrao DESC, ca.id;
+GO
+
+-- Tabela Item_Carrinhos (NOVA) --
+-- O carrinho de cada cliente. O preço é sempre o preço ATUAL do produto (o preço só é congelado --
+-- quando a compra vira pedido, na tabela item_pedidos). --
+SELECT uc.nome AS Cliente, prod.nome AS Produto, ic.quantidade AS Quantidade,
+       prod.preco AS Preco_Atual, ic.quantidade * prod.preco AS Subtotal
+FROM item_carrinhos ic
+INNER JOIN usuarios uc    ON uc.id = ic.cliente_id
+INNER JOIN produtos prod  ON prod.id = ic.produto_id
+ORDER BY uc.nome, prod.nome;
 GO
 
 -- Consultando funcionários --

@@ -32,12 +32,8 @@ public abstract class Usuario {
     @Column(name = "status", nullable = false)
     private StatusUsuario status = StatusUsuario.ATIVO;
 
-    @Column(name = "logradouro", nullable = false, length = 255)
-    private String logradouro;
-
-    @Column(name = "bairro", nullable = false, length = 100)
-    private String bairro;
-    
+    // ALTERADO: logradouro, bairro e cep foram REMOVIDOS daqui. O endereço agora é uma tabela própria
+    // (enderecos, ver Endereco.java) e pertence ao Cliente: um cliente pode ter vários endereços.
     @Column(name = "telefone", nullable = false, length = 20)
     private String telefone;
 
@@ -46,8 +42,4 @@ public abstract class Usuario {
 
     @Column(name = "data_cadastro", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dataCadastro;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cep_numero", nullable = false)
-    private Cep cep;
 }

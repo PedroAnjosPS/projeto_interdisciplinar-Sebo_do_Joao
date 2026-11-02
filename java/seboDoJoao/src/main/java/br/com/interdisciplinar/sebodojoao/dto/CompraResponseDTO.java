@@ -19,6 +19,7 @@ public record CompraResponseDTO(
     String cliente,
     String funcionario,          // atendente responsável pelo pedido
     Entrega entrega,
+    Endereco endereco,           // NOVO: endereço de entrega (vem do banco: tabelas enderecos/ceps/cidades)
     Pagamento pagamento,
     List<Item> itens,
     // Dizem ao site quais botões mostrar (a regra de verdade continua nas procedures do banco)
@@ -32,6 +33,12 @@ public record CompraResponseDTO(
     // statusEntrega: Pendente | Preparando | Em transito | Entregue | Cancelado
     public record Entrega(String transportadora, String statusEntrega, String codigoRastreio, String previsao) {}
 
+    // NOVO: endereço de entrega do pedido. "numero" é null quando era "Sem número".
+    public record Endereco(String destinatario, String telefone, String logradouro, String numero,
+                           String complemento, String bairro, String cep, String cidade, String uf) {}
+
     // statusPagamento resume todas as parcelas: Pendente | Aprovado | Recusado
-    public record Pagamento(String forma, int parcelas, BigDecimal valorParcela, String statusPagamento) {}
+    // ALTERADO: ganhou bandeira e finalCartao (null quando o pagamento não é no cartão)
+    public record Pagamento(String forma, int parcelas, BigDecimal valorParcela, String statusPagamento,
+                            String bandeira, String finalCartao) {}
 }

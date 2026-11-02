@@ -27,7 +27,9 @@ public class Cep {
     @JoinColumn(name = "cidade_id", nullable = false)
     private Cidade cidade;
 
+    // ALTERADO: antes o CEP era ligado aos usuários (lista "usuarios"). Agora é ligado aos
+    // endereços (lista "enderecos"), pois é o endereço que tem CEP.
     @OneToMany(mappedBy = "cep")
     @JsonIgnore
-    private List<Usuario> usuarios;
+    private List<Endereco> enderecos;
 }

@@ -40,6 +40,13 @@ public class Pagamento {
     @Column(name = "data_pagamento", nullable = false)
     private LocalDate dataPagamento;
 
+    // NOVO: bandeira e 4 últimos dígitos do cartão usado (ficam null em Pix e boleto)
+    @Column(name = "bandeira", length = 30)
+    private String bandeira;
+
+    @Column(name = "final_cartao", length = 4)
+    private String finalCartao;
+
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;

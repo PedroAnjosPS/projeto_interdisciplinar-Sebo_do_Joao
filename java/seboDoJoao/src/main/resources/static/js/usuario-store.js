@@ -30,8 +30,8 @@ const UsuarioStore = (() => {
         // A API devolve a senha junto com os dados do cliente; ela não precisa (nem deve) ficar guardada no navegador
         const { senha, ...semSenha } = dadosUsuario;
         localStorage.setItem(CHAVE_SESSAO, JSON.stringify(semSenha));
-        // O que a pessoa pôs no carrinho como visitante passa pro carrinho da conta (CarrinhoStore fica em vitrine.js)
-        if (typeof CarrinhoStore !== 'undefined' && semSenha.id != null) CarrinhoStore.juntarVisitanteNaConta(semSenha.id);
+        // ALTERADO: o carrinho do visitante deixou de ser juntado aqui. Este método roda também ao atualizar o
+        // perfil, e a junção agora é uma chamada ao servidor (assíncrona). Ela acontece só no login, em entrar().
     }
     
     function lerSessao() {
@@ -95,6 +95,12 @@ const UsuarioStore = (() => {
         }
 
         iniciarSessao(dadosUsuario);
+
+        // NOVO: o que a pessoa pôs no carrinho como visitante é enviado para o carrinho da conta, que fica no
+        // banco de dados (CarrinhoStore fica em vitrine.js). Só vale para cliente; funcionário não usa carrinho.
+        if (dadosUsuario.perfil === PERFIL_CLIENTE && typeof CarrinhoStore !== 'undefined' && dadosUsuario.id != null) {
+            await CarrinhoStore.juntarVisitanteNaConta(dadosUsuario.id);
+        }
         return dadosUsuario;
     }
 

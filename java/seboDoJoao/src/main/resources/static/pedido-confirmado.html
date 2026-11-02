@@ -115,8 +115,9 @@
         }
 
         function textoDoPagamento(pg) {
-            // ALTERADO: o banco guarda a forma ("PIX" ou cartão de crédito) e as parcelas. A bandeira e o final
-            // do cartão só aparecem se este navegador as anotou na hora da compra (ver PedidosStore.criar).
+            // ALTERADO: o banco guarda a forma ("PIX" ou cartão de crédito), as parcelas e também a bandeira e o
+            // final do cartão usado (pagamentos.bandeira / final_cartao). Pedidos antigos, feitos antes dessas
+            // colunas existirem, podem não ter esses dois dados: nesse caso aparece só "Cartão de crédito".
             if (pg.tipo === 'pix') return 'Pix';
             const nome = pg.bandeira ? (NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão') : 'Cartão de crédito';
             const final = pg.ultimos4 ? ` final ${pg.ultimos4}` : '';
@@ -166,7 +167,7 @@
         };
 
         function montarPedidoCompleto(p, nome) {
-            const e = p.endereco; // pode ser null: o banco não guarda endereço (só este navegador, ver PedidosStore)
+            const e = p.endereco; // ALTERADO: agora vem do banco (entregas.endereco_id); só seria null se faltasse o endereço
             const [linha1, linha2, linha3] = e ? linhasDoEndereco(e) : ['', '', ''];
             const rotulo = ROTULOS_STATUS[p.status] || { texto: p.status, classe: 'ec-status-aguardando' };
             const nomesEntrega = { 'Pendente': 'Pendente', 'Preparando': 'Preparando o envio', 'Em transito': 'Em trânsito', 'Entregue': 'Entregue', 'Cancelado': 'Cancelada' };

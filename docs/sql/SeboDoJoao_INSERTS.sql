@@ -21,6 +21,29 @@ INSERT INTO ufs (sigla, nome) VALUES
 ('ES', 'Espírito Santo');
 GO
 
+-- ALTERADO: os 17 estados que faltavam. Agora as 27 UFs do Brasil estão cadastradas. --
+-- Motivo: ao salvar um endereço, o Java procura a UF informada nesta tabela (ela precisa existir, pois a --
+-- coluna "nome" é obrigatória) e cria sozinho a cidade e o CEP que ainda não estiverem cadastrados. --
+INSERT INTO ufs (sigla, nome) VALUES
+('AC', 'Acre'),
+('AL', 'Alagoas'),
+('AP', 'Amapá'),
+('AM', 'Amazonas'),
+('CE', 'Ceará'),
+('DF', 'Distrito Federal'),
+('MA', 'Maranhão'),
+('MT', 'Mato Grosso'),
+('MS', 'Mato Grosso do Sul'),
+('PA', 'Pará'),
+('PB', 'Paraíba'),
+('PI', 'Piauí'),
+('RN', 'Rio Grande do Norte'),
+('RO', 'Rondônia'),
+('RR', 'Roraima'),
+('SE', 'Sergipe'),
+('TO', 'Tocantins');
+GO
+
 -- Tabela Cidades -- 
 INSERT INTO cidades (nome, uf_sigla) VALUES 
 ('São José do Rio Preto', 'SP'),
@@ -50,17 +73,19 @@ INSERT INTO ceps (numero_cep, cidade_id) VALUES
 GO
 
 -- Tabela Usuarios --
-INSERT INTO usuarios (nome, email, senha, status, logradouro, bairro, telefone, cep_numero) VALUES 
-('João da Silva', 'joao.silva@email.com', 'hash123', 1, 'Rua das Flores, 100', 'Centro', '(17) 99111-2222', '15010-000'),
-('Maria Oliveira', 'maria.oliveira@email.com', 'hash123', 1, 'Av. Paulista, 500', 'Bela Vista', '(11) 98222-3333', '13010-000'),
-('Carlos Souza', 'carlos.souza@email.com', 'hash123', 1, 'Rua da Praia, 20', 'Copacabana', '(21) 97333-4444', '20010-000'),
-('Ana Paula', 'ana.paula@email.com', 'hash123', 1, 'Rua Bahia, 45', 'Savassi', '(31) 96444-5555', '30110-000'),
-('Lucas Mendes', 'lucas.mendes@email.com', 'hash123', 1, 'Rua XV, 300', 'Centro', '(41) 95555-6666', '80010-000'),
-('Beatriz Lima', 'beatriz.lima@email.com', 'hash123', 1, 'Av. Ipiranga, 1000', 'Menino Deus', '(51) 94666-7777', '90010-000'),
-('Ana Paula (Dona)', 'ana.dona@sebodojoao.com', 'admin123', 1, 'Rua XV de Novembro, 300', 'Centro', '(17) 99444-5555', '15010-000'),
-('Pedro Atendente', 'pedro.func@sebodojoao.com', 'func123', 1, 'Rua Tiradentes, 150', 'Boa Vista', '(17) 99555-6666', '15010-000'),
-('Marcos Supervisor', 'marcos.sup@sebodojoao.com', 'func123', 1, 'Rua Voluntários, 89', 'Centro', '(17) 99666-7777', '15010-000'),
-('Juliana Estoque', 'juliana.est@sebodojoao.com', 'func123', 1, 'Rua Redentora, 450', 'Redentora', '(17) 99777-8888', '15010-000');
+-- ALTERADO: a tabela usuarios não tem mais logradouro, bairro e cep_numero. O endereço agora fica na --
+-- tabela enderecos (veja mais abaixo), que pertence ao cliente. Funcionários não têm endereço cadastrado. --
+INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
+('João da Silva', 'joao.silva@email.com', 'hash123', 1, '(17) 99111-2222'),
+('Maria Oliveira', 'maria.oliveira@email.com', 'hash123', 1, '(11) 98222-3333'),
+('Carlos Souza', 'carlos.souza@email.com', 'hash123', 1, '(21) 97333-4444'),
+('Ana Paula', 'ana.paula@email.com', 'hash123', 1, '(31) 96444-5555'),
+('Lucas Mendes', 'lucas.mendes@email.com', 'hash123', 1, '(41) 95555-6666'),
+('Beatriz Lima', 'beatriz.lima@email.com', 'hash123', 1, '(51) 94666-7777'),
+('Ana Paula (Dona)', 'ana.dona@sebodojoao.com', 'admin123', 1, '(17) 99444-5555'),
+('Pedro Atendente', 'pedro.func@sebodojoao.com', 'func123', 1, '(17) 99555-6666'),
+('Marcos Supervisor', 'marcos.sup@sebodojoao.com', 'func123', 1, '(17) 99666-7777'),
+('Juliana Estoque', 'juliana.est@sebodojoao.com', 'func123', 1, '(17) 99777-8888');
 GO
 
 -- Tabela Clientes --
@@ -82,6 +107,31 @@ INSERT INTO funcionarios (usuario_id, codigo_funcionario, admin) VALUES
 (8, 'FUNC-002', 0),
 (9, 'FUNC-003', 0),
 (10, 'FUNC-004', 0);
+GO
+
+-- Tabela Enderecos --
+-- NOVO: endereços de entrega dos clientes (1 a 6). O endereço de cada cliente é o que antes ficava --
+-- na tabela usuarios (rua, bairro e CEP); o João tem um segundo endereço para demonstrar que um --
+-- cliente pode ter vários. "padrao" = 1 marca o endereço que já vem escolhido no checkout (só um por cliente). --
+-- Os endereços também são usados pelas entregas (veja a tabela entregas, coluna endereco_id). --
+INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, padrao, cep_numero, cliente_id) VALUES
+('Rua das Flores',  '100',  NULL,       'Centro',      1, 'Casa',      1, '15010-000', 1), -- 1
+('Av. Brasil',      '2500', 'Sala 12',  'Boa Vista',   1, 'Trabalho',  0, '15010-000', 1), -- 2
+('Av. Paulista',    '500',  NULL,       'Bela Vista',  1, 'Casa',      1, '13010-000', 2), -- 3
+('Rua da Praia',    '20',   'Apto 3',   'Copacabana',  1, 'Casa',      1, '20010-000', 3), -- 4
+('Rua Bahia',       '45',   NULL,       'Savassi',     1, 'Casa',      1, '30110-000', 4), -- 5
+('Rua XV',          '300',  NULL,       'Centro',      1, 'Casa',      1, '80010-000', 5), -- 6
+('Av. Ipiranga',    '1000', 'Bloco B',  'Menino Deus', 1, 'Casa',      1, '90010-000', 6); -- 7
+GO
+
+-- Tabela Cartoes --
+-- NOVO: cartões salvos pelos clientes. Só ficam a bandeira, os 4 últimos dígitos, o nome do titular e a --
+-- validade (MM/AA). O número completo e o CVV NUNCA são guardados. "padrao" = 1: cartão já escolhido no checkout. --
+INSERT INTO cartoes (bandeira, final_numero, titular, validade, padrao, cliente_id) VALUES
+('visa',       '4242', 'JOAO DA SILVA',   '12/30', 1, 1),
+('mastercard', '5555', 'MARIA OLIVEIRA',  '08/29', 1, 2),
+('elo',        '6362', 'MARIA OLIVEIRA',  '03/30', 0, 2),
+('visa',       '1111', 'CARLOS SOUZA',    '05/31', 1, 3);
 GO
 
 -- Tabela Categorias --
@@ -150,7 +200,19 @@ INSERT INTO imagem_produtos (caminho, produto_id) VALUES
 ('/imagens/produtos/ImagemProduto10.jpg', 10); -- ALTERADO: o arquivo se chama "ImagemProduto10.jpg" (I maiúsculo); em sistemas que diferenciam maiúsculas o caminho antigo não achava a imagem
 GO
 
+-- Tabela Item_Carrinhos --
+-- NOVO: carrinhos de compras que ainda não viraram pedido (clientes 3 e 4). Guarda só o produto e a --
+-- quantidade; o preço é sempre o preço atual do produto, e o estoque só é baixado quando a compra é finalizada. --
+INSERT INTO item_carrinhos (cliente_id, produto_id, quantidade) VALUES
+(3, 1, 1),
+(3, 5, 2),
+(4, 6, 1);
+GO
+
 -- Tabela Entregas --
+-- ALTERADO (nova coluna endereco_id): cada entrega aponta para o endereço do cliente que fez o pedido. --
+-- O valor do frete (valor_frete) não foi informado: vale o padrão 0, porque os totais dos pedidos abaixo --
+-- são só a soma dos itens (compras com retirada/frete grátis). --
 -- ALTERADO: antes todas as entregas estavam "Pendente (1)", mas já tinham código de rastreio, e a --
 -- data de postagem era a do dia em que o script rodava. Agora cada entrega tem um status coerente --
 -- com o seu pedido, seguindo a mesma regra da procedure sp_avancar_entrega: --
@@ -158,17 +220,17 @@ GO
 --   * a data de entrega só existe quando a entrega foi concluída (4). --
 -- A entrega N pertence ao pedido N (entrega 1 -> pedido 1, entrega 2 -> pedido 2...). --
 -- Status: 1 Pendente | 2 Preparando | 3 Em trânsito | 4 Entregue | 5 Cancelada --
-INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_previsao_entrega, data_entrega) VALUES
-('Correios (PAC)',   4, 'https://rastreio.com/AB1',     'AB123456789BR', '2026-10-07T09:00:00', '2026-10-15', '2026-10-14T15:30:00'), -- 1: Entregue
-('Correios (SEDEX)', 4, 'https://rastreio.com/AB2',     'AB987654321BR', '2026-10-09T10:00:00', '2026-10-13', '2026-10-12T11:20:00'), -- 2: Entregue
-('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-10-22', NULL),                  -- 3: Pendente
-('Loggi',            2, NULL,                           NULL,            NULL,                  '2026-11-04', NULL),                  -- 4: Preparando
-('Correios (PAC)',   1, NULL,                           NULL,            NULL,                  '2026-11-06', NULL),                  -- 5: Pendente
-('Jadlog',           3, 'https://jadlog.com.br/JD2',    'JD444555666SP', '2026-10-26T14:00:00', '2026-11-03', NULL),                  -- 6: Em trânsito
-('Loggi',            5, NULL,                           NULL,            NULL,                  '2026-10-27', NULL),                  -- 7: Cancelada
-('Correios (SEDEX)', 4, 'https://rastreio.com/AB4',     'AB999888777BR', '2026-10-15T08:30:00', '2026-10-19', '2026-10-18T17:10:00'), -- 8: Entregue
-('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-11-07', NULL),                  -- 9: Pendente
-('Correios (PAC)',   2, NULL,                           NULL,            NULL,                  '2026-11-05', NULL);                  -- 10: Preparando
+INSERT INTO entregas (transportadora, status, link_rastreio, codigo_rastreio, data_postagem, data_previsao_entrega, data_entrega, endereco_id) VALUES
+('Correios (PAC)',   4, 'https://rastreio.com/AB1',     'AB123456789BR', '2026-10-07T09:00:00', '2026-10-15', '2026-10-14T15:30:00', 1), -- 1: Entregue
+('Correios (SEDEX)', 4, 'https://rastreio.com/AB2',     'AB987654321BR', '2026-10-09T10:00:00', '2026-10-13', '2026-10-12T11:20:00', 3), -- 2: Entregue
+('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-10-22', NULL, 1),                  -- 3: Pendente
+('Loggi',            2, NULL,                           NULL,            NULL,                  '2026-11-04', NULL, 3),                  -- 4: Preparando
+('Correios (PAC)',   1, NULL,                           NULL,            NULL,                  '2026-11-06', NULL, 2),                  -- 5: Pendente
+('Jadlog',           3, 'https://jadlog.com.br/JD2',    'JD444555666SP', '2026-10-26T14:00:00', '2026-11-03', NULL, 3),                  -- 6: Em trânsito
+('Loggi',            5, NULL,                           NULL,            NULL,                  '2026-10-27', NULL, 1),                  -- 7: Cancelada
+('Correios (SEDEX)', 4, 'https://rastreio.com/AB4',     'AB999888777BR', '2026-10-15T08:30:00', '2026-10-19', '2026-10-18T17:10:00', 3), -- 8: Entregue
+('Jadlog',           1, NULL,                           NULL,            NULL,                  '2026-11-07', NULL, 1),                  -- 9: Pendente
+('Correios (PAC)',   2, NULL,                           NULL,            NULL,                  '2026-11-05', NULL, 3);                  -- 10: Preparando
 GO
 
 -- Tabela Pedidos --
@@ -242,19 +304,20 @@ GO
 --   * o status acompanha o pedido: pagamento APROVADO (2) tem data_pagamento; PENDENTE (1) não tem; --
 --     o boleto do pedido cancelado (7) ficou RECUSADO (3), como faz a procedure sp_cancelar_pedido; --
 --   * os vencimentos não são mais anteriores à data do pedido. --
+-- ALTERADO: duas colunas novas, bandeira e final_cartao: guardam a bandeira e os 4 últimos dígitos do cartão usado no pagamento (NULL em PIX e boleto). --
 -- Status: 1 Pendente | 2 Aprovado | 3 Recusado --
-INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, data_pagamento, pedido_id) VALUES
-(1, 2,  80.50, 1, 'PIX',            '2026-10-05', '2026-10-05', 1),
-(1, 2,  45.50, 1, 'CARTAO_CREDITO', '2026-10-08', '2026-10-08', 2),
-(1, 1,  40.00, 1, 'BOLETO',         '2026-10-17', NULL,         3),
-(1, 2,  55.00, 1, 'PIX',            '2026-10-28', '2026-10-28', 4),
-(1, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-10-30', '2026-10-30', 5),
-(2, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-11-30', '2026-10-30', 5),
-(1, 2, 150.00, 1, 'PIX',            '2026-10-24', '2026-10-24', 6),
-(1, 3,  90.00, 1, 'BOLETO',         '2026-10-25', NULL,         7),
-(1, 2,  30.00, 1, 'CARTAO_CREDITO', '2026-10-14', '2026-10-14', 8),
-(1, 1,  35.00, 1, 'PIX',            '2026-10-31', NULL,         9),
-(1, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-10-29', '2026-10-29', 10),
-(2, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-11-29', '2026-10-29', 10),
-(3, 2,  23.34, 3, 'CARTAO_CREDITO', '2026-12-29', '2026-10-29', 10);
+INSERT INTO pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento, data_vencimento, data_pagamento, bandeira, final_cartao, pedido_id) VALUES
+(1, 2,  80.50, 1, 'PIX',            '2026-10-05', '2026-10-05', NULL, NULL, 1),
+(1, 2,  45.50, 1, 'CARTAO_CREDITO', '2026-10-08', '2026-10-08', 'mastercard', '5555', 2),
+(1, 1,  40.00, 1, 'BOLETO',         '2026-10-17', NULL, NULL, NULL, 3),
+(1, 2,  55.00, 1, 'PIX',            '2026-10-28', '2026-10-28', NULL, NULL, 4),
+(1, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-10-30', '2026-10-30', 'visa', '4242', 5),
+(2, 2,  30.00, 2, 'CARTAO_CREDITO', '2026-11-30', '2026-10-30', 'visa', '4242', 5),
+(1, 2, 150.00, 1, 'PIX',            '2026-10-24', '2026-10-24', NULL, NULL, 6),
+(1, 3,  90.00, 1, 'BOLETO',         '2026-10-25', NULL, NULL, NULL, 7),
+(1, 2,  30.00, 1, 'CARTAO_CREDITO', '2026-10-14', '2026-10-14', 'elo', '6362', 8),
+(1, 1,  35.00, 1, 'PIX',            '2026-10-31', NULL, NULL, NULL, 9),
+(1, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-10-29', '2026-10-29', 'mastercard', '5555', 10),
+(2, 2,  23.33, 3, 'CARTAO_CREDITO', '2026-11-29', '2026-10-29', 'mastercard', '5555', 10),
+(3, 2,  23.34, 3, 'CARTAO_CREDITO', '2026-12-29', '2026-10-29', 'mastercard', '5555', 10);
 GO

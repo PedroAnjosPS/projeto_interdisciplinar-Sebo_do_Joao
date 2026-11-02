@@ -485,14 +485,21 @@
             }
             estado.subtotal = estado.itens.reduce((soma, { produto, quantidade }) => soma + produto.preco * quantidade, 0);
 
-            estado.cartoes = await CartoesStore.listar();
-            const cartaoInicial = estado.cartoes.find((c) => c.padrao && !validadeJaVenceu(c.validade))
-                || estado.cartoes.find((c) => !validadeJaVenceu(c.validade));
-            estado.cartaoId = cartaoInicial ? cartaoInicial.id : 'novo';
+            // ALTERADO: cartões e endereços agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
+            // expirado...), o aviso aparece na tela e a compra fica bloqueada, em vez de a página ficar pela metade.
+            try {
+                estado.cartoes = await CartoesStore.listar();
+                const cartaoInicial = estado.cartoes.find((c) => c.padrao && !validadeJaVenceu(c.validade))
+                    || estado.cartoes.find((c) => !validadeJaVenceu(c.validade));
+                estado.cartaoId = cartaoInicial ? cartaoInicial.id : 'novo';
 
-            renderizarFormaDePagamento();
-            renderizarCartoesSalvos();
-            await carregarEnderecos();
+                renderizarFormaDePagamento();
+                renderizarCartoesSalvos();
+                await carregarEnderecos();
+            } catch (erro) {
+                mostrarAviso(erro.message || 'Não foi possível carregar seus dados. Tente novamente.');
+                $('co-confirmar').disabled = true;
+            }
         });
     </script>
 </body>

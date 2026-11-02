@@ -191,7 +191,13 @@
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
             if (!(await exigirLogin())) return;
-            renderizarCartoes();
+            // ALTERADO: os cartões agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
+            // expirado...), o aviso aparece na tela em vez de a página ficar em branco.
+            try {
+                await renderizarCartoes();
+            } catch (erro) {
+                mostrarMensagemDaPagina(erro.message || 'Não foi possível carregar seus cartões. Tente novamente.', 'danger');
+            }
         });
     </script>
 </body>

@@ -2,9 +2,7 @@ package br.com.interdisciplinar.sebodojoao.service;
 
 import br.com.interdisciplinar.sebodojoao.dto.FuncionarioRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.FuncionarioResponseDTO;
-import br.com.interdisciplinar.sebodojoao.model.Cep;
 import br.com.interdisciplinar.sebodojoao.model.Funcionario;
-import br.com.interdisciplinar.sebodojoao.repository.CepRepository;
 import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,8 +12,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FuncionarioService {
+    // ALTERADO: o CepRepository saiu daqui, pois o funcionário não tem mais CEP/endereço cadastrado.
     private final FuncionarioRepository funcionarioRepository;
-    private final CepRepository cepRepository;
 
     public List<FuncionarioResponseDTO> listarTodos() {
         return funcionarioRepository.findAll()
@@ -31,9 +29,6 @@ public class FuncionarioService {
                                 funcionario.getEmail(),
                                 funcionario.getSenha(),
                                 funcionario.getTelefone(),
-                                funcionario.getBairro(),
-                                funcionario.getLogradouro(),
-                                funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                                 funcionario.getStatus(),
                                 fotoPerfil,
                                 funcionario.getCodigoFuncionario(),
@@ -54,9 +49,6 @@ public class FuncionarioService {
                 funcionario.getEmail(),
                 funcionario.getSenha(),
                 funcionario.getTelefone(),
-                funcionario.getBairro(),
-                funcionario.getLogradouro(),
-                funcionario.getCep() != null ? funcionario.getCep().getNumeroCep() : null,
                 funcionario.getStatus(),
                 funcionario.getFotoPerfil(),
                 funcionario.getCodigoFuncionario(),
@@ -65,21 +57,11 @@ public class FuncionarioService {
     }
 
     public FuncionarioResponseDTO cadastrar(FuncionarioRequestDTO dto) {
-        Cep cep = null;
-        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
-                cep = cepRepository
-                        .findById(dto.cepNumero())
-                        .orElseThrow();
-        }  
-
         Funcionario funcionario = new Funcionario();
         funcionario.setNome(dto.nome());
         funcionario.setEmail(dto.email());
         funcionario.setSenha(dto.senha());
         funcionario.setTelefone(dto.telefone());
-        funcionario.setBairro(dto.bairro());
-        funcionario.setLogradouro(dto.logradouro());
-        funcionario.setCep(cep);
         funcionario.setFotoPerfil(dto.fotoPerfil());
 
         if (dto.status() != null) {
@@ -96,9 +78,6 @@ public class FuncionarioService {
                 salvo.getEmail(),
                 salvo.getSenha(),
                 salvo.getTelefone(),
-                salvo.getBairro(),
-                salvo.getLogradouro(),
-                salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
                 salvo.getFotoPerfil(),
                 salvo.getCodigoFuncionario(),
@@ -116,17 +95,10 @@ public class FuncionarioService {
         if (dto.email() != null) funcionarioExistente.setEmail(dto.email());
         if (dto.senha() != null) funcionarioExistente.setSenha(dto.senha());
         if (dto.telefone() != null) funcionarioExistente.setTelefone(dto.telefone());
-        if (dto.bairro() != null) funcionarioExistente.setBairro(dto.bairro());
-        if (dto.logradouro() != null) funcionarioExistente.setLogradouro(dto.logradouro());
         // Texto vazio é o pedido de remover a foto: a coluna volta a ser NULL
         if (dto.fotoPerfil() != null) funcionarioExistente.setFotoPerfil(dto.fotoPerfil().isEmpty() ? null : dto.fotoPerfil());
         if (dto.codigoFuncionario() != null) funcionarioExistente.setCodigoFuncionario(dto.codigoFuncionario());
         if (dto.admin() != null) funcionarioExistente.setAdmin(dto.admin());
-
-        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
-            Cep cep = cepRepository.findById(dto.cepNumero()).orElseThrow();
-            funcionarioExistente.setCep(cep);
-        }
 
         if (dto.status() != null) {
             funcionarioExistente.setStatus(dto.status());
@@ -144,9 +116,6 @@ public class FuncionarioService {
                 atualizado.getEmail(),
                 atualizado.getSenha(),
                 atualizado.getTelefone(),
-                atualizado.getBairro(),
-                atualizado.getLogradouro(),
-                atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
                 fotoPerfil,
                 atualizado.getCodigoFuncionario(),

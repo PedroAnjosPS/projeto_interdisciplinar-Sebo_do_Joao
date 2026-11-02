@@ -38,12 +38,14 @@ public final class ControleDeAcesso {
     public static Long exigirCliente(HttpSession sessao) {
         Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
 
+        // ALTERADO: as mensagens eram só sobre "comprar". Agora esta mesma checagem protege também o carrinho,
+        // os endereços e os cartões, então o texto ficou genérico.
         if (perfil == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "É preciso fazer login para comprar.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "É preciso fazer login.");
         }
 
         if (!PERFIL_CLIENTE.equals(perfil)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Contas de funcionário não podem realizar compras.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Contas de funcionário não podem usar esta função (compras, carrinho, endereços e cartões são só para clientes).");
         }
 
         return lerId(sessao);

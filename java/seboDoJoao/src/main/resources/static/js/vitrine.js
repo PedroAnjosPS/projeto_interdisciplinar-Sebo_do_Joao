@@ -9,9 +9,9 @@
 //
 // O que tem aqui:
 //   1. Máscaras e validações (CPF, telefone, nome, e-mail, nascimento, CEP, endereço, cartão)
-//   2. CarrinhoStore  — carrinho de compras (um por conta)
+//   2. CarrinhoStore  — carrinho de compras (no banco para cliente logado; no navegador para visitante)
 //   3. EnderecosStore, CartoesStore e PedidosStore — endereços, cartões e pedidos da conta
-//      (por enquanto no localStorage; a API ainda não tem essas rotas)
+//      (ALTERADO: agora todos conversam com a API Java e ficam gravados no banco de dados)
 //   4. Funções de apoio (preço, badge do carrinho, cabeçalho logado/deslogado)
 //   5. Aviso rápido (toast) e card de produto
 //   6. Área do administrador (exigirAdmin, sair, mostrar senha)
@@ -204,9 +204,8 @@ function errosDoEndereco(e) {
     };
 
     if (texto(e.apelido).length > 30) erros.apelido = 'Use no máximo 30 caracteres.';
-    obrigatorio('destinatario', 'Informe o nome de quem vai receber.');
-    if (!somenteDigitos(e.telefone)) erros.telefone = 'Informe um telefone para contato.';
-    else if (erroDoTelefone(e.telefone)) erros.telefone = erroDoTelefone(e.telefone);
+    // ALTERADO: a conferência de "destinatário" e "telefone" foi removida: o endereço não tem mais esses campos
+    // (quem recebe é a pessoa da conta, com o nome e o telefone do cadastro).
 
     const erroCep = erroDoCep(e.cep);
     if (erroCep) erros.cep = erroCep;
@@ -330,31 +329,28 @@ function erroDoTitularDoCartao(texto) {
 // ===== INÍCIO: carrinho-store =====
 // Camada de acesso ao carrinho de compras (mesma ideia do ProdutosStore).
 //
-// Só guardamos { id, quantidade } de cada item. Nome, preço e imagem vêm
-// do ProdutosStore na hora de mostrar a tela, assim o preço nunca fica
-// desatualizado. Hoje fica no localStorage; com o backend Java + Spring
-// Boot essas funções viram chamadas à API e as telas não precisam mudar.
+// ALTERADO (bloco inteiro): antes o carrinho de TODO mundo ficava só no localStorage do navegador.
+// Agora existem dois carrinhos, e este arquivo escolhe o certo sozinho:
+//   - CLIENTE LOGADO  -> o carrinho fica no BANCO DE DADOS (tabela item_carrinhos), pela API /api/carrinho.
+//                        Assim ele acompanha a conta em qualquer computador ou navegador.
+//   - VISITANTE (sem login) -> carrinho temporário no navegador (localStorage), porque ainda não há conta
+//                        para guardá-lo no banco. Ao fazer login, o que estava nele é passado para a conta
+//                        (função juntarVisitanteNaConta) e o carrinho temporário é esvaziado.
+//   - FUNCIONÁRIO     -> não usa carrinho (não compra).
+// Só guardamos { id, quantidade } de cada item. Nome, preço e imagem vêm do ProdutosStore na hora de
+// mostrar a tela, assim o preço nunca fica desatualizado.
+// As telas continuam chamando as mesmas funções de antes (listar, adicionar, remover...): não mudou nada para elas.
 const CarrinhoStore = (() => {
-    // Cada conta tem o seu carrinho: quem não entrou ainda usa o carrinho de "visitante"
-    // (que é juntado ao da conta quando a pessoa faz login). No backend Java isso é só
-    // buscar os itens do usuário logado (GET /carrinho).
     const PREFIXO = 'sebo_do_joao_carrinho';
-    const CHAVE_SESSAO = 'sebo_do_joao_sessao';
     const CHAVE_LOCALSTORAGE = PREFIXO; // carrinho do visitante (nome antigo, mantido)
 
-    function idDaContaLogada() {
-        try {
-            const sessao = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || 'null');
-            return sessao && sessao.id != null ? sessao.id : null;
-        } catch (erro) {
-            return null;
-        }
+    // true quando quem está usando o site é um CLIENTE logado (o carrinho dele fica no banco)
+    function ehClienteLogado() {
+        const sessao = UsuarioStore.lerSessao();
+        return Boolean(sessao) && !UsuarioStore.ehAdmin(sessao);
     }
 
-    function chaveDe(idDaConta) {
-        return idDaConta == null ? PREFIXO : `${PREFIXO}_${idDaConta}`;
-    }
-
+    // ----- Carrinho do VISITANTE (localStorage) -----
     function lerDe(chave) {
         try {
             const itens = JSON.parse(localStorage.getItem(chave) || '[]');
@@ -364,35 +360,18 @@ const CarrinhoStore = (() => {
         }
     }
 
-    function lerTudo() {
-        return lerDe(chaveDe(idDaContaLogada()));
+    function lerVisitante() {
+        return lerDe(PREFIXO);
     }
 
-    function salvarTudo(itens) {
-        localStorage.setItem(chaveDe(idDaContaLogada()), JSON.stringify(itens));
+    function salvarVisitante(itens) {
+        localStorage.setItem(PREFIXO, JSON.stringify(itens));
     }
 
-    // Chamado quando a pessoa entra numa conta: o que ela pôs no carrinho como visitante
-    // vai pro carrinho da conta (somando quantidades) e o carrinho de visitante esvazia.
-    function juntarVisitanteNaConta(idDaConta) {
-        const doVisitante = lerDe(PREFIXO);
-        if (!doVisitante.length) return;
-        const daConta = lerDe(chaveDe(idDaConta));
-        doVisitante.forEach((item) => {
-            const existente = daConta.find((i) => String(i.id) === String(item.id));
-            if (existente) existente.quantidade = (Number(existente.quantidade) || 0) + (Number(item.quantidade) || 0);
-            else daConta.push({ id: item.id, quantidade: Number(item.quantidade) || 1 });
-        });
-        localStorage.setItem(chaveDe(idDaConta), JSON.stringify(daConta));
-        localStorage.removeItem(PREFIXO);
-    }
-
-    function apagarDaConta(idDaConta) {
-        localStorage.removeItem(chaveDe(idDaConta));
-    }
-
-    function ehChaveDeCarrinho(chave) {
-        return typeof chave === 'string' && chave.startsWith(PREFIXO);
+    // ----- Carrinho do CLIENTE (banco de dados, via API) -----
+    // A API devolve [{ produtoId, quantidade }]; aqui viram { id, quantidade }, o formato que as telas usam.
+    function deApi(itens) {
+        return (itens || []).map((i) => ({ id: i.produtoId, quantidade: i.quantidade }));
     }
 
     // Quantas unidades dá pra comprar no máximo. Produtos antigos, sem o
@@ -408,11 +387,19 @@ const CarrinhoStore = (() => {
     }
 
     async function listar() {
-        return lerTudo();
+        const sessao = UsuarioStore.lerSessao();
+        if (!sessao) return lerVisitante();
+        if (UsuarioStore.ehAdmin(sessao)) return [];
+        try {
+            return deApi(await chamarApi('/api/carrinho'));
+        } catch (erro) {
+            // Sem conexão ou sessão expirada: mostra o carrinho vazio em vez de quebrar a tela
+            return [];
+        }
     }
 
     async function contarItens() {
-        return lerTudo().reduce((total, item) => total + (Number(item.quantidade) || 0), 0);
+        return (await listar()).reduce((total, item) => total + (Number(item.quantidade) || 0), 0);
     }
 
     async function adicionar(produto, quantidade = 1) {
@@ -422,7 +409,7 @@ const CarrinhoStore = (() => {
 
         if (!disponivel(produto)) return { ok: false, motivo: 'indisponivel' };
 
-        const itens = lerTudo();
+        const itens = await listar();
         const item = itens.find((i) => String(i.id) === String(produto.id));
         const quantidadeAtual = item ? Number(item.quantidade) || 0 : 0;
 
@@ -430,31 +417,94 @@ const CarrinhoStore = (() => {
             return { ok: false, motivo: 'estoque' };
         }
 
-        if (item) {
-            item.quantidade = quantidadeAtual + quantidade;
-        } else {
-            itens.push({ id: produto.id, quantidade });
+        // Visitante: guarda no navegador
+        if (!ehClienteLogado()) {
+            if (item) item.quantidade = quantidadeAtual + quantidade;
+            else itens.push({ id: produto.id, quantidade });
+            salvarVisitante(itens);
+            return { ok: true };
         }
 
-        salvarTudo(itens);
-        return { ok: true };
+        // Cliente logado: grava no banco (o Java confere de novo o estoque, por segurança)
+        try {
+            await chamarApi('/api/carrinho', {
+                method: 'POST',
+                body: JSON.stringify({ produtoId: produto.id, quantidade })
+            });
+            return { ok: true };
+        } catch (erro) {
+            if (erro.status === 409 && /estoque/i.test(erro.message)) return { ok: false, motivo: 'estoque' };
+            if (erro.status === undefined) return { ok: false, motivo: 'sessao', mensagem: erro.message };
+            return { ok: false, motivo: 'indisponivel' };
+        }
     }
 
     async function definirQuantidade(id, quantidade) {
-        const itens = lerTudo();
-        const item = itens.find((i) => String(i.id) === String(id));
-        if (!item) return;
+        const nova = Math.max(1, Math.floor(quantidade));
 
-        item.quantidade = Math.max(1, Math.floor(quantidade));
-        salvarTudo(itens);
+        if (!ehClienteLogado()) {
+            const itens = lerVisitante();
+            const item = itens.find((i) => String(i.id) === String(id));
+            if (!item) return;
+            item.quantidade = nova;
+            salvarVisitante(itens);
+            return;
+        }
+
+        try {
+            await chamarApi(`/api/carrinho/${encodeURIComponent(id)}`, {
+                method: 'PUT',
+                body: JSON.stringify({ produtoId: id, quantidade: nova })
+            });
+        } catch (erro) { /* sem estoque ou item que já saiu do carrinho: a tela recarrega e mostra a situação real */ }
     }
 
     async function remover(id) {
-        salvarTudo(lerTudo().filter((i) => String(i.id) !== String(id)));
+        if (!ehClienteLogado()) {
+            salvarVisitante(lerVisitante().filter((i) => String(i.id) !== String(id)));
+            return;
+        }
+        try {
+            await chamarApi(`/api/carrinho/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        } catch (erro) { /* a tela recarrega e mostra o carrinho real */ }
     }
 
     async function limpar() {
-        salvarTudo([]);
+        if (!ehClienteLogado()) {
+            salvarVisitante([]);
+            return;
+        }
+        try {
+            await chamarApi('/api/carrinho', { method: 'DELETE' });
+        } catch (erro) { /* a tela recarrega e mostra o carrinho real */ }
+    }
+
+    // Chamado quando a pessoa entra numa conta: o que ela pôs no carrinho como visitante é enviado ao banco
+    // (somando quantidades, sem passar do estoque) e o carrinho temporário do navegador é esvaziado.
+    // Também aproveita para trazer o carrinho que versões antigas do site guardavam no navegador por conta
+    // (chave "sebo_do_joao_carrinho_<id>"), que depois deixa de existir.
+    async function juntarVisitanteNaConta(idDaConta) {
+        const chaveAntigaDaConta = `${PREFIXO}_${idDaConta}`;
+        const itens = [...lerVisitante(), ...lerDe(chaveAntigaDaConta)]
+            .map((i) => ({ produtoId: i.id, quantidade: Number(i.quantidade) || 1 }));
+        if (!itens.length) return;
+
+        try {
+            await chamarApi('/api/carrinho/juntar', { method: 'POST', body: JSON.stringify(itens) });
+            localStorage.removeItem(PREFIXO);
+            localStorage.removeItem(chaveAntigaDaConta);
+        } catch (erro) {
+            // Se falhar (ex.: servidor fora do ar), os itens continuam no navegador para tentar de novo no próximo login
+        }
+    }
+
+    // Ao excluir a conta, o Java já apaga o carrinho do banco; aqui só sobra limpar o carrinho antigo do navegador
+    function apagarDaConta(idDaConta) {
+        localStorage.removeItem(`${PREFIXO}_${idDaConta}`);
+    }
+
+    function ehChaveDeCarrinho(chave) {
+        return typeof chave === 'string' && chave.startsWith(PREFIXO);
     }
 
     return {
@@ -470,9 +520,10 @@ const CarrinhoStore = (() => {
 
 // ===== INÍCIO: enderecos-cartoes-pedidos =====
 // Endereços, cartões e pedidos da conta logada. Mesma ideia dos outros Stores: as telas só
-// chamam estas funções e, no backend Java + Spring Boot (SQL Server), cada uma vira uma
-// chamada à API (GET/POST /enderecos, /cartoes, /pedidos...). Cada registro guarda o
-// "usuarioId" do dono, e todas as funções só enxergam os registros da conta logada.
+// chamam estas funções, e cada uma faz uma chamada à API Java (/api/enderecos, /api/cartoes,
+// /api/compras), que grava no SQL Server. ALTERADO: antes endereços e cartões ficavam no
+// localStorage; agora tudo está no banco, e o Java usa o login da sessão para saber quem é o
+// dono (cada conta só enxerga os próprios registros).
 
 // Devolve a conta logada ou avisa que precisa entrar
 async function usuarioLogadoOuErro() {
@@ -481,135 +532,134 @@ async function usuarioLogadoOuErro() {
     return usuario;
 }
 
-function lerLista(chave) {
-    try {
-        const lista = JSON.parse(localStorage.getItem(chave) || '[]');
-        return Array.isArray(lista) ? lista : [];
-    } catch (erro) {
-        return [];
-    }
-}
-
-function salvarLista(chave, lista) {
-    try {
-        localStorage.setItem(chave, JSON.stringify(lista));
-    } catch (erro) {
-        if (erro.name === 'QuotaExceededError' || erro.code === 22) {
-            throw new Error('O navegador não tem mais espaço pra guardar esses dados.');
-        }
-        throw erro;
-    }
-}
-
-function proximoIdDaLista(lista) {
-    return lista.length ? Math.max(...lista.map((item) => Number(item.id) || 0)) + 1 : 1;
-}
-
 // ----- Endereços -----
+// ALTERADO (bloco inteiro): antes os endereços ficavam só no localStorage do navegador. Agora são gravados
+// no BANCO (tabela enderecos), pela API /api/enderecos. Quem é o dono vem do login (o Java usa a sessão),
+// então cada conta só enxerga os próprios endereços. As funções são as mesmas de antes (listar, obter,
+// salvar, definirPadrao, remover), por isso as telas quase não mudaram.
+//
+// Dois "formatos" de endereço convivem:
+//   - o do BANCO/Java:  { logradouro, numero (null = sem número), complemento, ... }
+//   - o das TELAS:      { rua, numero ('' quando sem número), semNumero (true/false), complemento, ... }
+// As funções deApi() e paraApi() só traduzem de um para o outro.
 const EnderecosStore = (() => {
-    const CHAVE = 'sebo_do_joao_enderecos';
-    const LIMITE = 10;
+    const LIMITE = 10; // o Java confere o mesmo limite (EnderecoService.LIMITE)
 
-    // Padrão primeiro, depois do mais novo pro mais antigo
+    function deApi(e) {
+        return {
+            id: e.id,
+            apelido: e.apelido,
+            // ALTERADO: o banco não guarda mais destinatário e telefone no endereço. Para as telas que ainda mostram
+            // "nome · telefone" junto do endereço, usamos o nome e o telefone da conta logada (cadastro).
+            destinatario: (UsuarioStore.lerSessao() || {}).nome || '',
+            telefone: (UsuarioStore.lerSessao() || {}).telefone || '',
+            cep: e.cep,
+            rua: e.logradouro,
+            numero: e.numero || '',
+            semNumero: e.numero == null,
+            complemento: e.complemento || '',
+            bairro: e.bairro,
+            cidade: e.cidade,
+            uf: e.uf,
+            padrao: e.padrao === true
+        };
+    }
+
+    // Só clientes logados têm endereços (visitante e funcionário: lista vazia)
+    function contaComEnderecos(usuario) {
+        return Boolean(usuario) && !UsuarioStore.ehAdmin(usuario);
+    }
+
+    // O Java já devolve o padrão primeiro e, depois, do mais novo pro mais antigo
     async function listar() {
         const usuario = await UsuarioStore.obter();
-        if (!usuario) return [];
-        return lerLista(CHAVE)
-            .filter((e) => String(e.usuarioId) === String(usuario.id))
-            .sort((a, b) => (b.padrao === true) - (a.padrao === true) || b.id - a.id);
+        if (!contaComEnderecos(usuario)) return [];
+        return (await chamarApi('/api/enderecos')).map(deApi);
     }
 
     async function obter(id) {
-        return (await listar()).find((e) => String(e.id) === String(id)) || null;
+        const usuario = await UsuarioStore.obter();
+        if (!contaComEnderecos(usuario) || id == null) return null;
+        try {
+            return deApi(await chamarApi(`/api/enderecos/${encodeURIComponent(id)}`));
+        } catch (erro) {
+            if (erro.status === 404) return null; // não existe, foi excluído ou é de outra pessoa
+            throw erro;
+        }
     }
 
     // Cria (sem id) ou atualiza (com id). O primeiro endereço da conta já vira o padrão.
     async function salvar(dados) {
-        const usuario = await usuarioLogadoOuErro();
+        await usuarioLogadoOuErro();
+        // A tela confere os campos para avisar rápido; o Java confere tudo de novo (e é ele quem decide)
         const erros = errosDoEndereco(dados);
         const primeiroErro = Object.values(erros)[0];
         if (primeiroErro) throw new Error(primeiroErro);
 
-        const todos = lerLista(CHAVE);
-        const meus = todos.filter((e) => String(e.usuarioId) === String(usuario.id));
-
-        const limpo = {
-            apelido: String(dados.apelido ?? '').trim() || 'Endereço',
-            destinatario: String(dados.destinatario).trim(),
-            telefone: formatarTelefone(dados.telefone),
+        const corpo = {
+            apelido: String(dados.apelido ?? '').trim(),
             cep: formatarCep(dados.cep),
-            rua: String(dados.rua).trim(),
+            logradouro: String(dados.rua).trim(),
             numero: dados.semNumero ? '' : String(dados.numero).trim(),
             semNumero: Boolean(dados.semNumero),
             complemento: String(dados.complemento ?? '').trim(),
             bairro: String(dados.bairro).trim(),
             cidade: String(dados.cidade).trim(),
-            uf: String(dados.uf).trim().toUpperCase()
+            uf: String(dados.uf).trim().toUpperCase(),
+            padrao: Boolean(dados.padrao)
         };
 
-        let registro;
-        if (dados.id != null) {
-            registro = todos.find((e) => String(e.id) === String(dados.id) && String(e.usuarioId) === String(usuario.id));
-            if (!registro) throw new Error('Endereço não encontrado.');
-            Object.assign(registro, limpo);
-        } else {
-            if (meus.length >= LIMITE) throw new Error(`Você pode guardar até ${LIMITE} endereços. Exclua algum pra adicionar outro.`);
-            registro = { id: proximoIdDaLista(todos), usuarioId: usuario.id, padrao: meus.length === 0, ...limpo };
-            todos.push(registro);
-        }
-
-        if (dados.padrao) {
-            todos.forEach((e) => { if (String(e.usuarioId) === String(usuario.id)) e.padrao = e === registro; });
-        }
-        salvarLista(CHAVE, todos);
-        return registro;
+        const editando = dados.id != null;
+        const salvo = await chamarApi(editando ? `/api/enderecos/${encodeURIComponent(dados.id)}` : '/api/enderecos', {
+            method: editando ? 'PUT' : 'POST',
+            body: JSON.stringify(corpo)
+        });
+        return deApi(salvo);
     }
 
     async function definirPadrao(id) {
-        const usuario = await usuarioLogadoOuErro();
-        const todos = lerLista(CHAVE);
-        if (!todos.some((e) => String(e.id) === String(id) && String(e.usuarioId) === String(usuario.id))) return;
-        todos.forEach((e) => {
-            if (String(e.usuarioId) === String(usuario.id)) e.padrao = String(e.id) === String(id);
-        });
-        salvarLista(CHAVE, todos);
+        await usuarioLogadoOuErro();
+        await chamarApi(`/api/enderecos/${encodeURIComponent(id)}/padrao`, { method: 'POST' });
     }
 
+    // "Exclui" o endereço: no banco ele só é marcado como inativo (as entregas antigas continuam usando)
     async function remover(id) {
-        const usuario = await usuarioLogadoOuErro();
-        let todos = lerLista(CHAVE);
-        const removido = todos.find((e) => String(e.id) === String(id) && String(e.usuarioId) === String(usuario.id));
-        if (!removido) return;
-        todos = todos.filter((e) => e !== removido);
-
-        // Se apagou o padrão, o mais novo que sobrou assume
-        if (removido.padrao) {
-            const sobra = todos.filter((e) => String(e.usuarioId) === String(usuario.id)).sort((a, b) => b.id - a.id)[0];
-            if (sobra) sobra.padrao = true;
-        }
-        salvarLista(CHAVE, todos);
+        await usuarioLogadoOuErro();
+        await chamarApi(`/api/enderecos/${encodeURIComponent(id)}`, { method: 'DELETE' });
     }
 
-    function removerDaConta(usuarioId) {
-        salvarLista(CHAVE, lerLista(CHAVE).filter((e) => String(e.usuarioId) !== String(usuarioId)));
-    }
-
-    return { CHAVE, LIMITE, listar, obter, salvar, definirPadrao, remover, removerDaConta };
+    return { LIMITE, listar, obter, salvar, definirPadrao, remover };
 })();
 
 // ----- Cartões -----
-// Só guarda bandeira, últimos 4 dígitos, nome e validade. O número inteiro e o CVV
-// são conferidos e jogados fora na hora (nunca vão pro localStorage).
+// ALTERADO (bloco inteiro): antes os cartões ficavam só no localStorage do navegador. Agora são gravados no
+// BANCO (tabela cartoes), pela API /api/cartoes. Continua valendo a regra de segurança: o número completo e o
+// CVV são conferidos aqui e JOGADOS FORA na hora; só a bandeira, os 4 últimos dígitos, o nome e a validade
+// seguem para o Java e para o banco.
 const CartoesStore = (() => {
-    const CHAVE = 'sebo_do_joao_cartoes';
-    const LIMITE = 6;
+    const LIMITE = 6; // o Java confere o mesmo limite (CartaoService.LIMITE)
 
+    // O banco chama de "finalNumero"; as telas usam "ultimos4"
+    function deApi(c) {
+        return {
+            id: c.id,
+            bandeira: c.bandeira,
+            ultimos4: c.finalNumero,
+            titular: c.titular,
+            validade: c.validade,
+            padrao: c.padrao === true
+        };
+    }
+
+    function contaComCartoes(usuario) {
+        return Boolean(usuario) && !UsuarioStore.ehAdmin(usuario);
+    }
+
+    // O Java já devolve o padrão primeiro e, depois, do mais novo pro mais antigo
     async function listar() {
         const usuario = await UsuarioStore.obter();
-        if (!usuario) return [];
-        return lerLista(CHAVE)
-            .filter((c) => String(c.usuarioId) === String(usuario.id))
-            .sort((a, b) => (b.padrao === true) - (a.padrao === true) || b.id - a.id);
+        if (!contaComCartoes(usuario)) return [];
+        return (await chamarApi('/api/cartoes')).map(deApi);
     }
 
     async function obter(id) {
@@ -630,53 +680,33 @@ const CartoesStore = (() => {
     }
 
     async function salvar(dados) {
-        const usuario = await usuarioLogadoOuErro();
-        const limpo = conferirCartao(dados);
+        await usuarioLogadoOuErro();
+        const limpo = conferirCartao(dados); // o número completo para por aqui
 
-        const todos = lerLista(CHAVE);
-        const meus = todos.filter((c) => String(c.usuarioId) === String(usuario.id));
-        if (meus.some((c) => c.bandeira === limpo.bandeira && c.ultimos4 === limpo.ultimos4 && c.validade === limpo.validade)) {
-            throw new Error('Esse cartão já está salvo na sua conta.');
-        }
-        if (meus.length >= LIMITE) throw new Error(`Você pode guardar até ${LIMITE} cartões. Exclua algum pra adicionar outro.`);
-
-        const registro = { id: proximoIdDaLista(todos), usuarioId: usuario.id, padrao: meus.length === 0, ...limpo };
-        todos.push(registro);
-        if (dados.padrao) {
-            todos.forEach((c) => { if (String(c.usuarioId) === String(usuario.id)) c.padrao = c === registro; });
-        }
-        salvarLista(CHAVE, todos);
-        return registro;
+        const salvo = await chamarApi('/api/cartoes', {
+            method: 'POST',
+            body: JSON.stringify({
+                bandeira: limpo.bandeira,
+                finalNumero: limpo.ultimos4,
+                titular: limpo.titular,
+                validade: limpo.validade,
+                padrao: Boolean(dados.padrao)
+            })
+        });
+        return deApi(salvo);
     }
 
     async function definirPadrao(id) {
-        const usuario = await usuarioLogadoOuErro();
-        const todos = lerLista(CHAVE);
-        if (!todos.some((c) => String(c.id) === String(id) && String(c.usuarioId) === String(usuario.id))) return;
-        todos.forEach((c) => {
-            if (String(c.usuarioId) === String(usuario.id)) c.padrao = String(c.id) === String(id);
-        });
-        salvarLista(CHAVE, todos);
+        await usuarioLogadoOuErro();
+        await chamarApi(`/api/cartoes/${encodeURIComponent(id)}/padrao`, { method: 'POST' });
     }
 
     async function remover(id) {
-        const usuario = await usuarioLogadoOuErro();
-        let todos = lerLista(CHAVE);
-        const removido = todos.find((c) => String(c.id) === String(id) && String(c.usuarioId) === String(usuario.id));
-        if (!removido) return;
-        todos = todos.filter((c) => c !== removido);
-        if (removido.padrao) {
-            const sobra = todos.filter((c) => String(c.usuarioId) === String(usuario.id)).sort((a, b) => b.id - a.id)[0];
-            if (sobra) sobra.padrao = true;
-        }
-        salvarLista(CHAVE, todos);
+        await usuarioLogadoOuErro();
+        await chamarApi(`/api/cartoes/${encodeURIComponent(id)}`, { method: 'DELETE' });
     }
 
-    function removerDaConta(usuarioId) {
-        salvarLista(CHAVE, lerLista(CHAVE).filter((c) => String(c.usuarioId) !== String(usuarioId)));
-    }
-
-    return { CHAVE, LIMITE, listar, obter, conferirCartao, salvar, definirPadrao, remover, removerDaConta };
+    return { LIMITE, listar, obter, conferirCartao, salvar, definirPadrao, remover };
 })();
 
 // ----- Frete e parcelas (simulados) -----
@@ -781,9 +811,10 @@ const PedidosStore = (() => {
     const STATUS_CONCLUIDO = 'Concluido';
     const STATUS_CANCELADO = 'Cancelado';
 
-    // O banco ainda não tem onde guardar o endereço de entrega nem a bandeira/final do cartão usado.
-    // Por isso, só estes dois detalhes ficam anotados no navegador (um por pedido), para a tela do
-    // pedido continuar mostrando esses dados. Tudo o mais (itens, valores, status) vem do banco.
+    // ALTERADO: antes o endereço de entrega e a bandeira/final do cartão ficavam anotados no navegador
+    // ("extras"), porque o banco não tinha onde guardá-los. Agora eles têm lugar próprio (entregas.endereco_id
+    // e pagamentos.bandeira/final_cartao), então tudo vem do banco e as anotações locais foram REMOVIDAS.
+    // Esta chave só continua aqui para apagar as anotações que versões antigas deixaram no navegador.
     const CHAVE_EXTRAS = 'sebo_do_joao_pedidos_extras';
 
     // Ícone de cada categoria (o banco devolve só o nome da categoria)
@@ -792,22 +823,9 @@ const PedidosStore = (() => {
         'blu-rays': 'fa-compact-disc', 'dvds': 'fa-film', 'cds': 'fa-compact-disc', 'fitas cassetes': 'fa-cassette-tape'
     };
 
-    function lerExtras() {
-        try {
-            const extras = JSON.parse(localStorage.getItem(CHAVE_EXTRAS) || '{}');
-            return extras && typeof extras === 'object' ? extras : {};
-        } catch (erro) {
-            return {};
-        }
-    }
-
-    function guardarExtras(clienteId, pedidoId, dados) {
-        try {
-            const extras = lerExtras();
-            extras[`${clienteId}_${pedidoId}`] = dados;
-            localStorage.setItem(CHAVE_EXTRAS, JSON.stringify(extras));
-        } catch (erro) { /* sem espaço no navegador: o pedido já está no banco, só perde o endereço na tela */ }
-    }
+    // ALTERADO: lerExtras() e guardarExtras() foram REMOVIDAS (não há mais o que anotar no navegador).
+    // No lugar, as anotações antigas são apagadas uma vez, quando este arquivo é carregado.
+    try { localStorage.removeItem(CHAVE_EXTRAS); } catch (erro) { /* navegador sem localStorage: nada a limpar */ }
 
     // Código "copia e cola" de exemplo (parece um Pix de verdade, mas é fictício).
     // ALTERADO: antes usava números aleatórios e o código ficava guardado no pedido. Agora o pedido vem
@@ -828,10 +846,18 @@ const PedidosStore = (() => {
 
     // Converte o pedido que veio do Java (CompraResponseDTO) para o formato que as telas já usam.
     function converter(dto) {
-        const extras = lerExtras()[`${dto.clienteId}_${dto.id}`] || {};
         const entrega = dto.entrega || {};
         const pg = dto.pagamento || {};
         const ehPix = pg.forma === 'PIX';
+
+        // ALTERADO: o endereço de entrega agora vem do banco (dto.endereco). Aqui ele é traduzido para o
+        // mesmo formato que as telas já usam (rua, numero, semNumero...), igual ao EnderecosStore.
+        const end = dto.endereco;
+        const endereco = end && end.logradouro ? {
+            destinatario: end.destinatario, telefone: end.telefone, cep: end.cep,
+            rua: end.logradouro, numero: end.numero || '', semNumero: end.numero == null,
+            complemento: end.complemento || '', bairro: end.bairro, cidade: end.cidade, uf: end.uf
+        } : null;
 
         // "2026-11-07" -> "07/11/2026"
         const previsao = entrega.previsao ? entrega.previsao.split('-').reverse().join('/') : '';
@@ -853,15 +879,16 @@ const PedidosStore = (() => {
                 prazoTexto: previsao ? `Previsão de entrega: ${previsao}` : ''
             },
             total: Number(dto.total),
-            endereco: extras.endereco || null,
+            endereco,
             entrega: { status: entrega.statusEntrega, codigoRastreio: entrega.codigoRastreio },
             pagamento: {
                 tipo: ehPix ? 'pix' : 'cartao',
                 status: pg.statusPagamento,
                 parcelas: pg.parcelas || 1,
                 valorParcela: Number(pg.valorParcela),
-                bandeira: extras.cartao ? extras.cartao.bandeira : '',
-                ultimos4: extras.cartao ? extras.cartao.ultimos4 : '',
+                // ALTERADO: bandeira e final do cartão agora vêm do banco (pagamentos.bandeira / final_cartao)
+                bandeira: pg.bandeira || '',
+                ultimos4: pg.finalCartao || '',
                 pixCodigo: ehPix ? gerarCodigoPix(dto.total, dto.codigo) : undefined
             },
             podeCancelar: dto.podeCancelar,
@@ -958,7 +985,12 @@ const PedidosStore = (() => {
                 parcelas: parcelasEscolhidas,
                 transportadora: frete.nome,   // vai para entregas.transportadora
                 prazoDias: frete.prazoDias,   // o banco calcula a data de previsão de entrega
-                valorFrete: frete.preco       // entra no total do pedido e das parcelas
+                valorFrete: frete.preco,      // entra no total do pedido e das parcelas (e fica em entregas.valor_frete)
+                // NOVO: o endereço escolhido (o banco confere se é deste cliente) e, no cartão, só a bandeira e os
+                // 4 últimos dígitos (vão para pagamentos.bandeira e pagamentos.final_cartao). O número e o CVV NÃO são enviados.
+                enderecoId: endereco.id,
+                bandeira: cartaoUsado ? cartaoUsado.bandeira : null,
+                finalCartao: cartaoUsado ? cartaoUsado.ultimos4 : null
             })
         });
 
@@ -966,9 +998,10 @@ const PedidosStore = (() => {
         if (pagamento.cartaoNovo && pagamento.cartaoNovo.salvar) {
             try { await CartoesStore.salvar(pagamento.cartaoNovo); } catch (erro) { /* já salvo ou limite: a compra segue */ }
         }
-        const { id: _id, usuarioId: _usuarioId, padrao: _padrao, ...enderecoSemIds } = endereco;
-        guardarExtras(pedidoCriado.clienteId, pedidoCriado.id, { endereco: enderecoSemIds, cartao: cartaoUsado });
+        // ALTERADO: não é mais preciso "anotar" o endereço e o cartão no navegador (guardarExtras foi removida):
+        // o endereço e o cartão do pedido já ficaram gravados no banco e voltam na resposta.
 
+        // O carrinho (que agora é do banco, para quem está logado) é esvaziado
         await CarrinhoStore.limpar();
         return converter(pedidoCriado);
     }
@@ -997,27 +1030,19 @@ const PedidosStore = (() => {
         return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/aprovar-pagamento`, { method: 'POST' }));
     }
 
-    // Quando uma conta é excluída, apaga também as anotações locais dos pedidos dela
-    function removerDaConta(usuarioId) {
-        try {
-            const extras = lerExtras();
-            Object.keys(extras).forEach((chave) => { if (chave.startsWith(`${usuarioId}_`)) delete extras[chave]; });
-            localStorage.setItem(CHAVE_EXTRAS, JSON.stringify(extras));
-        } catch (erro) { /* nada a fazer */ }
-    }
-
+    // ALTERADO: removerDaConta() foi removida daqui (não há mais anotações locais de pedidos).
     return {
         CHAVE_EXTRAS, STATUS_AGUARDANDO, STATUS_PROCESSANDO, STATUS_CONCLUIDO, STATUS_CANCELADO,
-        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega, aprovarPagamento, removerDaConta
+        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega, aprovarPagamento
     };
 })();
 
-// Tudo que pertence a uma conta que está sendo excluída
+// Tudo que pertence a uma conta que está sendo excluída.
+// ALTERADO: endereços, cartões, carrinho e pedidos agora ficam no banco, e quem apaga o que é da conta
+// (endereços, cartões e carrinho) é o Java, na hora de excluir o cliente. Aqui sobra só limpar o que ainda
+// possa ter ficado neste navegador (o carrinho antigo de visitante/conta).
 function apagarDadosDaConta(usuarioId) {
     CarrinhoStore.apagarDaConta(usuarioId);
-    EnderecosStore.removerDaConta(usuarioId);
-    CartoesStore.removerDaConta(usuarioId);
-    PedidosStore.removerDaConta(usuarioId);
 }
 // ===== FIM: enderecos-cartoes-pedidos =====
 
@@ -1172,6 +1197,10 @@ async function comprarProduto(id) {
         avisar('Contas de funcionário não podem realizar compras.', false);
     } else if (resultado.motivo === 'estoque') {
         avisar('Você já tem todas as unidades disponíveis desse produto no carrinho.', true);
+    } else if (resultado.motivo === 'sessao') {
+        // NOVO: o carrinho de quem está logado fica no banco; se o servidor não reconhece o login (por exemplo,
+        // foi reiniciado) ou está fora do ar, a pessoa recebe o motivo em vez de "produto indisponível".
+        avisar(resultado.mensagem || 'Não foi possível adicionar ao carrinho. Entre novamente e tente de novo.', false);
     } else {
         avisar('Esse produto está indisponível no momento.', false);
     }

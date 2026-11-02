@@ -182,7 +182,13 @@
             atualizarCabecalhoConta();
             atualizarBadgeCarrinho();
             if (!(await exigirLogin())) return;
-            renderizarEnderecos();
+            // ALTERADO: os endereços agora vêm do banco (via Java). Se der erro (servidor fora do ar, login
+            // expirado...), o aviso aparece na tela em vez de a página ficar em branco.
+            try {
+                await renderizarEnderecos();
+            } catch (erro) {
+                mostrarMensagemDaPagina(erro.message || 'Não foi possível carregar seus endereços. Tente novamente.', 'danger');
+            }
         });
     </script>
 </body>

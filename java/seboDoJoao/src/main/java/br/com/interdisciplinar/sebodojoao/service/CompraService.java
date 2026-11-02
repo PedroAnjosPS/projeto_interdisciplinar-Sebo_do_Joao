@@ -62,23 +62,46 @@ public class CompraService {
         int prazoDias = dto.prazoDias() == null ? 7 : Math.max(0, dto.prazoDias());
         BigDecimal frete = dto.valorFrete() == null ? BigDecimal.ZERO : dto.valorFrete();
 
+        // NOVO: o endereço de entrega é obrigatório (o banco confere se ele existe, está ativo e é deste cliente)
+        if (dto.enderecoId() == null) {
+            throw erro(HttpStatus.BAD_REQUEST, "Escolha um endereço de entrega.");
+        }
+
+        // NOVO: bandeira e final do cartão (só no pagamento com cartão). O final precisa ter exatamente 4 números.
+        String bandeira = null;
+        String finalCartao = null;
+        if ("CARTAO_CREDITO".equals(forma)) {
+            bandeira = dto.bandeira() == null || dto.bandeira().isBlank() ? null : dto.bandeira().trim().toLowerCase();
+            finalCartao = dto.finalCartao() == null || dto.finalCartao().isBlank() ? null : dto.finalCartao().trim();
+            if (bandeira != null && bandeira.length() > 30) bandeira = bandeira.substring(0, 30);
+            if (finalCartao != null && !finalCartao.matches("\\d{4}")) {
+                throw erro(HttpStatus.BAD_REQUEST, "Os 4 últimos dígitos do cartão são inválidos.");
+            }
+        }
+
         final String transportadoraFinal = transportadora;
+        final String bandeiraFinal = bandeira;
+        final String finalCartaoFinal = finalCartao;
         Integer pedidoId;
         try {
-            // Chama: sp_finalizar_compra(cliente, itens, forma, parcelas, transportadora, prazo, frete, [saída] pedido_id)
+            // Chama: sp_finalizar_compra(cliente, ENDEREÇO, itens, forma, parcelas, transportadora, prazo, frete,
+            //                            BANDEIRA, FINAL_CARTÃO, [saída] pedido_id)
             pedidoId = jdbc.execute(
                 (java.sql.Connection conexao) -> {
-                    try (CallableStatement chamada = conexao.prepareCall("{call dbo.sp_finalizar_compra(?,?,?,?,?,?,?,?)}")) {
+                    try (CallableStatement chamada = conexao.prepareCall("{call dbo.sp_finalizar_compra(?,?,?,?,?,?,?,?,?,?,?)}")) {
                         chamada.setInt(1, clienteId.intValue());
-                        chamada.setString(2, json.toString());
-                        chamada.setString(3, forma);
-                        chamada.setInt(4, parcelas);
-                        chamada.setString(5, transportadoraFinal);
-                        chamada.setInt(6, prazoDias);
-                        chamada.setBigDecimal(7, frete);
-                        chamada.registerOutParameter(8, Types.INTEGER); // o banco devolve o ID do pedido criado
+                        chamada.setInt(2, dto.enderecoId().intValue());
+                        chamada.setString(3, json.toString());
+                        chamada.setString(4, forma);
+                        chamada.setInt(5, parcelas);
+                        chamada.setString(6, transportadoraFinal);
+                        chamada.setInt(7, prazoDias);
+                        chamada.setBigDecimal(8, frete);
+                        chamada.setString(9, bandeiraFinal);       // null no Pix
+                        chamada.setString(10, finalCartaoFinal);   // null no Pix
+                        chamada.registerOutParameter(11, Types.INTEGER); // o banco devolve o ID do pedido criado
                         chamada.execute();
-                        return chamada.getInt(8);
+                        return chamada.getInt(11);
                     }
                 });
         } catch (Exception e) {
@@ -163,7 +186,9 @@ public class CompraService {
     // Lê a VIEW vw_pedidos_detalhados (pedido + cliente + atendente + entrega num SELECT só)
     private static final String SELECT_PEDIDO =
         "SELECT pedido_id, data, total, status_pedido, cliente_id, cliente, funcionario, "
-        + "transportadora, codigo_rastreio, data_previsao_entrega, status_entrega "
+        + "transportadora, codigo_rastreio, data_previsao_entrega, status_entrega, "
+        // ALTERADO: colunas novas da view (endereço de entrega)
+        + "destinatario, telefone_entrega, logradouro, numero_endereco, complemento, bairro, cep_numero, cidade, uf "
         + "FROM dbo.vw_pedidos_detalhados";
 
     private List<CompraResponseDTO> montar(List<Map<String, Object>> linhas) {
@@ -186,7 +211,7 @@ public class CompraService {
 
             // Pagamento: junta as linhas (parcelas) da tabela pagamentos num resumo só
             List<Map<String, Object>> parcelas = jdbc.queryForList(
-                "SELECT status, valor, quantidade_parcelas, forma_pagamento FROM pagamentos "
+                "SELECT status, valor, quantidade_parcelas, forma_pagamento, bandeira, final_cartao FROM pagamentos "
                 + "WHERE pedido_id = ? ORDER BY numero_parcela", id);
             CompraResponseDTO.Pagamento pagamento = null;
             boolean temPendente = false;
@@ -200,7 +225,8 @@ public class CompraService {
                 String resumo = recusado ? "Recusado" : temPendente ? "Pendente" : "Aprovado";
                 Map<String, Object> primeira = parcelas.get(0);
                 pagamento = new CompraResponseDTO.Pagamento((String) primeira.get("forma_pagamento"),
-                    ((Number) primeira.get("quantidade_parcelas")).intValue(), (BigDecimal) primeira.get("valor"), resumo);
+                    ((Number) primeira.get("quantidade_parcelas")).intValue(), (BigDecimal) primeira.get("valor"), resumo,
+                    (String) primeira.get("bandeira"), (String) primeira.get("final_cartao"));
             }
 
             String statusPedido = (String) l.get("status_pedido");
@@ -214,10 +240,16 @@ public class CompraService {
                 (String) l.get("transportadora"), statusEntrega, (String) l.get("codigo_rastreio"),
                 previsao == null ? null : previsao.toString());
 
+            // NOVO: endereço de entrega, lido da view (que junta entregas, enderecos, ceps, cidades)
+            CompraResponseDTO.Endereco endereco = new CompraResponseDTO.Endereco(
+                (String) l.get("destinatario"), (String) l.get("telefone_entrega"), (String) l.get("logradouro"),
+                (String) l.get("numero_endereco"), (String) l.get("complemento"), (String) l.get("bairro"),
+                (String) l.get("cep_numero"), (String) l.get("cidade"), (String) l.get("uf"));
+
             pedidos.add(new CompraResponseDTO(id, String.format("SJ-%05d", id),
                 l.get("data").toString().replace(' ', 'T'), total, subtotal, total.subtract(subtotal),
                 statusPedido, ((Number) l.get("cliente_id")).longValue(), (String) l.get("cliente"),
-                (String) l.get("funcionario"), entrega, pagamento, itens,
+                (String) l.get("funcionario"), entrega, endereco, pagamento, itens,
                 andamento && entregaNaoSaiu,                                            // podeCancelar (igual à sp_cancelar_pedido)
                 "Aguardando pagamento".equals(statusPedido) && temPendente,             // podePagar
                 "Processando".equals(statusPedido) && ("Pendente".equals(statusEntrega) // podeAvancarEntrega (igual à sp_avancar_entrega)
@@ -238,7 +270,7 @@ public class CompraService {
             if (t instanceof SQLException sql && sql.getErrorCode() >= 50000 && sql.getErrorCode() < 51000) {
                 HttpStatus status = switch (sql.getErrorCode()) {
                     case 50001 -> HttpStatus.UNAUTHORIZED;         // cliente não encontrado
-                    case 50002, 50005, 50006, 50008 -> HttpStatus.BAD_REQUEST; // carrinho vazio, forma/parcelas/frete inválidos
+                    case 50002, 50005, 50006, 50008, 50009 -> HttpStatus.BAD_REQUEST; // carrinho vazio, forma/parcelas/frete/endereço inválidos
                     case 50020 -> HttpStatus.NOT_FOUND;            // pedido não é deste cliente
                     default -> HttpStatus.CONFLICT;                // estoque, status do pedido/entrega...
                 };

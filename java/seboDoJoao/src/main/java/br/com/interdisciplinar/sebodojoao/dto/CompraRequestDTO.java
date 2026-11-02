@@ -19,7 +19,13 @@ public record CompraRequestDTO(
     // Prazo máximo da entrega, em dias. Vai para o cálculo de entregas.data_previsao_entrega.
     Integer prazoDias,
     // Valor do frete mostrado na tela (0 = grátis ou retirada). Entra no total do pedido.
-    BigDecimal valorFrete
+    BigDecimal valorFrete,
+    // NOVO: o endereço de entrega escolhido (id da tabela enderecos). O banco confere se ele é deste cliente.
+    Long enderecoId,
+    // NOVO: bandeira e 4 últimos dígitos do cartão usado (só no pagamento com cartão). O número
+    // completo e o CVV nunca são enviados. Ficam gravados em pagamentos.bandeira e pagamentos.final_cartao.
+    String bandeira,
+    String finalCartao
 ) {
     // Um item do carrinho
     public record ItemCompraDTO(Long produtoId, Integer quantidade) {}

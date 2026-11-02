@@ -59,7 +59,7 @@ public class ClienteRestController {
         }
 
         ClienteRequestDTO dto = new ClienteRequestDTO(
-                nome, email, null, telefone, null, null, null, null, caminhoFoto, cpf, dataNascimento
+                nome, email, null, telefone, null, caminhoFoto, cpf, dataNascimento
         );
 
         return ResponseEntity.ok(clienteService.atualizar(id, dto));

@@ -166,10 +166,9 @@ function abrirModalEndereco(existente = null) {
                             <div id="erro-end-uf" class="ec-form-erro" role="alert"></div>
                         </div>
 
-                        ${campoDeFormulario({ id: 'end-destinatario', rotulo: 'Quem vai receber', atributos: 'maxlength="100" autocomplete="name"' })}
-                        ${campoDeFormulario({ id: 'end-telefone', rotulo: 'Telefone de contato', tipo: 'tel', classe: 'col-sm-6',
-                            placeholder: '(00) 00000-0000', atributos: 'inputmode="numeric" autocomplete="tel"' })}
-                        ${campoDeFormulario({ id: 'end-apelido', rotulo: 'Nome do endereço (opcional)', classe: 'col-sm-6',
+                        <!-- ALTERADO: os campos "Quem vai receber" e "Telefone de contato" foram REMOVIDOS. O banco não guarda mais
+                             esses dois dados no endereço: quem recebe é a própria pessoa da conta (nome e telefone do cadastro). -->
+                        ${campoDeFormulario({ id: 'end-apelido', rotulo: 'Nome do endereço (opcional)', classe: 'col-12',
                             placeholder: 'Casa, Trabalho...', atributos: 'maxlength="30"' })}
 
                         <div class="col-12">
@@ -192,11 +191,10 @@ function abrirModalEndereco(existente = null) {
 
     return abrirJanela(html, async (el, fechar) => {
         const $ = (id) => el.querySelector('#' + id);
-        const campos = ['cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'destinatario', 'telefone', 'apelido'];
+        const campos = ['cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'apelido'];
 
-        // Preenche (edição) ou sugere nome e telefone da conta (novo endereço)
-        const usuario = await UsuarioStore.obter();
-        const base = existente || { destinatario: usuario ? usuario.nome : '', telefone: usuario ? usuario.telefone : '' };
+        // Preenche os campos (na edição). ALTERADO: não há mais nome/telefone para sugerir (campos removidos).
+        const base = existente || {};
         campos.forEach((campo) => { if (base[campo] != null) $('end-' + campo).value = base[campo]; });
         $('end-sem-numero').checked = Boolean(existente && existente.semNumero);
         $('end-numero').disabled = $('end-sem-numero').checked;
@@ -206,7 +204,6 @@ function abrirModalEndereco(existente = null) {
 
         // Máscaras
         ligarMascara($('end-cep'), formatarCep);
-        ligarMascara($('end-telefone'), formatarTelefone);
 
         // CEP completo -> busca o endereço
         let buscaAtual = 0;
@@ -241,7 +238,7 @@ function abrirModalEndereco(existente = null) {
             cep: $('end-cep').value, rua: $('end-rua').value, numero: $('end-numero').value,
             semNumero: $('end-sem-numero').checked, complemento: $('end-complemento').value,
             bairro: $('end-bairro').value, cidade: $('end-cidade').value, uf: $('end-uf').value,
-            destinatario: $('end-destinatario').value, telefone: $('end-telefone').value, apelido: $('end-apelido').value
+            apelido: $('end-apelido').value
         });
         campos.forEach((campo) => {
             const input = $('end-' + campo);

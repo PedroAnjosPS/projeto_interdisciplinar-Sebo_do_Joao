@@ -69,6 +69,12 @@
         function montarPedidoGestao(p) {
             const itens = p.itens.map((i) => `<li>${escaparHtml(i.nome)} <span class="ec-texto-suave">× ${i.quantidade}</span></li>`).join('');
             const parcelas = p.pagamento.tipo === 'pix' ? 'Pix' : `Cartão de crédito · ${p.pagamento.parcelas}x`;
+            // NOVO: para onde enviar o pedido. O endereço vem do banco (entregas.endereco_id) e mostra quem recebe,
+            // o telefone de contato e o endereço completo. É o dado de que o funcionário precisa para despachar.
+            const e = p.endereco;
+            const destino = e
+                ? `${escaparHtml(e.destinatario)} (${escaparHtml(e.telefone)}) · ${linhasDoEndereco(e).map(escaparHtml).join(' · ')}`
+                : 'Endereço não informado';
 
             // Os botões só aparecem quando o banco permite a ação (os campos podePagar / podeAvancarEntrega)
             const botoes = [
@@ -88,6 +94,7 @@
                     <ul class="ec-ped-itens">${itens}</ul>
                     <p class="mb-1"><strong>Pagamento:</strong> ${escaparHtml(parcelas)} · ${escaparHtml(p.pagamento.status)}</p>
                     <p class="mb-1"><strong>Entrega:</strong> ${escaparHtml(p.frete.nome)} · ${escaparHtml(NOMES_ENTREGA[p.entrega.status] || p.entrega.status)}${p.entrega.codigoRastreio ? ` · rastreio ${escaparHtml(p.entrega.codigoRastreio)}` : ''}</p>
+                    <p class="mb-1"><strong>Destino:</strong> ${destino}</p>
                     <footer class="ec-ped-rodape">
                         <div><span class="ec-texto-suave">Total</span> <strong class="ec-ped-total">${formatarPreco(p.total)}</strong></div>
                         <div class="d-flex gap-2 flex-wrap">${botoes}</div>

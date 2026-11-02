@@ -1,11 +1,15 @@
 -- PROCEDURES DO BANCO DE DADOS - SEBO DO JOÃO --
 
 -- 1-) Finaliza a compra de um cliente, realizando as validações necessárias, --
--- cadastrando a entrega, o pedido, seus respectivos produtos e pagamentos. --
+-- cadastrando a entrega (com o endereço de destino e o valor do frete), o pedido, --
+-- seus respectivos produtos e pagamentos (com a bandeira e o final do cartão usado). --
 -- Calcula o valor total da compra, atualiza o estoque por meio da trigger --
 -- correspondente e retorna o ID do pedido criado para a aplicação Java. --
 CREATE PROCEDURE dbo.sp_finalizar_compra
     @cliente_id INT,
+    -- ALTERADO: novo parâmetro obrigatório: o endereço de entrega escolhido (tabela enderecos). --
+    -- Ele é gravado na entrega (entregas.endereco_id). --
+    @endereco_id INT,
     @itens_json NVARCHAR(MAX),
     @forma_pagamento VARCHAR(50),
     @quantidade_parcelas INT = 1,
@@ -14,6 +18,10 @@ CREATE PROCEDURE dbo.sp_finalizar_compra
     -- ALTERADO: novo parâmetro opcional com o valor do frete escolhido no site (padrão 0 = sem frete). --
     -- Antes o total do pedido era só a soma dos produtos e o frete mostrado na tela não ficava registrado. --
     @valor_frete DECIMAL(10,2) = 0,
+    -- ALTERADO: bandeira e 4 últimos dígitos do cartão usado (opcionais; ficam NULL no PIX e no boleto). --
+    -- São copiados para cada parcela em pagamentos, para o histórico não depender do cartão salvo. --
+    @bandeira VARCHAR(30) = NULL,
+    @final_cartao CHAR(4) = NULL,
     @pedido_id INT OUTPUT
 AS
 BEGIN
@@ -25,6 +33,12 @@ BEGIN
         -- Verifica se o cliente informado existe --
         IF NOT EXISTS (SELECT 1 FROM clientes WHERE usuario_id = @cliente_id)
             THROW 50001, 'Cliente não encontrado!', 1;
+
+        -- ALTERADO (novo): o endereço de entrega precisa existir, pertencer a ESTE cliente e estar ativo --
+        -- (não vale um endereço "excluído" na tela nem o endereço de outra pessoa). Código 50009. --
+        IF NOT EXISTS (SELECT 1 FROM enderecos
+                       WHERE id = @endereco_id AND cliente_id = @cliente_id AND ativo = 1)
+            THROW 50009, 'Endereço de entrega inválido!', 1;
 
         -- Valida a forma de pagamento escolhida --
         IF @forma_pagamento NOT IN ('PIX', 'CARTAO_CREDITO', 'BOLETO')
@@ -102,12 +116,16 @@ BEGIN
         -- Cadastra a entrega com status inicial 1 e calcula a previsão de entrega --
         -- ALTERADO: data_postagem agora entra como NULL. Sem isso, a coluna usava GETDATE() e a entrega --
         -- nascia "postada" no momento da compra. A data é preenchida por sp_avancar_entrega (em trânsito). --
-        INSERT INTO entregas (transportadora, status, data_postagem, data_previsao_entrega)
+        -- ALTERADO: a entrega agora também guarda o valor do frete (valor_frete) e o endereço de destino --
+        -- (endereco_id), que antes não tinham onde ser registrados. --
+        INSERT INTO entregas (transportadora, status, data_postagem, data_previsao_entrega, valor_frete, endereco_id)
         VALUES (
             @transportadora,
             1,
             NULL,
-            DATEADD(DAY, @prazo_dias, CAST(GETDATE() AS DATE))
+            DATEADD(DAY, @prazo_dias, CAST(GETDATE() AS DATE)),
+            @valor_frete,
+            @endereco_id
         );
 
         -- Recupera o ID da entrega recém-criada --
@@ -157,7 +175,7 @@ BEGIN
         -- Define a data de pagamento somente quando o pagamento está aprovado --
         INSERT INTO pagamentos (
             numero_parcela, status, valor, quantidade_parcelas, forma_pagamento,
-            data_vencimento, data_pagamento, pedido_id
+            data_vencimento, data_pagamento, bandeira, final_cartao, pedido_id
         )
         SELECT
             numero_parcela,
@@ -169,6 +187,9 @@ BEGIN
             CASE
                 WHEN @status_pagamento = 2 THEN CAST(GETDATE() AS DATE)
             END,
+            -- ALTERADO: bandeira e final do cartão só são gravados quando o pagamento é no cartão --
+            CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @bandeira END,
+            CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @final_cartao END,
             @pedido_id
         FROM dbo.fn_parcelas(
             @total,

@@ -2,12 +2,14 @@ package br.com.interdisciplinar.sebodojoao.service;
 
 import br.com.interdisciplinar.sebodojoao.dto.ClienteRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.ClienteResponseDTO;
-import br.com.interdisciplinar.sebodojoao.model.Cep;
 import br.com.interdisciplinar.sebodojoao.model.Cliente;
-import br.com.interdisciplinar.sebodojoao.repository.CepRepository;
+import br.com.interdisciplinar.sebodojoao.repository.CartaoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
+import br.com.interdisciplinar.sebodojoao.repository.EnderecoRepository;
+import br.com.interdisciplinar.sebodojoao.repository.ItemCarrinhoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,7 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClienteService {
     private final ClienteRepository clienteRepository;
-    private final CepRepository cepRepository;
+    // ALTERADO: o CepRepository saiu (o cliente não tem mais CEP direto). Entraram estes três, usados só
+    // na exclusão da conta: o cliente tem endereços, cartões e carrinho, que precisam sair junto com ele.
+    private final EnderecoRepository enderecoRepository;
+    private final CartaoRepository cartaoRepository;
+    private final ItemCarrinhoRepository itemCarrinhoRepository;
 
     public List<ClienteResponseDTO> listarTodos() {
         return clienteRepository.findAll()
@@ -31,9 +37,6 @@ public class ClienteService {
                                 cliente.getEmail(),
                                 cliente.getSenha(),
                                 cliente.getTelefone(),
-                                cliente.getBairro(),
-                                cliente.getLogradouro(),
-                                cliente.getCep() != null ? cliente.getCep().getNumeroCep() : null, // Ajuste conforme o tipo do ID da classe Cep
                                 cliente.getStatus(),
                                 fotoPerfil,
                                 cliente.getCpf(),
@@ -54,9 +57,6 @@ public class ClienteService {
                 cliente.getEmail(),
                 cliente.getSenha(),
                 cliente.getTelefone(),
-                cliente.getBairro(),
-                cliente.getLogradouro(),
-                cliente.getCep() != null ? cliente.getCep().getNumeroCep() : null,
                 cliente.getStatus(),
                 cliente.getFotoPerfil(),
                 cliente.getCpf(),
@@ -65,22 +65,11 @@ public class ClienteService {
     }
 
     public ClienteResponseDTO cadastrar(ClienteRequestDTO dto) {
-        // Só busca o CEP se o front-end enviar algum número de CEP. Caso contrário, o CEP será nulo.
-        Cep cep = null;
-        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
-                cep = cepRepository
-                        .findById(dto.cepNumero())
-                        .orElseThrow();
-        }                
-
         Cliente cliente = new Cliente();
         cliente.setNome(dto.nome());
         cliente.setEmail(dto.email());
         cliente.setSenha(dto.senha());
         cliente.setTelefone(dto.telefone());
-        cliente.setBairro(dto.bairro());
-        cliente.setLogradouro(dto.logradouro());
-        cliente.setCep(cep);
         cliente.setFotoPerfil(dto.fotoPerfil());
 
         // Se vier null, o padrão do banco (1) será assumido (ou você pode setar manualmente aqui)
@@ -99,9 +88,6 @@ public class ClienteService {
                 salvo.getEmail(),
                 salvo.getSenha(),
                 salvo.getTelefone(),
-                salvo.getBairro(),
-                salvo.getLogradouro(),
-                salvo.getCep() != null ? salvo.getCep().getNumeroCep() : null,
                 salvo.getStatus(),
                 salvo.getFotoPerfil(),
                 salvo.getCpf(),
@@ -119,19 +105,12 @@ public class ClienteService {
         if (dto.email() != null) clienteExistente.setEmail(dto.email());
         if (dto.senha() != null) clienteExistente.setSenha(dto.senha());
         if (dto.telefone() != null) clienteExistente.setTelefone(dto.telefone());
-        if (dto.bairro() != null) clienteExistente.setBairro(dto.bairro());
-        if (dto.logradouro() != null) clienteExistente.setLogradouro(dto.logradouro());
         // O CPF é único no banco. Se dois clientes salvassem o campo vazio, o segundo receberia
         // erro e nada do perfil seria gravado, por isso o vazio mantém o valor que já existe.
         if (dto.cpf() != null && !dto.cpf().isBlank()) clienteExistente.setCpf(dto.cpf());
         if (dto.dataNascimento() != null) clienteExistente.setDataNascimento(dto.dataNascimento());
         // Texto vazio é o pedido de remover a foto: a coluna volta a ser NULL
         if (dto.fotoPerfil() != null) clienteExistente.setFotoPerfil(dto.fotoPerfil().isEmpty() ? null : dto.fotoPerfil());
-
-        if (dto.cepNumero() != null && !dto.cepNumero().trim().isEmpty()) {
-            Cep cep = cepRepository.findById(dto.cepNumero()).orElseThrow();
-            clienteExistente.setCep(cep);
-        }
 
         if (dto.status() != null) {
             clienteExistente.setStatus(dto.status());
@@ -145,9 +124,6 @@ public class ClienteService {
                 atualizado.getEmail(),
                 atualizado.getSenha(),
                 atualizado.getTelefone(),
-                atualizado.getBairro(),
-                atualizado.getLogradouro(),
-                atualizado.getCep() != null ? atualizado.getCep().getNumeroCep() : null,
                 atualizado.getStatus(),
                 atualizado.getFotoPerfil(),
                 atualizado.getCpf(),
@@ -155,7 +131,16 @@ public class ClienteService {
         );
     }
 
+    // ALTERADO: antes só apagava o cliente. Agora apaga também o que pertence a ele (carrinho, cartões e endereços),
+    // tudo numa transação só (se algo falhar, nada é apagado). Se o cliente já tiver pedidos, o banco
+    // recusa a exclusão (o histórico de compras precisa ser mantido) e a transação inteira é desfeita.
+    @Transactional
     public void excluir(Long id) {
+        itemCarrinhoRepository.apagarDoCliente(id);
+        cartaoRepository.deleteAll(cartaoRepository.findByCliente_Id(id));
+        enderecoRepository.deleteAll(enderecoRepository.findByCliente_Id(id));
         clienteRepository.deleteById(id);
+        // flush: força o envio dos comandos ao banco agora, para o erro (se houver) aparecer aqui
+        clienteRepository.flush();
     }
 }

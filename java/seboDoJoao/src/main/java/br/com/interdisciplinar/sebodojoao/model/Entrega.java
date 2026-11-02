@@ -3,6 +3,7 @@ package br.com.interdisciplinar.sebodojoao.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -34,6 +35,15 @@ public class Entrega {
 
     @Column(name = "data_entrega", nullable = false)
     private LocalDateTime dataEntrega;
+
+    // NOVO: valor do frete desta entrega (pedidos.total = produtos + frete)
+    @Column(name = "valor_frete", nullable = false, precision = 10, scale = 2)
+    private BigDecimal valorFrete = BigDecimal.ZERO;
+
+    // NOVO: para onde a entrega vai (tabela enderecos)
+    @ManyToOne
+    @JoinColumn(name = "endereco_id", nullable = false)
+    private Endereco endereco;
 
     @Convert(converter = StatusEntregaConverter.class)
     @Column(name = "status", nullable = false)

@@ -49,7 +49,7 @@
                         <li><a class="dropdown-item" href="menu-conta.html"><i class="fas fa-user me-2"></i>Minha conta</a></li>
                         <li data-ec-so-cliente><a class="dropdown-item" href="pedidos.html"><i class="fas fa-box me-2"></i>Meus pedidos</a></li>
                         <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-id-card me-2"></i>Informações do perfil</a></li>
-                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="admin.html"><i class="fas fa-gauge me-2"></i>Painel do administrador</a></li>
+                        <li data-ec-so-admin class="d-none"><a class="dropdown-item" href="funcionario.html"><i class="fas fa-gauge me-2"></i><span data-ec-papel="Painel do {papel}">Painel do funcionário</span></a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="index.html" data-ec-sair><i class="fas fa-right-from-bracket me-2"></i>Sair</a></li>
                     </ul>
@@ -202,8 +202,8 @@
                     <div>
                         <h3 id="titulo-excluir" class="ec-seguranca-titulo">Excluir conta</h3>
                         <p class="ec-seguranca-descricao">
-                            Apaga de vez os seus dados (nome, e-mail, CPF, telefone, foto e senha).
-                            Essa ação não pode ser desfeita.
+                            Encerra a sua conta. Se você nunca fez compras, os seus dados são apagados.
+                            Se já fez, a conta fica inativa e os pedidos continuam no histórico da loja.
                         </p>
                     </div>
                 </div>
@@ -229,8 +229,8 @@
                             <i class="fas fa-triangle-exclamation fs-1 mb-3" style="color: var(--ec-color-error);"></i>
                             <h5 id="modalExcluirContaTitulo" class="ec-heading-dark fw-bold mb-2">Excluir a sua conta?</h5>
                             <p class="mb-4" style="color: var(--ec-color-mocha);">
-                                Todos os seus dados serão apagados e você será desconectado.
-                                Essa ação não pode ser desfeita.
+                                A sua conta será encerrada e você será desconectado. Se já fez compras, os pedidos
+                                ficam guardados no histórico da loja. Você não conseguirá mais entrar.
                             </p>
                         </div>
 
@@ -421,8 +421,10 @@
             const botao = formExcluir.querySelector('button[type="submit"]');
             botao.disabled = true;
             try {
-                await UsuarioStore.excluirConta(valor('excluir-senha'));
-                deixarAvisoParaProximaTela('Sua conta foi excluída.');
+                const inativada = await UsuarioStore.excluirConta(valor('excluir-senha'));
+                deixarAvisoParaProximaTela(inativada
+                    ? 'Sua conta foi encerrada. Os seus pedidos continuam no histórico da loja.'
+                    : 'Sua conta foi excluída.');
                 location.href = 'index.html';
             } catch (erro) {
                 if (erro.message === 'A senha está incorreta.') {

@@ -18,7 +18,7 @@
 
     <!-- Cabeçalho padrão das telas de admin (igual ao de cadastro-produto.html) -->
     <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3" style="position: relative">
-        <a href="admin.html" class="ec-admin-logo text-decoration-none">
+        <a href="funcionario.html" class="ec-admin-logo text-decoration-none">
             <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
         </a>
 
@@ -28,8 +28,8 @@
             <button class="btn ec-search-btn" type="button"><i class="fas fa-search"></i></button>
         </div>
 
-        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu do administrador">
-            <a href="admin.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu principal">
+            <a href="funcionario.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
                 <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
             </a>
             <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
@@ -83,7 +83,7 @@
     <script src="js/usuario-store.js"></script>
     <script src="js/vitrine.js"></script>
     <script>
-        // Tela só do administrador: sem login dele, vai pro admin-login.html
+        // Tela só do administrador: sem login dele, vai pro funcionario-login.html
         // (e volta pra cá depois de entrar). A página fica escondida até a conferência.
         exigirAdmin();
 

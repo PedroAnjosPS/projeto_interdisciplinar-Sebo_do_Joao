@@ -7,6 +7,8 @@ import br.com.interdisciplinar.sebodojoao.repository.CartaoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
 import br.com.interdisciplinar.sebodojoao.repository.EnderecoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ItemCarrinhoRepository;
+import br.com.interdisciplinar.sebodojoao.repository.PedidoRepository;
+import br.com.interdisciplinar.sebodojoao.model.StatusUsuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class ClienteService {
     private final EnderecoRepository enderecoRepository;
     private final CartaoRepository cartaoRepository;
     private final ItemCarrinhoRepository itemCarrinhoRepository;
+    private final PedidoRepository pedidoRepository;
 
     public List<ClienteResponseDTO> listarTodos() {
         return clienteRepository.findAll()
@@ -131,16 +134,27 @@ public class ClienteService {
         );
     }
 
-    // Exclui o cliente e também o que pertence a ele (carrinho, cartões e endereços), tudo numa transação
-    // só: se algo falhar, nada é apagado. Se o cliente já tiver pedidos, o banco recusa a exclusão
-    // (o histórico de compras precisa ser mantido) e a transação inteira é desfeita.
+    // Encerra a conta do cliente, tudo numa transação só. Devolve true se a conta foi apenas
+    // inativada e false se foi apagada de vez.
+    //  - Sem pedidos: apaga o cliente e o que pertence a ele (carrinho, cartões e endereços).
+    //  - Com pedidos: o histórico de compras precisa ser mantido, então a conta fica INATIVA.
+    //    Carrinho e cartões são apagados; os endereços ficam, porque as entregas apontam para eles.
     @Transactional
-    public void excluir(Long id) {
+    public boolean excluir(Long id) {
+        Cliente cliente = clienteRepository.findById(id).orElseThrow();
         itemCarrinhoRepository.apagarDoCliente(id);
         cartaoRepository.deleteAll(cartaoRepository.findByCliente_Id(id));
+
+        if (pedidoRepository.existsByCliente_Id(id)) {
+            cliente.setStatus(StatusUsuario.INATIVO);
+            clienteRepository.save(cliente);
+            return true;
+        }
+
         enderecoRepository.deleteAll(enderecoRepository.findByCliente_Id(id));
         clienteRepository.deleteById(id);
         // flush: força o envio dos comandos ao banco agora, para o erro (se houver) aparecer aqui
         clienteRepository.flush();
+        return false;
     }
 }

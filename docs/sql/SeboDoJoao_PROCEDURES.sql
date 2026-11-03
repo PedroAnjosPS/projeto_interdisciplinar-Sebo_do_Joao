@@ -90,17 +90,13 @@ BEGIN
             THROW 50003, 'Algum produto está indisponível ou sem estoque suficiente.', 1;
 
 
-        -- Seleciona o funcionário ativo com a menor quantidade de pedidos atribuídos --
-        -- Em caso de empate, utiliza o menor ID como critério de desempate --
+        -- Sorteia um funcionário ativo para ficar com o pedido --
         DECLARE @funcionario_id INT =
             (
                 SELECT TOP 1 f.usuario_id
                 FROM funcionarios f
                 INNER JOIN usuarios u ON u.id = f.usuario_id AND u.status = 1
-                ORDER BY
-                    (SELECT COUNT(*) FROM pedidos pe
-                     WHERE pe.funcionario_id = f.usuario_id),
-                    f.usuario_id
+                ORDER BY NEWID()
             );
 
         -- Verifica se existe algum funcionário ativo disponível --

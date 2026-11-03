@@ -82,7 +82,8 @@ public class ClienteRestController {
     }
 
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        clienteService.excluir(id);
+    public java.util.Map<String, Boolean> excluir(@PathVariable Long id) {
+        // "inativada" = true quando a conta tinha pedidos e foi só inativada, não apagada
+        return java.util.Map.of("inativada", clienteService.excluir(id));
     }
 }

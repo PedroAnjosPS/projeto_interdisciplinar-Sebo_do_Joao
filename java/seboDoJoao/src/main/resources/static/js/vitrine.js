@@ -1009,7 +1009,7 @@ const PedidosStore = (() => {
         return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/cancelar`, { method: 'POST' }));
     }
 
-    // Usadas só pelo painel do funcionário (admin-pedidos.html)
+    // Usadas só pelo painel do funcionário (funcionario-pedidos.html)
     async function listarTodos() {
         return (await chamarApi('/api/compras/gestao')).map(converter);
     }
@@ -1063,10 +1063,22 @@ window.addEventListener('storage', (evento) => {
 
 // ===== Conta no cabeçalho e login =====
 
+// Textos marcados com data-ec-papel="Painel do {papel}" mostram "funcionário" ou, para o
+// funcionário administrador (admin = 1), "administrador". {PAPEL} é a versão em maiúsculas.
+function aplicarPapelNosTextos(usuario) {
+    const papel = usuario && usuario.admin === true ? 'administrador' : 'funcionário';
+    document.querySelectorAll('[data-ec-papel]').forEach((elemento) => {
+        elemento.textContent = elemento.dataset.ecPapel
+            .replace('{papel}', papel)
+            .replace('{PAPEL}', papel.toUpperCase());
+    });
+}
+
 // Mostra no cabeçalho "Fazer Login" ou o menu da conta (com a foto do usuário,
 // se ele tiver uma), conforme a pessoa esteja logada ou não
 async function atualizarCabecalhoConta() {
     const usuario = await UsuarioStore.obter();
+    aplicarPapelNosTextos(usuario);
 
     document.querySelectorAll('[data-ec-deslogado]').forEach((elemento) => {
         elemento.classList.toggle('d-none', Boolean(usuario));
@@ -1112,7 +1124,7 @@ async function exigirCliente() {
     if (!usuario) return null;
 
     if (UsuarioStore.ehAdmin(usuario)) {
-        location.replace('admin.html');
+        location.replace('funcionario.html');
         return null;
     }
     return usuario;
@@ -1325,9 +1337,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // As telas começam com <body hidden> e só aparecem depois dessa conferência.
 // Devolve true se pode ficar.
 async function exigirAdmin() {
-    const usuario = await UsuarioStore.obter();
+    let usuario = await UsuarioStore.obter();
 
     if (UsuarioStore.ehAdmin(usuario)) {
+        // Sessões antigas não guardam o campo "admin", então ele é buscado no banco
+        if (usuario.admin === undefined) usuario = (await UsuarioStore.recarregar()) || usuario;
+        aplicarPapelNosTextos(usuario);
         document.body.hidden = false;
         return true;
     }
@@ -1338,6 +1353,21 @@ async function exigirAdmin() {
         const paginaAtual = location.pathname.split('/').pop() + location.search;
         location.replace('login.html?voltar=' + encodeURIComponent(paginaAtual));
     }
+    return false;
+}
+
+// Para as telas que só o funcionário administrador (funcionarios.admin = 1) usa. O funcionário
+// comum volta para o painel. Sessões antigas podem não ter o campo "admin" guardado, então ele
+// é buscado no banco nesse caso.
+async function exigirAdministrador() {
+    if (!(await exigirAdmin())) return false;
+
+    let usuario = await UsuarioStore.obter();
+    if (usuario && usuario.admin === undefined) usuario = await UsuarioStore.recarregar();
+    if (usuario && usuario.admin === true) return true;
+
+    document.body.hidden = true;
+    location.replace('funcionario.html');
     return false;
 }
 

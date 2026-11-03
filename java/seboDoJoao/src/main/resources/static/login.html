@@ -245,7 +245,7 @@
         function destinoDepoisDoLogin(usuario) {
             const voltar = parametrosUrl.get('voltar') || '';
             if (/^[A-Za-z0-9_-]+\.html(\?[^#\s]*)?$/.test(voltar)) return voltar;
-            return UsuarioStore.ehAdmin(usuario) ? 'admin.html' : 'index.html';
+            return UsuarioStore.ehAdmin(usuario) ? 'funcionario.html' : 'index.html';
         }
 
         function mostrarMensagemAuth(idDaArea, texto) {

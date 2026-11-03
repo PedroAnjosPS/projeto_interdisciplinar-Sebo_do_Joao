@@ -79,7 +79,10 @@ const UsuarioStore = (() => {
         });
 
         if (!resposta.ok) {
-            throw new Error('E-mail ou senha incorretos.');
+            // 403 = conta inativa (funcionário inativado pelo administrador ou cliente que encerrou a conta)
+            throw new Error(resposta.status === 403
+                ? 'Esta conta está inativa e não pode mais entrar. Em caso de dúvida, fale com a loja.'
+                : 'E-mail ou senha incorretos.');
         }
 
         // O Java deve devolver os dados do usuário e qual é o perfil dele (CLIENTE ou FUNCIONARIO)
@@ -270,7 +273,8 @@ const UsuarioStore = (() => {
         return novaSessao;
     }
 
-    // Exclui a conta logada de vez (pede a senha). A conta do administrador não pode.
+    // Encerra a conta logada (pede a senha). A conta do funcionário não pode. Sem pedidos a conta é
+    // apagada; com pedidos ela só fica inativa. Devolve true nesse segundo caso.
     async function excluirConta(senha) {
         const usuarioLogado = lerSessao();
         if (!usuarioLogado) throw new Error('Você precisa estar logado para fazer isso.');
@@ -281,8 +285,11 @@ const UsuarioStore = (() => {
         const resposta = await fetch(`/api/clientes/${usuarioLogado.id}`, { method: 'DELETE' });
         if (!resposta.ok) throw new Error('Não foi possível excluir a conta agora. Tente novamente.');
 
+        const resultado = await resposta.json().catch(() => ({}));
+
         apagarDadosDaConta(usuarioLogado.id); // endereços, cartões, pedidos e carrinho da conta (vitrine.js)
         sair();
+        return resultado.inativada === true;
     }
 
     // Apenas exporta as funções

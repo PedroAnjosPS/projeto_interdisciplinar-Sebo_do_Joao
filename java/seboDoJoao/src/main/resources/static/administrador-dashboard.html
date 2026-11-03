@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Informações do Sebo - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilo só desta tela: números em destaque e caixas dos gráficos */
+        .ec-dash-numero { display: block; margin: 0.15rem 0; font-size: 1.7rem; font-weight: 700; line-height: 1.2; color: var(--ec-color-coffee); }
+        .ec-dash-cartao { min-height: 0; }
+        .ec-dash-grafico { position: relative; height: 280px; }
+        .ec-dash-titulo { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: var(--ec-color-coffee); }
+        .ec-dash-titulo i { margin-right: 0.5rem; color: var(--ec-color-mocha); }
+    </style>
+</head>
+
+<!-- Tela do funcionário administrador: números e gráficos da loja, lidos direto do banco de dados. -->
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
+        <a href="funcionario.html" class="ec-admin-logo text-decoration-none">
+            <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+        <span class="ec-admin-header-titulo d-none d-lg-inline">Área do administrador</span>
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu principal">
+            <a href="funcionario.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="mb-4">
+            <h2 class="ec-admin-title fw-bold mb-1">INFORMAÇÕES DO SEBO</h2>
+            <p class="ec-conta-email mb-0">Resumo das vendas, dos clientes e do estoque. Pedidos cancelados não entram na conta das vendas.</p>
+        </div>
+
+        <p id="dash-erro" class="text-danger" role="alert"></p>
+
+        <!-- Números principais -->
+        <div id="dash-numeros" class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 mb-4"></div>
+
+        <!-- Gráficos -->
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <section class="ec-ped-card">
+                    <h3 class="ec-dash-titulo"><i class="fas fa-chart-line"></i>Vendas por dia</h3>
+                    <div class="ec-dash-grafico"><canvas id="grafico-dias" aria-label="Valor vendido por dia"></canvas></div>
+                </section>
+            </div>
+            <div class="col-12 col-lg-4">
+                <section class="ec-ped-card">
+                    <h3 class="ec-dash-titulo"><i class="fas fa-list-check"></i>Pedidos por situação</h3>
+                    <div class="ec-dash-grafico"><canvas id="grafico-status" aria-label="Pedidos por situação"></canvas></div>
+                </section>
+            </div>
+            <div class="col-12 col-lg-6">
+                <section class="ec-ped-card">
+                    <h3 class="ec-dash-titulo"><i class="fas fa-layer-group"></i>Vendas por categoria</h3>
+                    <div class="ec-dash-grafico"><canvas id="grafico-categorias" aria-label="Valor vendido por categoria"></canvas></div>
+                </section>
+            </div>
+            <div class="col-12 col-lg-6">
+                <section class="ec-ped-card">
+                    <h3 class="ec-dash-titulo"><i class="fas fa-ranking-star"></i>Produtos mais vendidos</h3>
+                    <div class="ec-dash-grafico"><canvas id="grafico-produtos" aria-label="Produtos mais vendidos"></canvas></div>
+                </section>
+            </div>
+            <div class="col-12 col-lg-4">
+                <section class="ec-ped-card">
+                    <h3 class="ec-dash-titulo"><i class="fas fa-wallet"></i>Formas de pagamento</h3>
+                    <div class="ec-dash-grafico"><canvas id="grafico-pagamentos" aria-label="Formas de pagamento"></canvas></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <!-- Chart.js: biblioteca que desenha os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/produtos-store.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script>
+        // ===== Informações do Sebo (painel de dados do administrador) =====
+        // Cores dos gráficos, na mesma paleta marrom do site
+        const CORES = ['#4D443B', '#8C7E70', '#BFAFA1', '#A29386', '#C2B5A9', '#6E5F50', '#D9CFC6'];
+
+        function dinheiro(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // "2026-10-31" -> "31/10"
+        function diaMes(iso) {
+            const [, mes, dia] = String(iso).split('-');
+            return `${dia}/${mes}`;
+        }
+
+        function cartao(icone, titulo, valor, detalhe) {
+            return `
+                <div class="col">
+                    <div class="ec-conta-card ec-dash-cartao h-100">
+                        <i class="fas ${icone} ec-conta-card-icone"></i>
+                        <h3 class="ec-conta-card-titulo">${escaparHtml(titulo)}</h3>
+                        <strong class="ec-dash-numero">${escaparHtml(valor)}</strong>
+                        <p class="ec-conta-card-descricao">${escaparHtml(detalhe)}</p>
+                    </div>
+                </div>`;
+        }
+
+        function mostrarNumeros(n) {
+            const ticket = n.vendas ? n.valorVendido / n.vendas : 0;
+            document.getElementById('dash-numeros').innerHTML = [
+                cartao('fa-cart-shopping', 'Número de vendas', n.vendas, 'pedidos não cancelados'),
+                cartao('fa-sack-dollar', 'Faturamento', dinheiro(n.faturamento), `${dinheiro(n.aReceber)} ainda a receber`),
+                cartao('fa-receipt', 'Ticket médio', dinheiro(ticket), `${dinheiro(n.valorVendido)} vendidos no total`),
+                cartao('fa-rotate-left', 'Valor estornado', dinheiro(n.estornado), 'pedidos cancelados e pagos'),
+                cartao('fa-users', 'Clientes cadastrados', n.clientes, `${n.clientesAtivos} com conta ativa`),
+                cartao('fa-user-tie', 'Funcionários ativos', n.funcionariosAtivos, 'incluindo o administrador'),
+                cartao('fa-book-open', 'Produtos à venda', n.produtosDisponiveis, `${n.unidadesEmEstoque} unidades em estoque`),
+                cartao('fa-triangle-exclamation', 'Estoque baixo', n.estoqueBaixo, 'produtos com 2 unidades ou menos')
+            ].join('');
+        }
+
+        // Opções comuns: sem legenda quando só há uma série
+        const SEM_LEGENDA = { plugins: { legend: { display: false } }, maintainAspectRatio: false };
+
+        function desenharGraficos(p) {
+            Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+            Chart.defaults.color = '#4D443B';
+
+            // Vendas por dia (linha)
+            new Chart(document.getElementById('grafico-dias'), {
+                type: 'line',
+                data: {
+                    labels: p.vendasPorDia.map((d) => diaMes(d.dia)),
+                    datasets: [{
+                        label: 'Valor vendido', data: p.vendasPorDia.map((d) => d.valor),
+                        borderColor: '#4D443B', backgroundColor: 'rgba(140, 126, 112, 0.25)', fill: true, tension: 0.3
+                    }]
+                },
+                options: { ...SEM_LEGENDA, scales: { y: { beginAtZero: true, ticks: { callback: (v) => dinheiro(v) } } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => dinheiro(c.parsed.y) } } } }
+            });
+
+            // Pedidos por situação (rosca)
+            new Chart(document.getElementById('grafico-status'), {
+                type: 'doughnut',
+                data: {
+                    labels: p.pedidosPorStatus.map((s) => s.nome),
+                    datasets: [{ data: p.pedidosPorStatus.map((s) => s.quantidade), backgroundColor: CORES, borderColor: '#fff' }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Vendas por categoria (barras)
+            new Chart(document.getElementById('grafico-categorias'), {
+                type: 'bar',
+                data: {
+                    labels: p.vendasPorCategoria.map((c) => c.nome),
+                    datasets: [{ label: 'Valor vendido', data: p.vendasPorCategoria.map((c) => c.valor), backgroundColor: '#8C7E70', borderRadius: 6 }]
+                },
+                options: { ...SEM_LEGENDA, scales: { y: { beginAtZero: true, ticks: { callback: (v) => dinheiro(v) } } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: {
+                        label: (c) => `${dinheiro(c.parsed.y)} · ${p.vendasPorCategoria[c.dataIndex].unidades} un.` } } } }
+            });
+
+            // Produtos mais vendidos (barras na horizontal)
+            new Chart(document.getElementById('grafico-produtos'), {
+                type: 'bar',
+                data: {
+                    labels: p.produtosMaisVendidos.map((x) => x.nome.length > 28 ? x.nome.slice(0, 27) + '…' : x.nome),
+                    datasets: [{ label: 'Unidades vendidas', data: p.produtosMaisVendidos.map((x) => x.unidades), backgroundColor: '#4D443B', borderRadius: 6 }]
+                },
+                options: { ...SEM_LEGENDA, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+
+            // Formas de pagamento (rosca)
+            const nomesPagamento = { PIX: 'Pix', CARTAO_CREDITO: 'Cartão de crédito', BOLETO: 'Boleto' };
+            new Chart(document.getElementById('grafico-pagamentos'), {
+                type: 'doughnut',
+                data: {
+                    labels: p.formasDePagamento.map((f) => nomesPagamento[f.nome] || f.nome),
+                    datasets: [{ data: p.formasDePagamento.map((f) => f.quantidade), backgroundColor: CORES, borderColor: '#fff' }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!(await exigirAdministrador())) return; // funcionário comum volta para o painel
+            try {
+                const painel = await chamarApi('/api/administracao/painel');
+                mostrarNumeros(painel.numeros);
+                if (typeof Chart === 'undefined') {
+                    document.getElementById('dash-erro').textContent = 'Não foi possível carregar a biblioteca dos gráficos. Confira a conexão com a internet.';
+                    return;
+                }
+                desenharGraficos(painel);
+            } catch (erro) {
+                document.getElementById('dash-erro').textContent = erro.message;
+            }
+        });
+    </script>
+</body>
+
+</html>

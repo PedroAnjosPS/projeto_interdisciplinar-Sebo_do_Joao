@@ -12,6 +12,7 @@ import br.com.interdisciplinar.sebodojoao.dto.LoginRequestDTO;
 import br.com.interdisciplinar.sebodojoao.dto.LoginResponseDTO;
 import br.com.interdisciplinar.sebodojoao.model.Cliente;
 import br.com.interdisciplinar.sebodojoao.model.Funcionario;
+import br.com.interdisciplinar.sebodojoao.model.StatusUsuario;
 import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
 import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
 import jakarta.servlet.http.HttpSession;
@@ -31,6 +32,12 @@ public class LoginRestController {
         Optional<Cliente> clienteOpt = clienteRepository.findByEmailAndSenha(dto.email(), dto.senha());
         if (clienteOpt.isPresent()) {
             Cliente cliente = clienteOpt.get();
+
+            // Cliente que encerrou a conta (e tinha pedidos) fica inativo e não entra mais (erro 403)
+            if (cliente.getStatus() == StatusUsuario.INATIVO) {
+                return ResponseEntity.status(403).build();
+            }
+
             // Guarda o perfil no servidor: é nele que as regras de compra vão confiar (ver ControleDeAcesso)
             ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_CLIENTE);
             // Guarda também o ID do cliente na sessão (usado nas compras, no carrinho e em "Meus pedidos")
@@ -44,7 +51,14 @@ public class LoginRestController {
         Optional<Funcionario> funcionarioOpt = funcionarioRepository.findByEmailAndSenha(dto.email(), dto.senha());
         if (funcionarioOpt.isPresent()) {
             Funcionario funcionario = funcionarioOpt.get();
+
+            // Funcionário inativado pelo administrador não consegue mais entrar (erro 403)
+            if (funcionario.getStatus() == StatusUsuario.INATIVO) {
+                return ResponseEntity.status(403).build();
+            }
+
             ControleDeAcesso.registrarPerfil(sessao, ControleDeAcesso.PERFIL_FUNCIONARIO);
+            ControleDeAcesso.registrarAdministrador(sessao, Boolean.TRUE.equals(funcionario.getAdmin()));
             // O ID do funcionário também fica guardado na sessão
             ControleDeAcesso.registrarUsuario(sessao, funcionario.getId());
             return ResponseEntity.ok(new LoginResponseDTO(funcionario.getId(), funcionario.getNome(),

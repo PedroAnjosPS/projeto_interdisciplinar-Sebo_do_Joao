@@ -12,7 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 // o serviço lança um ResponseStatusException. Este tratador transforma o erro em {"mensagem": "..."} com o
 // código HTTP certo; o site lê "mensagem" e mostra para a pessoa. (O CompraRestController já faz o mesmo
 // por conta própria; aqui evitamos repetir o mesmo trecho em cada controller novo.)
-@RestControllerAdvice(assignableTypes = { EnderecoRestController.class, CartaoRestController.class, CarrinhoRestController.class })
+@RestControllerAdvice(assignableTypes = { EnderecoRestController.class, CartaoRestController.class, CarrinhoRestController.class, AdministracaoRestController.class })
 public class TratadorDeErrosDaLoja {
 
     @ExceptionHandler(ResponseStatusException.class)

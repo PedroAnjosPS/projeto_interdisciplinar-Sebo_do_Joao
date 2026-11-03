@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Funcionários - Sebo do João</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nosso CSS padronizado -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilo só desta tela: a tabela de funcionários */
+        .ec-func-tabela { width: 100%; margin: 0; color: var(--ec-color-coffee); }
+        .ec-func-tabela th { padding: 0.75rem 0.9rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
+            color: var(--ec-color-mocha); border-bottom: 2px solid var(--ec-color-cream); white-space: nowrap; }
+        .ec-func-tabela td { padding: 0.85rem 0.9rem; vertical-align: middle; border-bottom: 1px solid var(--ec-color-cream); }
+        .ec-func-tabela tr:last-child td { border-bottom: 0; }
+        .ec-func-tabela tr.ec-func-inativo td { opacity: 0.6; }
+        .ec-func-tabela tr.ec-func-inativo td:last-child { opacity: 1; }
+        .ec-func-inativo-tag { background-color: rgba(179, 38, 30, 0.12); color: #B3261E; }
+    </style>
+</head>
+
+<!-- Tela do funcionário administrador: tabela com os funcionários comuns, onde ele pode inativar
+     (o funcionário continua no banco, mas não consegue mais entrar) ou reativar. -->
+<body class="ec-page-vitrine" data-ec-admin hidden>
+
+    <header class="ec-admin-header py-3 px-4 d-flex align-items-center gap-3">
+        <a href="funcionario.html" class="ec-admin-logo text-decoration-none">
+            <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
+        </a>
+        <span class="ec-admin-header-titulo d-none d-lg-inline">Área do administrador</span>
+        <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu principal">
+            <a href="funcionario.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-gauge"></i><span class="d-none d-md-inline">Painel</span>
+            </a>
+            <a href="index.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
+                <i class="fas fa-store"></i><span class="d-none d-md-inline">Ver loja</span>
+            </a>
+            <a href="login.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2"
+                data-ec-sair-admin>
+                <i class="fas fa-right-from-bracket"></i><span class="d-none d-md-inline">Sair</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <div class="mb-4">
+            <h2 class="ec-admin-title fw-bold mb-1">GERENCIAMENTO DE FUNCIONÁRIOS</h2>
+            <p class="ec-conta-email mb-0">Funcionários comuns da loja. Ao inativar, a pessoa não consegue mais entrar no sistema, mas o histórico de pedidos e produtos dela continua guardado.</p>
+        </div>
+
+        <div id="mensagem-funcionarios" role="status"></div>
+
+        <div class="ec-ped-card p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="ec-func-tabela">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                            <th class="text-center">Pedidos</th>
+                            <th class="text-center">Produtos</th>
+                            <th>Status</th>
+                            <th class="text-end">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-funcionarios">
+                        <tr><td colspan="8" class="text-center ec-texto-suave py-4">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p id="resumo-funcionarios" class="ec-texto-suave mt-3 mb-0"></p>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <script src="js/produtos-store.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/usuario-store.js"></script>
+    <script src="js/vitrine.js"></script>
+    <script src="js/formularios-conta.js"></script>
+    <script>
+        // ===== Gerenciamento de funcionários (só o administrador) =====
+        const corpoTabela = document.getElementById('tabela-funcionarios');
+        let funcionarios = [];
+
+        function mostrarMensagem(texto, tipo = 'success') {
+            document.getElementById('mensagem-funcionarios').innerHTML = texto
+                ? `<div class="alert alert-${tipo} mb-4">${escaparHtml(texto)}</div>` : '';
+        }
+
+        function dataBR(iso) {
+            const [ano, mes, dia] = String(iso || '').split('-');
+            return ano && mes && dia ? `${dia}/${mes}/${ano}` : '';
+        }
+
+        function montarLinha(f) {
+            const ativo = f.status === 'ATIVO';
+            const botao = ativo
+                ? `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-3" data-acao="inativar" data-id="${f.id}"><i class="far fa-trash-can me-1"></i>Inativar</button>`
+                : `<button type="button" class="btn ec-btn-dark ec-btn-pill px-3" data-acao="reativar" data-id="${f.id}"><i class="fas fa-rotate-left me-1"></i>Reativar</button>`;
+            return `
+                <tr class="${ativo ? '' : 'ec-func-inativo'}">
+                    <td><strong>${escaparHtml(f.codigoFuncionario)}</strong></td>
+                    <td>${escaparHtml(f.nome)}<br><small class="ec-texto-suave">desde ${escaparHtml(dataBR(f.dataCadastro))}</small></td>
+                    <td>${escaparHtml(f.email)}</td>
+                    <td>${escaparHtml(f.telefone || '—')}</td>
+                    <td class="text-center">${f.pedidosAtendidos}</td>
+                    <td class="text-center">${f.produtosCadastrados}</td>
+                    <td><span class="ec-status ${ativo ? 'ec-status-ok' : 'ec-func-inativo-tag'}">${ativo ? 'Ativo' : 'Inativo'}</span></td>
+                    <td class="text-end">${botao}</td>
+                </tr>`;
+        }
+
+        function desenharTabela() {
+            corpoTabela.innerHTML = funcionarios.length
+                ? funcionarios.map(montarLinha).join('')
+                : '<tr><td colspan="8" class="text-center ec-texto-suave py-4">Nenhum funcionário comum cadastrado.</td></tr>';
+            const ativos = funcionarios.filter((f) => f.status === 'ATIVO').length;
+            document.getElementById('resumo-funcionarios').textContent =
+                `${funcionarios.length} funcionário${funcionarios.length === 1 ? '' : 's'} (${ativos} ativo${ativos === 1 ? '' : 's'}, ${funcionarios.length - ativos} inativo${funcionarios.length - ativos === 1 ? '' : 's'})`;
+        }
+
+        async function carregarFuncionarios() {
+            try {
+                funcionarios = await chamarApi('/api/administracao/funcionarios');
+                desenharTabela();
+            } catch (erro) {
+                corpoTabela.innerHTML = '';
+                mostrarMensagem(erro.message, 'danger');
+            }
+        }
+
+        // Um único "ouvinte" para os botões de todas as linhas
+        corpoTabela.addEventListener('click', async (evento) => {
+            const botao = evento.target.closest('button[data-acao]');
+            if (!botao) return;
+            const funcionario = funcionarios.find((f) => String(f.id) === botao.dataset.id);
+            mostrarMensagem('');
+
+            try {
+                if (botao.dataset.acao === 'inativar') {
+                    const sim = await confirmarAcao({
+                        titulo: 'Inativar funcionário?',
+                        texto: `${funcionario.nome} não vai mais conseguir entrar no sistema. Você pode reativar depois.`,
+                        botao: 'Inativar'
+                    });
+                    if (!sim) return;
+                    await chamarApi(`/api/administracao/funcionarios/${botao.dataset.id}`, { method: 'DELETE' });
+                    mostrarMensagem(`${funcionario.nome} foi inativado.`);
+                } else {
+                    await chamarApi(`/api/administracao/funcionarios/${botao.dataset.id}/reativar`, { method: 'POST' });
+                    mostrarMensagem(`${funcionario.nome} foi reativado.`);
+                }
+                await carregarFuncionarios();
+            } catch (erro) {
+                mostrarMensagem(erro.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!(await exigirAdministrador())) return; // funcionário comum volta para o painel
+            carregarFuncionarios();
+        });
+    </script>
+</body>
+
+</html>

@@ -19,6 +19,8 @@ public final class ControleDeAcesso {
     // Nome do atributo da sessão que guarda o ID de quem fez login. Com ele, o Java sabe qual cliente
     // está comprando, sem precisar confiar em um ID enviado pelo navegador.
     private static final String ATRIBUTO_ID = "idUsuario";
+    // Guarda se o funcionário é administrador (true) ou comum (false)
+    private static final String ATRIBUTO_ADMIN = "funcionarioAdmin";
 
     private ControleDeAcesso() { }
 
@@ -65,6 +67,23 @@ public final class ControleDeAcesso {
         }
 
         return lerId(sessao);
+    }
+
+    // Guarda na sessão se o funcionário que entrou é administrador (funcionarios.admin = 1).
+    public static void registrarAdministrador(HttpSession sessao, boolean administrador) {
+        sessao.setAttribute(ATRIBUTO_ADMIN, administrador);
+    }
+
+    // Usada nas telas que só o funcionário administrador pode abrir (gerenciar funcionários e
+    // painel de dados). Funcionário comum e cliente são recusados.
+    public static Long exigirAdministrador(HttpSession sessao) {
+        Long id = exigirFuncionario(sessao);
+
+        if (!Boolean.TRUE.equals(sessao.getAttribute(ATRIBUTO_ADMIN))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Somente o funcionário administrador pode fazer isso.");
+        }
+
+        return id;
     }
 
     // Lê o ID guardado na sessão. Se não existir (ex.: sessão antiga), pede um novo login.

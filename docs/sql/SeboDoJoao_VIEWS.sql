@@ -3,7 +3,7 @@
 -- status do pedido e dados de entrega, incluindo transportadora, rastreamento, --
 -- valor do frete e endereço de entrega. --
 -- Utilizada para consultas no histórico de pedidos e no painel administrativo. --
-CREATE VIEW dbo.vw_pedidos_detalhados AS
+CREATE VIEW vw_pedidos_detalhados AS
 SELECT pe.id AS pedido_id, pe.data, pe.total,
 	   CASE pe.status 
 			WHEN 1 THEN 'Aguardando pagamento'
@@ -43,7 +43,7 @@ GO
 -- Apresenta um resumo de vendas por produto, categoria e gênero, --
 -- contabilizando a quantidade de pedidos, unidades vendidas e faturamento. --
 -- Desconsidera os pedidos cancelados. Utilizada para relatórios e dashboards administrativos. --
-CREATE VIEW dbo.vw_vendas_por_produto AS
+CREATE VIEW vw_vendas_por_produto AS
 SELECT prod.id AS produto_id, prod.nome AS produto, cat.nome AS categoria, gen.nome AS genero,
 	   COUNT(DISTINCT i.pedido_id) AS qtd_pedidos,
 	   SUM(i.quantidade) AS unidades_vendidas,
@@ -62,7 +62,7 @@ GO
 -- informações das parcelas, valores e datas de vencimento. --
 -- Calcula automaticamente a quantidade de dias de atraso de cada parcela. --
 -- Utilizada para acompanhamento financeiro e controle de pagamentos. --
-CREATE VIEW dbo.vw_pagamentos_pendentes AS
+CREATE VIEW vw_pagamentos_pendentes AS
 SELECT pg.id AS pagamento_id, pg.pedido_id, uc.nome AS cliente, pg.forma_pagamento,
 	   pg.numero_parcela, pg.quantidade_parcelas, pg.valor, pg.data_vencimento,
 	   CASE 

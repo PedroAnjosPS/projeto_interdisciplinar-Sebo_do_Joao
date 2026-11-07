@@ -45,6 +45,8 @@ ORDER BY p.id;
 
 select * from entregas;
 
+-- Consulta  --
+
 select * from enderecos;
 
 select * from cartoes;
@@ -56,7 +58,7 @@ select * from item_pedidos;
 select * from item_carrinhos;
 
 -- Consulta de clientes --
-select usu.nome AS Cliente, usu.email AS [Email do Cliente], usu.senha AS [Senha do Cliente], 
+select usu.id [Id do Cliente], usu.nome AS Cliente, usu.email AS [Email do Cliente], usu.senha AS [Senha do Cliente], 
 		CASE usu.status
 			WHEN 1 THEN 'ATIVO'
 			WHEN 2 THEN	'INATIVO'

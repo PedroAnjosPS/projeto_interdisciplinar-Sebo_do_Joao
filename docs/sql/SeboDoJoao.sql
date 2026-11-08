@@ -1,324 +1,289 @@
-CREATE DATABASE Sebo_do_Joao
-GO
+-----------------------------------------------------------------------
+-- Criar o Banco de Dados
+-----------------------------------------------------------------------
+create database Sebo_do_Joao
+go
 
-USE Sebo_do_Joao
-GO
+-----------------------------------------------------------------------
+-- Acessar o Banco de Dados
+-----------------------------------------------------------------------
+use Sebo_do_Joao
+go
 
-CREATE TABLE ufs
+-- Desliga o cache de IDENTITY do SQL Server. Por padrão ele reserva blocos de 1000 números
+-- em memória e, se o servidor reinicia sem desligar direito (ex.: o container do Docker),
+-- o bloco é perdido e os ids pulam (ex.: de 12 para 1002). Desligado, os ids seguem em sequência.
+alter database scoped configuration set identity_cache = off
+go
+
+-----------------------------------------------------------------------
+-- Criar as tabelas do Banco de Dados
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+-- Tabela: ufs
+-----------------------------------------------------------------------
+create table ufs
 (
-    sigla VARCHAR(2) PRIMARY KEY NOT NULL,
-    nome VARCHAR(100) NOT NULL
+	sigla				varchar(2)		not null		primary key,
+	nome				varchar(100)	not null
 )
-GO
+go
 
-CREATE TABLE cidades
+-----------------------------------------------------------------------
+-- Tabela: cidades
+-----------------------------------------------------------------------
+create table cidades
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) NOT NULL,
-    uf_sigla VARCHAR(2) NOT NULL,
-
-    CONSTRAINT fk_cidades_ufs FOREIGN KEY (uf_sigla)
-    REFERENCES ufs(sigla)
+	id					int				not null		primary key		identity,
+	nome				varchar(100)	not null,
+	uf_sigla			varchar(2)		not null		references ufs(sigla)
 )
-GO
+go
 
-CREATE TABLE ceps
+-----------------------------------------------------------------------
+-- Tabela: ceps
+-----------------------------------------------------------------------
+create table ceps
 (
-    numero_cep VARCHAR(10) PRIMARY KEY NOT NULL,
-    cidade_id INT NOT NULL,
-
-    CONSTRAINT fk_ceps_cidades FOREIGN KEY (cidade_id)
-    REFERENCES cidades(id)
+	numero_cep			varchar(10)		not null		primary key,
+	cidade_id			int				not null		references cidades(id)
 )
-GO
+go
 
-CREATE TABLE usuarios
+-----------------------------------------------------------------------
+-- Tabela: usuarios
+-----------------------------------------------------------------------
+create table usuarios
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    senha VARCHAR(255) NOT NULL,
-    status INT NULL DEFAULT 1,
-    telefone VARCHAR(20),
-    data_cadastro DATETIME DEFAULT GETDATE(),
-    foto_perfil VARCHAR(255) NULL,
-
-    CONSTRAINT ck_usuarios_status
-        CHECK (status IN (1,2))
+	id					int				not null		primary key		identity,
+	nome				varchar(100)	not null,
+	email				varchar(100)	not null		unique,
+	senha				varchar(255)	not null,
+	-- status 1 - ativo; 2 - inativo
+	status				int					null		default 1		check(status in (1,2)),
+	telefone			varchar(20),
+	data_cadastro		datetime						default getdate(),
+	foto_perfil			varchar(255)		null
 )
-GO
+go
 
-CREATE TABLE clientes
+-----------------------------------------------------------------------
+-- Tabela: clientes
+-- chave primária que também é chave estrangeira, pois estamos fazendo
+-- herança de usuarios
+-----------------------------------------------------------------------
+create table clientes
 (
-    usuario_id INT PRIMARY KEY NOT NULL,
-    data_nascimento DATE,
-    cpf VARCHAR(14) UNIQUE,
-
-    CONSTRAINT fk_clientes_usuarios
-        FOREIGN KEY (usuario_id)
-        REFERENCES usuarios(id)
+	usuario_id			int				not null		primary key		references usuarios(id),
+	data_nascimento		date,
+	cpf					varchar(14)						unique
 )
-GO
+go
 
-CREATE TABLE funcionarios
+-----------------------------------------------------------------------
+-- Tabela: funcionarios
+-- chave primária que também é chave estrangeira, pois estamos fazendo
+-- herança de usuarios
+-----------------------------------------------------------------------
+create table funcionarios
 (
-    usuario_id INT PRIMARY KEY NOT NULL,
-    codigo_funcionario VARCHAR(50) UNIQUE  NOT NULL,
-    admin BIT NOT NULL DEFAULT 0, -- 0 será padrão (assim, admitindo que nem todo funcionário será um administrador)
-
-    CONSTRAINT fk_funcionarios_usuarios
-        FOREIGN KEY (usuario_id)
-        REFERENCES usuarios(id)
+	usuario_id			int				not null		primary key		references usuarios(id),
+	codigo_funcionario	varchar(50)		not null		unique,
+	-- admin 0 - funcionário comum (padrão); 1 - funcionário administrador
+	admin				bit				not null		default 0
 )
-GO
+go
 
--- No front-end fica ativo = 0, para não quebrar o histórico das entregas.
-CREATE TABLE enderecos
+-----------------------------------------------------------------------
+-- Tabela: enderecos
+-- No front-end o endereço "excluído" fica com ativo = 0, para não
+-- quebrar o histórico das entregas
+-----------------------------------------------------------------------
+create table enderecos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    logradouro VARCHAR(255) NOT NULL,
-    numero VARCHAR(10) NULL,          -- NULL = opção "Sem número" da tela
-    complemento VARCHAR(100) NULL,
-    bairro VARCHAR(100) NOT NULL,
-    ativo BIT NOT NULL DEFAULT 1,     -- 1 = ativo, 0 = deixa de ser o endereço usado pelo cliente (não é o principal)
-    -- Nome dado pelo cliente ao endereço (ex.: "Casa", "Trabalho"); se não informar, vale "Endereço"
-    apelido VARCHAR(30) NOT NULL DEFAULT 'Endereço',
-    -- 1 = endereço padrão (já vem selecionado no checkout); 0 = não é o padrão.
-    -- Regra de negócio (feita na aplicação/procedure): só 1 endereço padrão por cliente.
-    padrao BIT NOT NULL DEFAULT 0,
-    cep_numero VARCHAR(10) NOT NULL,
-    cliente_id INT NOT NULL,
-
-    CONSTRAINT fk_enderecos_ceps
-        FOREIGN KEY (cep_numero)
-        REFERENCES ceps(numero_cep),
-
-    CONSTRAINT fk_enderecos_clientes
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes(usuario_id)
+	id					int				not null		primary key		identity,
+	logradouro			varchar(255)	not null,
+	-- numero null - opção "Sem número" da tela
+	numero				varchar(10)			null,
+	complemento			varchar(100)		null,
+	bairro				varchar(100)	not null,
+	-- ativo 1 - ativo; 0 - o cliente deixou de usar este endereço
+	ativo				bit				not null		default 1,
+	-- nome dado pelo cliente ao endereço (ex.: "Casa", "Trabalho")
+	apelido				varchar(30)		not null		default 'Endereço',
+	-- padrao 1 - endereço já selecionado no checkout; 0 - não é o padrão
+	-- só pode existir 1 endereço padrão por cliente (regra feita na aplicação)
+	padrao				bit				not null		default 0,
+	cep_numero			varchar(10)		not null		references ceps(numero_cep),
+	cliente_id			int				not null		references clientes(usuario_id)
 )
-GO
+go
 
--- Nunca guardar o número completo nem o CVV: só os 4 últimos dígitos.
-CREATE TABLE cartoes
+-----------------------------------------------------------------------
+-- Tabela: cartoes
+-- Nunca guardar o número completo nem o CVV: só os 4 últimos dígitos
+-----------------------------------------------------------------------
+create table cartoes
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    bandeira VARCHAR(30) NOT NULL,
-    final_numero CHAR(4) NOT NULL,    -- 4 últimos dígitos
-    titular VARCHAR(100) NOT NULL,
-    validade CHAR(5) NOT NULL,        -- formato MM/AA, igual à tela
-    -- 1 = cartão padrão (já vem selecionado no checkout); 0 = não é o padrão.
-    -- Regra de negócio (feita na aplicação/procedure): só 1 cartão padrão por cliente.
-    padrao BIT NOT NULL DEFAULT 0,
-    cliente_id INT NOT NULL,
-
-    CONSTRAINT ck_cartoes_validade
-    CHECK (validade LIKE '0[1-9]/[0-9][0-9]'    -- 01 a 09
-        OR validade LIKE '1[0-2]/[0-9][0-9]'),  -- 10 a 12
-
-    CONSTRAINT fk_cartoes_clientes
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes(usuario_id)
+	id					int				not null		primary key		identity,
+	bandeira			varchar(30)		not null,
+	-- 4 últimos dígitos do cartão
+	final_numero		char(4)			not null,
+	titular				varchar(100)	not null,
+	-- validade no formato MM/AA, igual à tela (mês de 01 a 12)
+	validade			char(5)			not null		check(validade like '0[1-9]/[0-9][0-9]' or validade like '1[0-2]/[0-9][0-9]'),
+	-- padrao 1 - cartão já selecionado no checkout; 0 - não é o padrão
+	-- só pode existir 1 cartão padrão por cliente (regra feita na aplicação)
+	padrao				bit				not null		default 0,
+	cliente_id			int				not null		references clientes(usuario_id)
 )
-GO
+go
 
-CREATE TABLE categorias
+-----------------------------------------------------------------------
+-- Tabela: categorias
+-----------------------------------------------------------------------
+create table categorias
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) NOT NULL,
+	id					int				not null		primary key		identity,
+	nome				varchar(100)	not null
 )
-GO
+go
 
-CREATE TABLE generos
+-----------------------------------------------------------------------
+-- Tabela: generos
+-----------------------------------------------------------------------
+create table generos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) NOT NULL,
+	id					int				not null		primary key		identity,
+	nome				varchar(100)	not null
 )
-GO
+go
 
-CREATE TABLE produtos
+-----------------------------------------------------------------------
+-- Tabela: produtos
+-----------------------------------------------------------------------
+create table produtos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    nome VARCHAR(100) NOT NULL,
-    descricao VARCHAR(MAX),
-    estoque INT NOT NULL DEFAULT 0,
-    preco DECIMAL(10,2) NOT NULL,
-    status INT NULL DEFAULT 1,
-    categoria_id INT NOT NULL,
-    genero_id INT NOT NULL,
-    funcionario_id INT NOT NULL,
-
-    CONSTRAINT ck_produtos_preco
-        CHECK (preco > 0),
-
-    CONSTRAINT ck_produtos_estoque
-        CHECK (estoque >= 0),
-
-    CONSTRAINT ck_produtos_status
-        CHECK (status IN (1,2)),
-
-    CONSTRAINT fk_produtos_categorias
-        FOREIGN KEY (categoria_id)
-        REFERENCES categorias(id),
-
-    CONSTRAINT fk_produtos_generos
-        FOREIGN KEY (genero_id)
-        REFERENCES generos(id),
-    
-    CONSTRAINT fk_produtos_funcionarios
-        FOREIGN KEY (funcionario_id)
-        REFERENCES funcionarios(usuario_id)
+	id					int				not null		primary key		identity,
+	nome				varchar(100)	not null,
+	descricao			varchar(max),
+	estoque				int				not null		default 0		check(estoque >= 0),
+	preco				decimal(10,2)	not null		check(preco > 0),
+	-- status 1 - disponível; 2 - inativo
+	status				int					null		default 1		check(status in (1,2)),
+	categoria_id		int				not null		references categorias(id),
+	genero_id			int				not null		references generos(id),
+	funcionario_id		int				not null		references funcionarios(usuario_id)
 )
-GO
+go
 
-CREATE TABLE imagem_produtos
+-----------------------------------------------------------------------
+-- Tabela: imagem_produtos
+-----------------------------------------------------------------------
+create table imagem_produtos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    caminho VARCHAR(255) NOT NULL,
-    produto_id INT NOT NULL,
-
-    CONSTRAINT fk_imagem_produtos_produtos
-        FOREIGN KEY (produto_id)
-        REFERENCES produtos(id)
+	id					int				not null		primary key		identity,
+	caminho				varchar(255)	not null,
+	produto_id			int				not null		references produtos(id)
 )
-GO
+go
 
-CREATE TABLE entregas
+-----------------------------------------------------------------------
+-- Tabela: entregas
+-- O frete fica na tabela de entregas (pedidos.total = produtos + frete)
+-----------------------------------------------------------------------
+create table entregas
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    transportadora VARCHAR(100),
-    status INT DEFAULT 1,
-    link_rastreio VARCHAR(255),
-    codigo_rastreio VARCHAR(100),
-    data_postagem DATETIME DEFAULT GETDATE(),
-    data_previsao_entrega DATE,
-    data_entrega DATETIME,
-    valor_frete DECIMAL(10,2) NOT NULL DEFAULT 0,  -- frete fica na tabela de entregas (pedidos.total = produtos + frete)
-    endereco_id INT NOT NULL,                       -- destino da entrega
-
-    CONSTRAINT ck_entregas_status
-        CHECK (status IN (1,2,3,4,5)),
-
-    CONSTRAINT ck_entregas_valor_frete
-        CHECK (valor_frete >= 0),
-
-    CONSTRAINT fk_entregas_enderecos
-        FOREIGN KEY (endereco_id)
-        REFERENCES enderecos(id)
+	id					int				not null		primary key		identity,
+	transportadora		varchar(100),
+	-- status 1 - pendente; 2 - preparando; 3 - em trânsito; 4 - entregue; 5 - cancelada
+	status				int								default 1		check(status in (1,2,3,4,5)),
+	link_rastreio		varchar(255),
+	codigo_rastreio		varchar(100),
+	data_postagem		datetime						default getdate(),
+	data_previsao_entrega	date,
+	data_entrega		datetime,
+	valor_frete			decimal(10,2)	not null		default 0		check(valor_frete >= 0),
+	-- destino da entrega
+	endereco_id			int				not null		references enderecos(id)
 )
-GO
+go
 
-CREATE TABLE pedidos
+-----------------------------------------------------------------------
+-- Tabela: pedidos
+-----------------------------------------------------------------------
+create table pedidos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    data DATETIME NOT NULL DEFAULT GETDATE(),
-    total DECIMAL(10,2) NOT NULL DEFAULT 0,
-    status INT NULL DEFAULT 1,
-    entrega_id INT UNIQUE,
-    cliente_id INT NOT NULL,
-    funcionario_id INT NOT NULL,
-
-    CONSTRAINT ck_pedidos_total
-        CHECK (total >= 0),
-
-    CONSTRAINT ck_pedidos_status
-        CHECK (status IN (1,2,3,4)),
-
-    CONSTRAINT fk_pedidos_entregas
-        FOREIGN KEY (entrega_id)
-        REFERENCES entregas(id),
-
-    CONSTRAINT fk_pedidos_clientes
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes(usuario_id),
-
-    CONSTRAINT fk_pedidos_funcionarios
-        FOREIGN KEY (funcionario_id)
-        REFERENCES funcionarios(usuario_id)
+	id					int				not null		primary key		identity,
+	data				datetime		not null		default getdate(),
+	total				decimal(10,2)	not null		default 0		check(total >= 0),
+	-- status 1 - aguardando pagamento; 2 - processando; 3 - concluído; 4 - cancelado
+	status				int					null		default 1		check(status in (1,2,3,4)),
+	entrega_id			int								unique			references entregas(id),
+	cliente_id			int				not null		references clientes(usuario_id),
+	funcionario_id		int				not null		references funcionarios(usuario_id)
 )
-GO
+go
 
-CREATE TABLE item_pedidos
+-----------------------------------------------------------------------
+-- Tabela: item_pedidos
+-- Tabela de relação NxN: chave primária é uma chave composta pelas
+-- chaves estrangeiras das duas tabelas da relação NxN
+-- Se o pedido for excluído, os itens dele também são
+-----------------------------------------------------------------------
+create table item_pedidos
 (
-    pedido_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade INT NOT NULL,
-    preco_unitario DECIMAL(10,2) NOT NULL,
-
-    CONSTRAINT pk_item_pedidos
-        PRIMARY KEY (pedido_id, produto_id),
-
-    CONSTRAINT ck_item_pedidos_quantidade
-        CHECK (quantidade > 0),
-
-    CONSTRAINT ck_item_pedidos_preco
-        CHECK (preco_unitario > 0),
-
-    CONSTRAINT fk_item_pedidos_pedidos
-        FOREIGN KEY (pedido_id)
-        REFERENCES pedidos(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_item_pedidos_produtos
-        FOREIGN KEY (produto_id)
-        REFERENCES produtos(id)
+	pedido_id			int				not null,
+	produto_id			int				not null,
+	quantidade			int				not null		check(quantidade > 0),
+	preco_unitario		decimal(10,2)	not null		check(preco_unitario > 0),
+	-- definição das chaves estrangeiras
+	foreign key(pedido_id)				references		pedidos(id)		on delete cascade,
+	foreign key(produto_id)				references		produtos(id),
+	-- por ser uma relação NxN a chave primária é composta pelas duas chaves estrangeiras
+	primary key(pedido_id, produto_id)
 )
-GO
+go
 
-CREATE TABLE pagamentos
+-----------------------------------------------------------------------
+-- Tabela: pagamentos
+-----------------------------------------------------------------------
+create table pagamentos
 (
-    id INT NOT NULL PRIMARY KEY IDENTITY,
-    numero_parcela INT NOT NULL,
-    status INT NULL DEFAULT 1,
-    valor DECIMAL(10,2) NOT NULL,
-    quantidade_parcelas INT NOT NULL,
-    forma_pagamento VARCHAR(50) NOT NULL,
-    data_vencimento DATE NOT NULL,
-    data_pagamento DATE,
-    -- Cópia dos dados do cartão usado (bandeira e final_cartao), para o histórico não depender somente de cartões
-    -- (o cliente pode pagar com cartão não salvo ou apagar o cartão depois). NULL para Pix/boleto.
-    bandeira VARCHAR(30) NULL,
-    final_cartao CHAR(4) NULL,
-    pedido_id INT NOT NULL,
-
-    CONSTRAINT ck_pagamentos_valor
-        CHECK (valor > 0),
-
-    CONSTRAINT ck_pagamentos_parcelas
-        CHECK (quantidade_parcelas > 0),
-
-    -- 1 Pendente | 2 Aprovado | 3 Recusado | 4 Compra estornada (pedido cancelado depois de pago)
-    CONSTRAINT ck_pagamentos_status
-        CHECK (status IN (1,2,3,4)),
-
-    CONSTRAINT fk_pagamentos_pedidos
-        FOREIGN KEY (pedido_id)
-        REFERENCES pedidos(id)
+	id					int				not null		primary key		identity,
+	numero_parcela		int				not null,
+	-- status 1 - pendente; 2 - aprovado; 3 - recusado; 4 - compra estornada (pedido cancelado depois de pago)
+	status				int					null		default 1		check(status in (1,2,3,4)),
+	valor				decimal(10,2)	not null		check(valor > 0),
+	quantidade_parcelas	int				not null		check(quantidade_parcelas > 0),
+	forma_pagamento		varchar(50)		not null,
+	data_vencimento		date			not null,
+	data_pagamento		date,
+	-- cópia dos dados do cartão usado (bandeira e final_cartao), para o histórico não depender
+	-- somente da tabela cartoes (o cliente pode pagar com cartão não salvo ou apagar o cartão
+	-- depois). Fica null no PIX e no boleto
+	bandeira			varchar(30)			null,
+	final_cartao		char(4)				null,
+	pedido_id			int				not null		references pedidos(id)
 )
-GO
+go
 
--- Carrinho de compras do cliente.
--- Separado de item_pedidos: não baixa estoque (a trigger é só de item_pedidos),
--- não congela preço (usa produtos.preco atual) e não exige pedido.
-CREATE TABLE item_carrinhos
+-----------------------------------------------------------------------
+-- Tabela: item_carrinhos
+-- Carrinho de compras do cliente. É separado de item_pedidos: não baixa
+-- estoque (a trigger é só de item_pedidos), guarda o preço do produto no
+-- momento em que entrou no carrinho e não exige pedido
+-----------------------------------------------------------------------
+create table item_carrinhos
 (
-    cliente_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade INT NOT NULL DEFAULT 1,
-
-    CONSTRAINT pk_item_carrinhos
-        PRIMARY KEY (cliente_id, produto_id),
-
-    CONSTRAINT ck_item_carrinhos_quantidade
-        CHECK (quantidade > 0),
-
-    CONSTRAINT fk_item_carrinhos_clientes
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes(usuario_id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_item_carrinhos_produtos
-        FOREIGN KEY (produto_id)
-        REFERENCES produtos(id)
+	cliente_id			int				not null,
+	produto_id			int				not null,
+	quantidade			int				not null		default 1		check(quantidade > 0),
+	preco_unitario		decimal(10,2)	not null		check(preco_unitario > 0.00),
+	-- definição das chaves estrangeiras (se o cliente for excluído, o carrinho dele também é)
+	foreign key(cliente_id)				references		clientes(usuario_id)	on delete cascade,
+	foreign key(produto_id)				references		produtos(id),
+	primary key(cliente_id, produto_id)
 )
-GO
+go

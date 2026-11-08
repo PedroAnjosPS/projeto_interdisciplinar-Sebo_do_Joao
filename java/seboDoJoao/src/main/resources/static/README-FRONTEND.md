@@ -1,72 +1,267 @@
-# Documentação de Arquitetura CSS - Front-end (E-commerce)
+# Front-end do Sebo do João
 
-## 📌 Visão Geral
-Este documento estabelece o padrão arquitetural para as folhas de estilo (CSS) do projeto. O objetivo desta estrutura é manter o código organizado, escalável e de fácil manutenção para todos os membros da equipe.
-
-Nossa abordagem utiliza o **Bootstrap** como framework base, complementado por estilos customizados estritamente separados por responsabilidade. Isso garante que o trabalho não precise ser refeito e que os componentes possam ser reutilizados em diferentes telas do e-commerce.
+Este documento explica como o front-end do projeto está organizado hoje: as pastas, as telas, os arquivos
+JavaScript e CSS, quem pode abrir cada tela e como o site conversa com o back-end em Java.
 
 ---
 
-## 📂 Estrutura de Diretórios
+## 1. Visão geral
 
-A estrutura de estilos está localizada no diretório `assets/css/` e adota uma metodologia modular (inspirada no modelo 7-1 do SASS e no padrão BEM/SMACSS adaptado):
+- **HTML, CSS e JavaScript puros.** Não há framework de JavaScript nem etapa de compilação do front-end.
+- **Bibliotecas por CDN** (precisam de internet):
+  - Bootstrap 5.3.0 (layout, grid, modais, botões e alertas);
+  - Font Awesome 6.4.0 (ícones);
+  - Chart.js 4.4.1 (só os gráficos de `administrador-dashboard.html`).
+- **Servido pelo próprio Spring Boot.** Os arquivos ficam em `src/main/resources/static`, então o site abre em
+  `http://localhost:8080/index.html` com o projeto rodando.
+- **Os dados ficam no banco.** O JavaScript chama a API Java com `fetch()` (rotas `/api/...`). No navegador
+  ficam guardados apenas o carrinho do visitante e uma cópia dos dados do login, usada para ajustar as telas.
+- **A regra de verdade está no Java.** Esconder um botão ou redirecionar uma tela no front-end é só conforto
+  para quem usa. Quem decide se a ação é permitida é o back-end, pela sessão de login (`ControleDeAcesso.java`).
+
+---
+
+## 2. Estrutura de pastas
 
 ```text
-raiz-do-projeto/
-└── assets/
-    └── css/
-        ├── base/
-        │   ├── _variables.css     # (Cores, fontes, sombras padronizadas)
-        │   └── _reset.css         # (Configurações globais e body)
-        ├── components/
-        │   ├── _buttons.css       # (Estilos de botões padronizados)
-        │   ├── _cards.css         # (Containers, painéis e cards)
-        │   └── _inputs.css        # (Formulários e campos de texto)
-        ├── pages/
-        │   └── _login.css         # (Estilos EXCLUSIVOS da tela de login)
-        └── style.css              # (Arquivo principal de importação/agrupamento)
+static/
+├── index.html, busca.html, produto.html ...   (as telas; todas na raiz da pasta)
+├── css/
+│   └── style.css                  # único arquivo de estilos próprios
+├── js/
+│   ├── produtos-store.js          # produtos (API /api/produtos)
+│   ├── usuario-store.js           # login, conta e sessão
+│   ├── vitrine.js                 # código compartilhado por todas as telas
+│   ├── formularios-conta.js       # janelas de endereço, cartão e confirmação
+│   └── perfil.js                  # formulário antigo de perfil (ver seção 5)
+├── imagens/
+│   ├── sebo.png                   # logo
+│   ├── produtos/                  # fotos enviadas no cadastro de produtos
+│   └── usuarios/                  # fotos de perfil
+├── data/
+│   └── produtos.json              # dados de exemplo antigos (não é mais lido pelo site)
+└── README-FRONTEND.md             # este arquivo
 ```
 
 ---
 
-## 🏗️ Responsabilidade de Cada Pasta
+## 3. Telas
 
-### 1. `base/`
-Contém as regras fundamentais do projeto. Nenhum componente visual específico deve ser criado aqui.
-* **O que colocar:** Variáveis de cor (extraídas da identidade visual), tipografia global, variáveis de espaçamento, estilos aplicados diretamente a tags HTML (como `body`, `h1`, `a`).
-* **Exemplo:** A definição das cores principais (ex: `--ec-color-accent`) fica nesta pasta.
+Os nomes dos arquivos seguem quem usa a tela: `funcionario-...` é para o funcionário comum (e também para o
+administrador), e `administrador-...` é só para o funcionário administrador (`funcionarios.admin = 1`).
 
-### 2. `components/`
-O coração da nossa padronização. Esta pasta abriga blocos de interface reutilizáveis.
-* **O que colocar:** Botões customizados, modais, cards de produtos, barras de navegação, estilos padronizados de formulário.
-* **Regra de Ouro:** Se um elemento (como o botão de "Entrar") pode ser usado em outra página (como na tela de "Finalizar Compra"), ele DEVE estar na pasta `components/`.
+### Loja (qualquer pessoa)
 
-### 3. `pages/`
-Estilos altamente específicos que pertencem a uma única tela e que não farão sentido em nenhum outro lugar do sistema.
-* **O que colocar:** Ajustes finos de posicionamento (grids, layouts de uma página específica) ou sobrescritas necessárias apenas para aquela view.
-* **Regra de Ouro:** Mantenha os arquivos desta pasta o mais vazios possível. Se um estilo está aqui, pergunte-se: *"Isso não deveria ser um componente?"*
+| Arquivo | Para que serve |
+|---|---|
+| `index.html` | Página inicial com carrossel de destaque e produtos |
+| `busca.html` | Lista produtos filtrando por categoria (`?categoria=Livros`) e por texto (procura no nome, categoria, gênero e descrição) |
+| `produto.html` | Detalhe de um produto |
+| `login.html` | Login e cadastro, no mesmo card com painel deslizante |
+| `signup.html` | Cadastro em 2 etapas |
 
-### 4. `style.css` (Root)
-Este é o arquivo central que o HTML irá carregar (`<link rel="stylesheet" href="assets/css/style.css">`).
-* **Função:** Ele serve apenas para unificar/importar os outros arquivos menores, criando um único pacote de estilos para o navegador.
+### Cliente
+
+| Arquivo | Para que serve |
+|---|---|
+| `carrinho.html` | Carrinho de compras (pede login) |
+| `checkout.html` | Finalizar a compra: endereço, entrega, pagamento e resumo (pede login) |
+| `pedido-confirmado.html` | Detalhe do pedido e sua situação |
+| `pedidos.html` | Lista de "Meus pedidos", com cancelamento |
+| `enderecos.html` | Endereços de entrega (somente cliente) |
+| `cartoes.html` | Cartões salvos (somente cliente) |
+
+### Conta (cliente e funcionário)
+
+| Arquivo | Para que serve |
+|---|---|
+| `menu-conta.html` | Atalhos da conta ("Endereços" e "Cartões" só aparecem para cliente) |
+| `perfil.html` | Dados pessoais e foto |
+| `seguranca.html` | E-mail, senha, cookies e encerrar a conta (a exclusão só aparece para cliente) |
+
+### Funcionário (comum e administrador)
+
+| Arquivo | Para que serve |
+|---|---|
+| `funcionario.html` | Painel com os atalhos do funcionário |
+| `cadastro-produto.html` | Cadastrar e editar produtos |
+| `produtos-cadastrados.html` | Lista de produtos, com edição e remoção |
+| `funcionario-pedidos.html` | Pedidos da loja: aprovar pagamento e avançar a entrega |
+| `funcionario-senha.html` | Alterar a senha do funcionário |
+| `funcionario-login.html` | Só redireciona para `login.html` (endereço antigo do login) |
+
+### Somente o funcionário administrador
+
+| Arquivo | Para que serve |
+|---|---|
+| `administrador-funcionarios.html` | Tabela dos funcionários comuns, com inativar e reativar |
+| `administrador-dashboard.html` | "Informações do Sebo": números e gráficos de vendas, clientes e estoque |
 
 ---
 
-## ✍️ Boas Práticas e Padrões para a Equipe
+## 4. Perfis e acesso às telas
 
-1. **Prefixo de Classes:**
-   Todas as classes customizadas da nossa aplicação devem utilizar o prefixo `ec-` (E-Commerce) para evitar conflitos com as classes nativas do Bootstrap.
-   * ❌ *Incorreto:* `.btn-custom { ... }`
-   * ✅ *Correto:* `.ec-btn-outline-primary { ... }`
+O site tem quatro situações de uso:
 
-2. **Evite IDs para estilização:**
-   Utilize apenas classes (`.minha-classe`) para aplicar estilos. IDs (`#meu-id`) têm um peso de especificidade muito alto e dificultam a sobrescrita e manutenção futura.
+| Perfil | O que pode |
+|---|---|
+| Visitante | Ver a loja e montar um carrinho temporário |
+| Cliente | Comprar, ver pedidos, gerenciar endereços e cartões |
+| Funcionário | Cadastrar produtos e cuidar dos pedidos. Não compra, então não tem carrinho nem pedidos próprios |
+| Funcionário administrador | Tudo do funcionário, mais gerenciar funcionários e ver a dashboard |
 
-3. **Responsividade:**
-   Sempre utilize as classes de grid e os breakpoints utilitários do Bootstrap (`col-md-6`, `d-none`, `d-lg-block`) antes de criar `media queries` customizadas no CSS. O CSS customizado deve ser o último recurso.
+Cada tela protegida chama uma função do `vitrine.js` logo que carrega:
 
-4. **Uso de Variáveis:**
-   Nunca insira cores hexadecimais soltas (ex: `#4D443B`) diretamente nas propriedades CSS dos componentes. Sempre utilize as variáveis declaradas no arquivo `base/` (ex: `var(--ec-color-card-dark-panel)`).
+| Função | Quem passa | Quem é desviado |
+|---|---|---|
+| `exigirLogin()` | Qualquer pessoa logada | Visitante vai para o login |
+| `exigirCliente()` | Cliente | Funcionário volta para o painel; visitante vai para o login |
+| `exigirAdmin()` | Funcionário (comum ou administrador) | Cliente volta para a loja; visitante vai para o login |
+| `exigirAdministrador()` | Funcionário administrador | Funcionário comum volta para `funcionario.html` |
+
+As telas de funcionário começam com `<body hidden>` e só aparecem depois dessa conferência.
+
+Outros pontos que dependem do perfil:
+
+- **Atributos `data-ec-...` no HTML** (a regra fica no `vitrine.js`, num lugar só):
+  - `data-ec-logado` / `data-ec-deslogado`: mostra o item só para quem está logado ou deslogado;
+  - `data-ec-so-cliente`: some para o funcionário (por exemplo, "Meus pedidos" e o carrinho);
+  - `data-ec-so-admin`: aparece só para funcionário (o link para o painel);
+  - `data-ec-papel="Painel do {papel}"`: o texto vira "funcionário" ou "administrador" conforme o perfil;
+  - `data-ec-badge-carrinho`, `data-ec-avatar`, `data-ec-sair`: bolinha do carrinho, foto do usuário e botão sair.
+- Funcionário inativado não consegue mais entrar. O login mostra a mensagem de conta inativa.
 
 ---
-*Documentação gerada para padronização técnica da equipe de Front-end.*
+
+## 5. JavaScript
+
+### Ordem de carregamento
+
+As telas carregam os scripts nesta ordem, no fim do `<body>`, depois do Bootstrap:
+
+```html
+<script src="js/produtos-store.js"></script>
+<script src="js/usuario-store.js"></script>
+<script src="js/vitrine.js"></script>
+<script src="js/formularios-conta.js"></script>   <!-- só onde há endereço, cartão ou confirmação -->
+```
+
+O `vitrine.js` depende dos dois stores, e o `formularios-conta.js` depende do `vitrine.js`.
+
+### Arquivos
+
+| Arquivo | O que tem |
+|---|---|
+| `produtos-store.js` | `ProdutosStore`: listar, buscar, salvar, atualizar e remover produtos pela API. Também completa cada produto com o nome da categoria, o nome do gênero e o ícone, pois a API devolve só os ids |
+| `usuario-store.js` | `UsuarioStore`: cadastro, login, saída, troca de senha e e-mail, exclusão da conta. Guarda a sessão em `localStorage` (`sebo_do_joao_sessao`) |
+| `vitrine.js` | Máscaras e validações de campos; `CarrinhoStore`, `EnderecosStore`, `CartoesStore` e `PedidosStore`; cabeçalho logado/deslogado; aviso rápido (toast); card de produto; funções `exigir...`; mensagens que somem sozinhas |
+| `formularios-conta.js` | Janelas (modais) de endereço, cartão e `confirmarAcao()`, que devolve uma Promise |
+| `perfil.js` | Formulário de perfil mais antigo. Só faz algo na tela que tem o formulário `formPerfil` |
+
+### Como funcionam os "stores"
+
+Cada store é um objeto que esconde de onde vêm os dados. As telas só chamam `CarrinhoStore.adicionar(...)` ou
+`PedidosStore.listar()`, sem saber se o dado está na API ou no navegador.
+
+- **Carrinho:** o cliente logado usa o carrinho do banco (`/api/carrinho`). O visitante usa o `localStorage`
+  (`sebo_do_joao_carrinho`), e ao fazer login esses itens são somados ao carrinho da conta.
+- **Sessão:** o login cria a sessão no servidor (cookie). O front guarda uma cópia dos dados em `localStorage`
+  só para ajustar as telas. Se a API responder 401, o front encerra a sessão local.
+
+### Mensagens que somem sozinhas
+
+Todo alerta do Bootstrap (`.alert`) que aparece depois da página carregada some com um efeito de fade:
+sucesso em 5 segundos e erro ou aviso em 8. Passar o mouse em cima pausa a contagem. Para um alerta ficar fixo,
+coloque `data-ec-fixo` nele. Os erros embaixo de cada campo (`.ec-form-erro`) não somem até a pessoa corrigir.
+
+---
+
+## 6. API usada pelo front-end
+
+| Rota | Uso |
+|---|---|
+| `POST /api/login`, `POST /api/login/sair` | Entrar e sair |
+| `/api/clientes`, `/api/funcionarios` | Cadastro e dados da conta |
+| `/api/produtos`, `/api/categorias` | Produtos e categorias |
+| `/api/carrinho` (e `/api/carrinho/juntar`) | Carrinho do cliente |
+| `/api/enderecos`, `/api/cartoes` | Endereços e cartões |
+| `/api/compras` | Finalizar compra, listar, cancelar e simular pagamento |
+| `/api/compras/gestao` | Pedidos da loja: aprovar pagamento e avançar a entrega |
+| `/api/administracao/funcionarios`, `/api/administracao/painel` | Gerenciamento de funcionários e dashboard |
+
+Os erros voltam como `{"mensagem": "..."}`, e o front mostra essa mensagem na tela.
+
+---
+
+## 7. CSS
+
+Todos os estilos próprios estão em `css/style.css`, carregado depois do Bootstrap. O arquivo é dividido em
+seções numeradas, na ordem em que aparecem:
+
+| Seção | Conteúdo |
+|---|---|
+| 1 a 7 | Paleta de cores, base e tipografia, cards, ícones, formulários e inputs, botões e rodapé |
+| 8 e 11 | Vitrine e página inicial (cabeçalho, carrossel, cards de produto) |
+| 9 | Login e cadastro com painel deslizante |
+| 10 | Telas de produto do funcionário (cadastro e listagem) |
+| 12 | Telas da loja: busca, produto, carrinho, conta e perfil |
+| 13 | Validação de formulários (mensagens nos campos) |
+| 14 | Área do funcionário: painel, troca de senha e campo de senha com olhinho |
+| 15 | Segurança e privacidade |
+| 16 | Cadastro em 2 etapas e e-mail somente leitura no perfil |
+| 17 | Endereços, cartões, finalizar compra e pedidos |
+| Final | Efeito de fade dos alertas |
+
+As telas `administrador-funcionarios.html` e `administrador-dashboard.html` têm um pequeno `<style>` próprio, só
+com o que é específico delas, e reaproveitam o resto do `style.css`.
+
+### Paleta
+
+As cores são variáveis da seção 1 (`:root`), com nomes baseados na cor real: `--ec-color-white`, `cream`,
+`latte`, `sand`, `taupe`, `mocha` e `coffee`. Também há as variáveis de borda arredondada e de sombra.
+
+---
+
+## 8. Boas práticas para mexer no front-end
+
+1. **Prefixo `ec-` nas classes próprias.** Evita conflito com as classes do Bootstrap.
+   Correto: `.ec-btn-outline-primary`. Incorreto: `.btn-custom`.
+2. **Cores só por variável.** Não coloque cores hexadecimais soltas no CSS dos componentes; use as variáveis
+   do `:root` (por exemplo, `var(--ec-color-coffee)`).
+3. **Estilo por classe, não por id.** IDs ficam para o JavaScript (`getElementById`) e para ligar `label` e
+   campo.
+4. **Responsividade primeiro pelo Bootstrap.** Use `col-md-6`, `d-none`, `d-lg-block` e afins antes de criar
+   `@media` próprio.
+5. **Regras de perfil num lugar só.** Para esconder algo de cliente ou funcionário, use os atributos
+   `data-ec-...` (seção 4) em vez de repetir a conferência em cada tela.
+6. **Mensagens de erro vêm da API.** Mostre `erro.message` e não escreva textos que repitam a regra do banco.
+7. **Nome de tela nova segue o perfil:** `funcionario-...` para o funcionário e `administrador-...` para o
+   administrador.
+
+### Para criar uma tela nova
+
+1. Copie uma tela parecida (cabeçalho, links do Bootstrap e do `style.css` já vêm prontos).
+2. Carregue os scripts na ordem da seção 5.
+3. Se a tela for protegida, chame a função `exigir...` certa no `DOMContentLoaded` e deixe o `<body hidden>` quando
+   for tela de funcionário.
+4. Busque os dados pelos stores ou com `fetch('/api/...')`.
+
+---
+
+## 9. Para rodar e testar
+
+1. Suba o SQL Server (Docker) e crie o banco com os scripts de `docs/sql`, na ordem: `SeboDoJoao.sql`,
+   `SeboDoJoao_INSERTS.sql`, `SeboDoJoao_FUNCTIONS.sql`, `SeboDoJoao_VIEWS.sql`, `SeboDoJoao_TRIGGERS.sql` e
+   `SeboDoJoao_PROCEDURES.sql`.
+2. Rode o projeto Java (`./mvnw spring-boot:run`) e abra `http://localhost:8080/index.html`.
+3. Depois de mudar um arquivo `.js` ou `.css`, atualize a página com Ctrl+F5 para o navegador não usar o antigo.
+
+---
+
+## 10. Pontos conhecidos
+
+- A proteção das rotas da API e o hash das senhas ficaram para a etapa de hospedagem. Hoje o front-end já se
+  comporta como se existissem, mas parte das rotas ainda não confere quem está chamando.
+- `data/produtos.json` e o código de "seed" em `produtos-store.js` estão comentados e só ficam como exemplo.
+- Os nomes das categorias e dos gêneros estão escritos em `produtos-store.js` e em `cadastro-produto.html`, com os
+  mesmos ids da tabela do banco. Ao incluir uma categoria ou gênero novo, atualize os dois lugares.

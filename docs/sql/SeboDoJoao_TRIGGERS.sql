@@ -1,115 +1,126 @@
--- TRIGGERS DO BANCO DE DADOS - SEBO DO JOÃO --
--- 1-) Atualiza automaticamente o estoque dos produtos após a inserção de itens --
--- na tabela item_pedidos. Verifica se existe quantidade suficiente em estoque --
--- antes de realizar a baixa. Caso contrário, interrompe a operação e retorna --
--- uma mensagem de erro, impedindo que o estoque fique negativo. --
-CREATE TRIGGER dbo.tr_item_pedidos_baixa_estoque ON item_pedidos AFTER INSERT AS
-BEGIN
-	-- SET NOCOUNT ON: Evita o envio de mensagens informando a quantidade de linhas afetadas --
-	-- pelas instruções SQL executadas na trigger, reduzindo mensagens desnecessárias. --
-	SET NOCOUNT ON;
+-----------------------------------------------------------------------
+-- Acessar o Banco de Dados
+-----------------------------------------------------------------------
+use Sebo_do_Joao
+go
 
-	-- Verifica se existe estoque suficiente para todos os produtos inseridos. --
-	IF EXISTS (
-		SELECT 1
-		FROM produtos prod WITH (UPDLOCK, HOLDLOCK)
-		INNER JOIN (
-			SELECT produto_id, SUM(quantidade) AS quantidade_total
-			FROM inserted
-			GROUP BY produto_id
-		)	AS itens_agrupados
-		ON		itens_agrupados.produto_id = prod.id
-		WHERE	prod.estoque < itens_agrupados.quantidade_total 
+-----------------------------------------------------------------------
+-- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
+-- TRIGGERS
+-- As tabelas inserted e deleted são criadas pelo SQL Server dentro da
+-- trigger: inserted tem as linhas novas e deleted tem as linhas antigas
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+-- 1) Crie uma trigger que dê baixa no estoque dos produtos quando os
+-- itens de um pedido são cadastrados. Se algum produto não tiver
+-- estoque suficiente, a operação é cancelada com uma mensagem de erro
+-----------------------------------------------------------------------
+create trigger tr_item_pedidos_baixa_estoque
+on item_pedidos
+after insert
+as
+begin
+	-- o set nocount on evita mensagens de linhas afetadas para quem chamou a trigger
+	set nocount on
+
+	-- verificar se algum produto tem estoque menor que a quantidade pedida
+	if exists	(
+					select	1
+					from	produtos p		INNER JOIN		inserted i
+					on		p.id = i.produto_id
+					where	p.estoque < i.quantidade
+				)
+		-- o número do erro é usado pelo Java (50007 = estoque insuficiente)
+		throw 50007, 'Estoque é insuficiente para realizar o pedido!', 1;
+
+	-- dar baixa no estoque (se o mesmo produto vier em mais de uma linha, as quantidades são somadas)
+	update produtos set estoque = estoque -	(
+												select	sum(quantidade)
+												from	inserted
+												where	produto_id = produtos.id
+											)
+	where id in (select produto_id from inserted)
+end
+go
+
+-----------------------------------------------------------------------
+-- 2) Crie uma trigger que devolva ao estoque os produtos de um pedido
+-- quando ele for cancelado (status passa a ser 4)
+-----------------------------------------------------------------------
+create trigger tr_pedidos_devolver_estoque
+on pedidos
+after update
+as
+begin
+	set nocount on
+
+	-- guardar os produtos e as quantidades dos pedidos que acabaram de ser cancelados
+	-- (antes da alteração o status não era 4)
+	declare @devolver table
+	(
+		produto_id		int,
+		quantidade		int
 	)
-	BEGIN
-		-- Cada erro precisa de um código próprio, pois o Java identifica o problema por ele. --
-		-- O 50001 já é usado por "Cliente não encontrado!" na procedure sp_finalizar_compra, por isso este é o 50007. --
-		;THROW 50007, 'Estoque é insuficiente para realizar o pedido!', 1;
-	END;
 
-	-- Realiza a baixa das quantidades no estoque. --
-	UPDATE prod SET prod.estoque = prod.estoque - itens_agrupados.quantidade_total
-	FROM produtos prod
-	INNER JOIN (
-		SELECT produto_id, SUM(quantidade) AS quantidade_total
-		FROM inserted
-		GROUP BY produto_id
-	)   AS itens_agrupados
-	ON itens_agrupados.produto_id = prod.id;
-END
-GO
+	insert into @devolver
+	select	ip.produto_id, sum(ip.quantidade)
+	from	item_pedidos ip		INNER JOIN		inserted i
+	on		ip.pedido_id = i.id	INNER JOIN		deleted d
+	on		i.id = d.id
+	where	i.status = 4 and d.status <> 4
+	group by ip.produto_id
 
+	-- devolver as quantidades ao estoque
+	update produtos set estoque = estoque + dv.quantidade
+	from	produtos p		INNER JOIN		@devolver dv
+	on		p.id = dv.produto_id
+end
+go
 
+-----------------------------------------------------------------------
+-- 3) Crie uma trigger que mude o pedido para processando (2) quando
+-- todos os pagamentos dele estiverem aprovados (2)
+-----------------------------------------------------------------------
+create trigger tr_pagamentos_confirma_pedido
+on pagamentos
+after insert, update
+as
+begin
+	set nocount on
 
--- 2-) Devolve automaticamente ao estoque os produtos de um pedido cancelado --
--- Verifica se o status do pedido foi alterado para CANCELADO (4), identifica --
--- os produtos e suas respectivas quantidades na tabela item_pedidos e realiza --
--- a reposição correspondente no estoque da tabela produtos. --
-CREATE TRIGGER dbo.tr_pedidos_devolver_estoque ON pedidos AFTER UPDATE AS
-BEGIN
-	SET NOCOUNT ON;
+	-- só os pedidos que ainda aguardam pagamento (1) e que não têm nenhum pagamento sem aprovar
+	update pedidos set status = 2
+	where status = 1
+	and id in (select pedido_id from inserted)
+	and not exists	(
+						select	1
+						from	pagamentos pg
+						where	pg.pedido_id = pedidos.id and pg.status <> 2
+					)
+end
+go
 
-	-- Identifica os pedidos que tiveram seu status alterado para CANCELADO --
-	UPDATE prod SET	prod.estoque	=	prod.estoque	+ itens_agrupados.quantidade_total
-	FROM produtos prod
-	INNER JOIN (
-		SELECT ip.produto_id, SUM(ip.quantidade) AS quantidade_total
-		FROM item_pedidos ip
-		INNER JOIN		inserted i		ON		i.id = ip.pedido_id
-		INNER JOIN		deleted  d		ON		d.id = i.id
-		WHERE			i.status = 4	AND		d.status <> 4
-		GROUP BY		ip.produto_id
-	)	AS itens_agrupados
-	ON	itens_agrupados.produto_id	=	prod.id;
-END
-GO
+-----------------------------------------------------------------------
+-- 4) Crie uma trigger que conclua o pedido (status 3) quando a entrega
+-- dele passar para entregue (4)
+-----------------------------------------------------------------------
+create trigger tr_entregas_conclui_pedido
+on entregas
+after update
+as
+begin
+	set nocount on
 
+	-- só quando a coluna status foi alterada
+	if not update(status)
+		return
 
-
--- 3-) Atualiza automaticamente o status do pedido para PROCESSANDO (2) --
--- (numeração corrigida: eram duas triggers com o número 2) --
--- quando todos os pagamentos vinculados a ele estiverem aprovados. --
--- Utiliza a tabela lógica inserted para identificar os pedidos afetados --
--- e NOT EXISTS para verificar se ainda existem pagamentos não aprovados. --
-CREATE TRIGGER dbo.tr_pagamentos_confirma_pedido ON pagamentos AFTER INSERT, UPDATE AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- Atualiza somente pedidos que ainda aguardam pagamento --
-    UPDATE pe SET pe.status = 2
-    FROM pedidos pe
-    WHERE pe.status = 1
-      AND pe.id IN (SELECT pedido_id FROM inserted)
-
-      -- Verifica se não existe nenhum pagamento ainda não aprovado --
-      AND NOT EXISTS (
-          SELECT 1
-          FROM pagamentos pg
-          WHERE pg.pedido_id = pe.id
-            AND pg.status <> 2
-      );
-END
-GO
-
-
-
--- 4-) Atualiza automaticamente o status do pedido para CONCLUÍDO (3) --
--- quando a entrega associada passa para ENTREGUE (4). Verifica se o campo --
--- status foi atualizado e compara os valores anteriores e atuais da entrega --
--- utilizando as tabelas lógicas inserted e deleted. Realiza a atualização --
--- somente quando o pedido ainda está em PROCESSANDO (2). --
-CREATE TRIGGER dbo.tr_entregas_conclui_pedido ON entregas AFTER UPDATE AS
-BEGIN
-    SET NOCOUNT ON;
-    IF NOT UPDATE(status) RETURN;
-    UPDATE pe SET pe.status = 3
-    FROM pedidos pe
-    INNER JOIN inserted i ON i.id = pe.entrega_id
-    INNER JOIN deleted d  ON d.id = i.id
-    WHERE i.status = 4 AND d.status <> 4 AND pe.status = 2;
-END
-GO
-
--- OBSERVAÇÕES: --
--- inserted e deleted são tabelas temporárias que o SQL Server --
--- cria dentro do trigger com as linhas novas e antigas. --
+	-- o pedido precisa estar processando (2) e a entrega acabou de virar entregue (4)
+	update pe set pe.status = 3
+	from	pedidos pe		INNER JOIN		inserted i
+	on		pe.entrega_id = i.id	INNER JOIN		deleted d
+	on		i.id = d.id
+	where	i.status = 4 and d.status <> 4 and pe.status = 2
+end
+go

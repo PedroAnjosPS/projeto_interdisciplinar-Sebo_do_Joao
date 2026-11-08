@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import br.com.interdisciplinar.sebodojoao.dto.CarrinhoItemDTO;
+import br.com.interdisciplinar.sebodojoao.dto.ItemCarrinhoDTO;
 import br.com.interdisciplinar.sebodojoao.model.ItemCarrinho;
 import br.com.interdisciplinar.sebodojoao.model.ItemCarrinhoId;
 import br.com.interdisciplinar.sebodojoao.model.Produto;
@@ -19,28 +19,28 @@ import lombok.RequiredArgsConstructor;
 
 // O carrinho de compras do cliente logado, guardado na tabela item_carrinhos.
 //
-// O que o carrinho NÃO faz: ele não baixa o estoque (isso só acontece na compra, pela trigger do banco)
-// e não guarda preço (o preço é sempre o atual do produto). Mesmo assim, ele confere o estoque ao
+// O que o carrinho NÃO faz: ele não baixa o estoque (isso só acontece na compra, pela trigger do banco).
+// Ele guarda o preço do produto no momento em que o item entra. Mesmo assim, ele confere o estoque ao
 // adicionar, para a pessoa não montar um carrinho com mais unidades do que existem.
 // Quem é o cliente vem da SESSÃO de login: cada cliente só enxerga e altera o próprio carrinho.
 @Service
 @RequiredArgsConstructor
-public class CarrinhoService {
+public class ItemCarrinhoService {
     private final ItemCarrinhoRepository itemCarrinhoRepository;
     private final ProdutoRepository produtoRepository;
     private final ClienteRepository clienteRepository;
 
     @Transactional(readOnly = true)
-    public List<CarrinhoItemDTO> listar(Long clienteId) {
+    public List<ItemCarrinhoDTO> listar(Long clienteId) {
         return itemCarrinhoRepository.findByCliente_IdOrderByProduto_IdAsc(clienteId)
                 .stream()
-                .map(i -> new CarrinhoItemDTO(i.getProduto().getId(), i.getQuantidade()))
+                .map(i -> new ItemCarrinhoDTO(i.getProduto().getId(), i.getQuantidade()))
                 .toList();
     }
 
     // Soma "quantidade" unidades do produto ao que já existe no carrinho
     @Transactional
-    public List<CarrinhoItemDTO> adicionar(Long clienteId, CarrinhoItemDTO dto) {
+    public List<ItemCarrinhoDTO> adicionar(Long clienteId, ItemCarrinhoDTO dto) {
         if (dto == null || dto.produtoId() == null || dto.quantidade() == null || dto.quantidade() < 1) {
             throw erro(HttpStatus.BAD_REQUEST, "Item do carrinho inválido.");
         }
@@ -58,7 +58,7 @@ public class CarrinhoService {
 
     // Troca a quantidade de um produto que já está no carrinho
     @Transactional
-    public List<CarrinhoItemDTO> definirQuantidade(Long clienteId, Long produtoId, Integer quantidade) {
+    public List<ItemCarrinhoDTO> definirQuantidade(Long clienteId, Long produtoId, Integer quantidade) {
         if (quantidade == null || quantidade < 1) throw erro(HttpStatus.BAD_REQUEST, "Quantidade inválida.");
 
         ItemCarrinho item = itemCarrinhoRepository.findById(new ItemCarrinhoId(clienteId, produtoId))
@@ -73,7 +73,7 @@ public class CarrinhoService {
     }
 
     @Transactional
-    public List<CarrinhoItemDTO> remover(Long clienteId, Long produtoId) {
+    public List<ItemCarrinhoDTO> remover(Long clienteId, Long produtoId) {
         itemCarrinhoRepository.deleteById(new ItemCarrinhoId(clienteId, produtoId));
         return listar(clienteId);
     }
@@ -87,9 +87,9 @@ public class CarrinhoService {
     // ao carrinho da conta. Produto que não existe mais, está inativo ou sem estoque é ignorado, e a
     // quantidade nunca passa do estoque.
     @Transactional
-    public List<CarrinhoItemDTO> juntar(Long clienteId, List<CarrinhoItemDTO> itensDoVisitante) {
+    public List<ItemCarrinhoDTO> juntar(Long clienteId, List<ItemCarrinhoDTO> itensDoVisitante) {
         if (itensDoVisitante != null) {
-            for (CarrinhoItemDTO dto : itensDoVisitante) {
+            for (ItemCarrinhoDTO dto : itensDoVisitante) {
                 if (dto == null || dto.produtoId() == null || dto.quantidade() == null || dto.quantidade() < 1) continue;
 
                 Produto produto = produtoRepository.findById(dto.produtoId()).orElse(null);
@@ -112,6 +112,7 @@ public class CarrinhoService {
             item.setProduto(produto);
         }
         item.setQuantidade(quantidade);
+        item.setPrecoUnitario(produto.getPreco());
         itemCarrinhoRepository.save(item);
     }
 

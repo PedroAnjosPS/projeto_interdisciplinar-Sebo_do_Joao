@@ -5,10 +5,9 @@
 // deveria precisar saber ONDE os produtos estão guardados. Elas só
 // chamam ProdutosStore.listar(), ProdutosStore.salvar(produto), etc.
 //
-// Hoje isso é salvo no localStorage do navegador. Quando o backend
-// em Java + Spring Boot estiver pronto, a ideia é reescrever só as
-// funções aqui dentro pra fazerem fetch() na API — o resto do código
-// não precisa mudar.
+// Os produtos ficam no banco de dados e as funções daqui chamam a API
+// Java com fetch() (/api/produtos). Se um dia a forma de guardar mudar,
+// só o que está aqui dentro precisa ser reescrito.
 const ProdutosStore = (() => {
     const CHAVE_LOCALSTORAGE = 'sebo_do_joao_produtos';
     // O seed fica em data/produtos.json. O caminho é calculado a partir do

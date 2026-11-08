@@ -209,12 +209,12 @@ INSERT INTO imagem_produtos (caminho, produto_id) VALUES
 GO
 
 -- Tabela Item_Carrinhos --
--- Carrinhos de compras que ainda não viraram pedido (clientes 3 e 4). Guardam só o produto e a --
--- quantidade: o preço é sempre o preço atual do produto, e o estoque só é baixado quando a compra é finalizada. --
-INSERT INTO item_carrinhos (cliente_id, produto_id, quantidade) VALUES
-(3, 1, 1),
-(3, 5, 2),
-(4, 6, 1);
+-- Carrinhos de compras que ainda não viraram pedido (clientes 3 e 4). Guardam o produto, a quantidade --
+-- e o preço do produto quando foi colocado no carrinho. O estoque só é baixado quando a compra é finalizada. --
+INSERT INTO item_carrinhos (cliente_id, produto_id, quantidade, preco_unitario) VALUES
+(3, 1, 1, 35.00),
+(3, 5, 2, 60.00),
+(4, 6, 1, 150.00);
 GO
 
 -- Tabela Entregas --

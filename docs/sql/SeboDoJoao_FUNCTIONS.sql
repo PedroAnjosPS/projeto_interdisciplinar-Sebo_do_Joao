@@ -1,61 +1,103 @@
--- 3 FUNCTIONS DO BANCO DE DADOS - SEBO DO JOÃO --
--- Retorna o valor do TOTAL do Pedido: Soma os itens de um pedido --
--- e retorna o valor final totalizado. --
-CREATE FUNCTION dbo.fn_total_pedido (@pedido_id INT)
-RETURNS DECIMAL(10,2)
-AS 
-BEGIN
-	RETURN ISNULL((SELECT SUM(quantidade * preco_unitario)
-				   FROM item_pedidos WHERE pedido_id = @pedido_id), 0);
-END
-GO
+-----------------------------------------------------------------------
+-- Acessar o Banco de Dados
+-----------------------------------------------------------------------
+use Sebo_do_Joao
+go
 
+-----------------------------------------------------------------------
+-- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
+-- FUNCTIONS
+-----------------------------------------------------------------------
 
+-----------------------------------------------------------------------
+-- 1) Crie uma function que calcule o total de um pedido, somando a
+-- quantidade vezes o preço de cada item do pedido
+-- Saída de dados: o valor total (zero se o pedido não tiver itens)
+-----------------------------------------------------------------------
+create function fn_total_pedido (@pedido_id int)
+returns decimal(10,2)
+as
+begin
+	declare @retorno decimal(10,2)
 
--- Retorna uma tabela dos produtos e seus respectivos detalhes --
--- (categoria, quantidade, preço unitário e subtotal) de um --
--- pedido específico, informado pelo parâmetro @pedido_id. --
-CREATE FUNCTION dbo.fn_itens_do_pedido (@pedido_id INT)
-RETURNS TABLE 
-AS 
-RETURN 
+	set @retorno =	(
+						select	sum(quantidade * preco_unitario)
+						from	item_pedidos
+						where	pedido_id = @pedido_id
+					)
+
+	return isnull(@retorno, 0)
+end
+go
+
+-- testar a function
+select dbo.fn_total_pedido(1) Total_Pedido
+go
+
+-----------------------------------------------------------------------
+-- 2) Crie uma function que traga os itens de um pedido
+-- Saída de dados: id e nome do produto, categoria, quantidade, preço
+-- unitário e subtotal de cada item
+-----------------------------------------------------------------------
+create function fn_itens_do_pedido (@pedido_id int)
+returns table
+as
+	return	(
+				select	p.id produto_id, p.nome produto, c.nome categoria,
+						i.quantidade, i.preco_unitario, (i.quantidade * i.preco_unitario) subtotal
+				from	item_pedidos i		INNER JOIN		produtos p
+				on		i.produto_id = p.id	INNER JOIN		categorias c
+				on		p.categoria_id = c.id
+				where	i.pedido_id = @pedido_id
+			)
+go
+
+-- testar a function
+select * from dbo.fn_itens_do_pedido(1)
+go
+
+-----------------------------------------------------------------------
+-- 3) Crie uma function que gere as parcelas de uma compra
+-- Saída de dados: número da parcela, valor e data de vencimento
+-- Se o total não dividir certinho, os centavos que sobram ficam na
+-- última parcela. Cada parcela vence um mês depois da anterior
+-----------------------------------------------------------------------
+create function fn_parcelas (@total decimal(10,2), @qtd int, @primeiro_vencimento date)
+returns @parcelas table
 (
-	SELECT p.id AS produto_id, p.nome AS produto, c.nome AS categoria,
-		i.quantidade, i.preco_unitario, i.quantidade * i.preco_unitario AS subtotal
-	FROM item_pedidos i
-	INNER JOIN produtos p ON p.id = i.produto_id
-	INNER JOIN categorias c ON c.id = p.categoria_id
-	WHERE i.pedido_id = @pedido_id
+	numero_parcela		int,
+	valor				decimal(10,2),
+	data_vencimento		date
 )
-GO
+as
+begin
+	-- variáveis usadas na function
+	declare @valor_parcela	decimal(10,2)
+	declare @n				int
 
+	-- se os dados forem inválidos a function não retorna nenhuma parcela
+	if @total <= 0 or @qtd <= 0 or @primeiro_vencimento is null
+		return
 
+	-- valor de cada parcela, cortando os centavos que sobram (ex.: 100,00 / 3 = 33,33)
+	set @valor_parcela = floor(@total * 100 / @qtd) / 100.00
+	set @n = 1
 
--- Gera as parcelas de uma compra, calculando o valor e a data de vencimento de cada uma, --
--- com ajuste de centavos na última parcela. Considera o valor total, a quantidade de parcelas -- 
--- e a data do primeiro vencimento. --
-CREATE FUNCTION dbo.fn_parcelas (@total DECIMAL(10,2), @qtd INT, @primeiro_vencimento DATE)
-RETURNS @parcelas TABLE (numero_parcela INT, valor DECIMAL(10,2), data_vencimento DATE)
-AS 
-BEGIN 
-	-- Faz a validação e impede valores inválidos
-    IF @total <= 0 OR @qtd <= 0 OR @primeiro_vencimento IS NULL
-        RETURN;
+	-- inserir os dados na variável do tipo TABLE
+	while @n <= @qtd
+	begin
+		if @n < @qtd
+			insert into @parcelas values (@n, @valor_parcela, dateadd(month, @n - 1, @primeiro_vencimento))
+		else
+			-- a última parcela leva o que sobrou
+			insert into @parcelas values (@n, @total - (@valor_parcela * (@qtd - 1)), dateadd(month, @n - 1, @primeiro_vencimento))
 
-	DECLARE @base DECIMAL(10,2) = FLOOR(@total * 100 / @qtd) / 100.00;
-	DECLARE @n INT = 1;
-	WHILE @n <= @qtd
-	BEGIN
-		INSERT INTO @parcelas
-		VALUES (@n,
-				CASE 
-					WHEN @n = @qtd 
-					THEN @total - @base * (@qtd - 1) 
-					ELSE @base 
-				END, -- os centavos sobram na última parcela
-				DATEADD(MONTH, @n - 1, @primeiro_vencimento));
-		SET @n = @n + 1;
-	END
-	RETURN;
-END
-GO
+		set @n = @n + 1
+	end
+	return
+end
+go
+
+-- testar a function
+select * from dbo.fn_parcelas(100.00, 3, getdate())
+go

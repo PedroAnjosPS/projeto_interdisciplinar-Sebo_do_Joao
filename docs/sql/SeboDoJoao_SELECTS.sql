@@ -37,25 +37,25 @@ SELECT * FROM imagem_produtos imag ORDER BY imag.produto_id;
 -- Tabela Entregas --
 SELECT * FROM entregas ent ORDER BY ent.transportadora;
 -- Select mais elaborado para consulta das informações de entrega --
-SELECT ent.id AS 'Id da Entrega', ent.transportadora AS Transportadora, 
+SELECT ent.id AS 'Id da Entrega', ent.transportadora AS Transportadora,
         CASE ent.status
-            WHEN 1 THEN 'AGUARDANDO PAGAMENTO'
-            WHEN 2 THEN 'PROCESSANDO'
-            WHEN 3 THEN 'CONCLUIDO'
-            WHEN 4 THEN 'CANCELADO'
-        END AS 'Status da Entrega',
-        ent.link_rastreio AS 'Link de Rastreio', ent.codigo_rastreio AS 'Código de Rastreio',
-        ent.data_postagem AS 'Data de Postagem', ent.data_previsao_entrega AS 'Data de Previsão de Entrega',
-        ent.data_entrega AS 'Data Real de Entrega', pe.id AS 'Id do Pedido',
-        CASE pe.status
             WHEN 1 THEN 'PENDENTE'
             WHEN 2 THEN 'PREPARANDO'
             WHEN 3 THEN 'EM TRÂNSITO'
             WHEN 4 THEN 'ENTREGUE'
             WHEN 5 THEN 'CANCELADO'
-        END AS 'Status do Pedido' 
-FROM entregas ent 
-    LEFT JOIN pedidos pe    ON pe.entrega_id = ent.id;
+        END AS 'Status da Entrega',
+        ent.link_rastreio AS 'Link de Rastreio', ent.codigo_rastreio AS 'Código de Rastreio',
+        ent.data_postagem AS 'Data de Postagem', ent.data_previsao_entrega AS 'Data de Previsão de Entrega',
+        ent.data_entrega AS 'Data Real de Entrega', pe.id AS 'Id do Pedido',
+        CASE pe.status
+            WHEN 1 THEN 'AGUARDANDO PAGAMENTO'
+            WHEN 2 THEN 'PROCESSANDO'
+            WHEN 3 THEN 'CONCLUIDO'
+            WHEN 4 THEN 'CANCELADO'
+        END AS 'Status do Pedido'
+FROM    entregas ent        INNER JOIN      pedidos pe
+ON      pe.entrega_id = ent.id;
 GO
 
 -- Tabela Pedidos --
@@ -64,30 +64,28 @@ SELECT * FROM pedidos pe;
 
 SELECT pe.id AS 'Id do Pedido', pe.data AS 'Data do pedido', 
         CONCAT('R$ ', FORMAT(pe.total, 'N2', 'pt-BR')) AS 'Total do Pedido',
-        CASE ent.status
+        CASE pe.status
             WHEN 1 THEN 'AGUARDANDO PAGAMENTO'
             WHEN 2 THEN 'PROCESSANDO'
             WHEN 3 THEN 'CONCLUIDO'
             WHEN 4 THEN 'CANCELADO'
             ELSE 'DESCONHECIDO'
-        END AS [Status do Pedido], 
+        END AS [Status do Pedido],
         pe.entrega_id AS 'Id da Entrega',
-        CASE pe.status
+        CASE ent.status
             WHEN 1 THEN 'PENDENTE'
             WHEN 2 THEN 'PREPARANDO'
             WHEN 3 THEN 'EM TRÂNSITO'
             WHEN 4 THEN 'ENTREGUE'
             WHEN 5 THEN 'CANCELADO'
             ELSE 'DESCONHECIDO'
-        END AS [Status do Pedido],
+        END AS [Status da Entrega],
         pe.cliente_id AS 'Id do Cliente', uc.nome AS Cliente, pe.funcionario_id AS 'Id do Funcionário',
         uf.nome AS 'Funcionário'
-FROM pedidos pe
-    LEFT JOIN entregas ent    ON pe.entrega_id = ent.id 
-    LEFT JOIN clientes cli    ON pe.cliente_id = cli.usuario_id
-    LEFT JOIN usuarios uc     ON cli.usuario_id = uc.id 
-    LEFT JOIN funcionarios f  ON pe.funcionario_id = f.usuario_id
-    LEFT JOIN usuarios uf     ON f.usuario_id = uf.id;
+FROM    pedidos pe                      INNER JOIN      entregas ent
+ON      pe.entrega_id = ent.id          INNER JOIN      usuarios uc
+ON      pe.cliente_id = uc.id           INNER JOIN      usuarios uf
+ON      pe.funcionario_id = uf.id;
 GO
 
 
@@ -162,10 +160,10 @@ ORDER BY uc.nome, ca.padrao DESC, ca.id;
 GO
 
 -- Tabela Item_Carrinhos --
--- O carrinho de cada cliente. O preço é sempre o preço ATUAL do produto (o preço só é congelado --
--- quando a compra vira pedido, na tabela item_pedidos). --
+-- O carrinho de cada cliente, com o preço guardado quando o item entrou no carrinho e o preço atual do produto. --
 SELECT uc.nome AS Cliente, prod.nome AS Produto, ic.quantidade AS Quantidade,
-       prod.preco AS Preco_Atual, ic.quantidade * prod.preco AS Subtotal
+       ic.preco_unitario AS Preco_No_Carrinho, prod.preco AS Preco_Atual,
+       ic.quantidade * ic.preco_unitario AS Subtotal
 FROM item_carrinhos ic
 INNER JOIN usuarios uc    ON uc.id = ic.cliente_id
 INNER JOIN produtos prod  ON prod.id = ic.produto_id

@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 // Representa a tabela "item_carrinhos": um produto no carrinho de um cliente.
-// Diferente do ItemPedido, aqui NÃO existe preço (vale sempre o preço atual do produto)
-// e guardar um item no carrinho NÃO baixa o estoque (o estoque só baixa quando a compra é finalizada).
+// O preço unitário é o do produto na hora em que o item entrou (ou foi alterado) no carrinho
+// Guardar um item no carrinho NÃO baixa o estoque (o estoque só baixa quando a compra é finalizada).
 @Entity
 @Table(name = "item_carrinhos")
 @Getter
@@ -28,4 +28,7 @@ public class ItemCarrinho {
 
     @Column(name = "quantidade", nullable = false)
     private Integer quantidade;
+
+    @Column(name = "preco_unitario", nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal precoUnitario;
 }

@@ -2390,3 +2390,15 @@ label.ec-profile-row .ec-profile-label {
     background-color: #F3E3B5;
     color: #6B4A00;
 }
+
+/* --- Alertas que somem sozinhas (ver "Mensagens que somem sozinhas" no vitrine.js) --- */
+.alert.ec-alerta-saindo {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert.ec-alerta-saindo {
+        transition: none;
+    }
+}

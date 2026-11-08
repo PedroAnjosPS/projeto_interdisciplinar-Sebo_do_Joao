@@ -1,22 +1,20 @@
 // ===== INÍCIO: usuario-store =====
 // Contas de usuário e login (mesma ideia do ProdutosStore).
 //
-// Hoje tudo fica no localStorage do navegador: as contas criadas aqui só
-// existem nesse computador. A senha nunca é guardada pura (vira um hash
-// SHA-256 com "sal"), mas isso é só pra demonstração — num site de verdade
-// quem guarda e confere a senha é o backend (Java + Spring Boot, com
-// BCrypt, por exemplo), e estas funções viram chamadas à API
-// (POST /usuarios, POST /login, GET /usuarios/me...).
+// As contas ficam no banco de dados e as funções daqui chamam a API Java
+// (POST /api/clientes, POST /api/login, GET /api/clientes/{id}...). O que fica
+// no localStorage do navegador é só uma cópia dos dados de quem está logado
+// (sem a senha), usada para ajustar as telas.
 //
-// Existe um só login pra todo mundo. Cada conta tem um "perfil": CLIENTE (padrão)
-// ou ADMIN. Quem entra com uma conta ADMIN vai pro painel do administrador e,
-// pela loja, só visualiza os produtos: funcionário não usa carrinho nem compra.
+// Existe um só login pra todo mundo. Cada conta tem um "perfil": CLIENTE ou
+// FUNCIONARIO (guardado em PERFIL_ADMIN). Quem entra como funcionário vai pro
+// painel dele e, pela loja, só visualiza os produtos: funcionário não usa carrinho
+// nem compra. Dentro dos funcionários existe o administrador (campo "admin").
 // O perfil guardado aqui serve só para ajustar as telas. Quem garante a regra é
 // o Java, com o perfil da sessão (veja ControleDeAcesso.java).
 //
-// Conta do administrador (criada sozinha na primeira vez que o site é usado):
-//     e-mail: sebodojoao@gmail.com   senha inicial: sebodojoao
-// (a senha dá pra trocar em "Alterar senha" no painel do administrador)
+// As contas de funcionário e de administrador vêm do banco
+// (veja docs/sql/SeboDoJoao_INSERTS.sql).
 const UsuarioStore = (() => {
     // A chave de sessão vai guardar quem está logado no momento
     const CHAVE_SESSAO = 'sebo_do_joao_sessao';

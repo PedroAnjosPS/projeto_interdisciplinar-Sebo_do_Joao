@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.interdisciplinar.sebodojoao.dto.CarrinhoItemDTO;
-import br.com.interdisciplinar.sebodojoao.service.CarrinhoService;
+import br.com.interdisciplinar.sebodojoao.dto.ItemCarrinhoDTO;
+import br.com.interdisciplinar.sebodojoao.service.ItemCarrinhoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
@@ -22,40 +22,40 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/carrinho")
 @RequiredArgsConstructor
-public class CarrinhoRestController {
-    private final CarrinhoService carrinhoService;
+public class ItemCarrinhoRestController {
+    private final ItemCarrinhoService itemCarrinhoService;
 
     @GetMapping
-    public List<CarrinhoItemDTO> listar(HttpSession sessao) {
-        return carrinhoService.listar(ControleDeAcesso.exigirCliente(sessao));
+    public List<ItemCarrinhoDTO> listar(HttpSession sessao) {
+        return itemCarrinhoService.listar(ControleDeAcesso.exigirCliente(sessao));
     }
 
     // Coloca um produto no carrinho (soma à quantidade que já existir)
     @PostMapping
-    public List<CarrinhoItemDTO> adicionar(@RequestBody CarrinhoItemDTO item, HttpSession sessao) {
-        return carrinhoService.adicionar(ControleDeAcesso.exigirCliente(sessao), item);
+    public List<ItemCarrinhoDTO> adicionar(@RequestBody ItemCarrinhoDTO item, HttpSession sessao) {
+        return itemCarrinhoService.adicionar(ControleDeAcesso.exigirCliente(sessao), item);
     }
 
     // Passa para o carrinho da conta os itens que a pessoa tinha como visitante (chamada no login)
     @PostMapping("/juntar")
-    public List<CarrinhoItemDTO> juntar(@RequestBody List<CarrinhoItemDTO> itens, HttpSession sessao) {
-        return carrinhoService.juntar(ControleDeAcesso.exigirCliente(sessao), itens);
+    public List<ItemCarrinhoDTO> juntar(@RequestBody List<ItemCarrinhoDTO> itens, HttpSession sessao) {
+        return itemCarrinhoService.juntar(ControleDeAcesso.exigirCliente(sessao), itens);
     }
 
     // Troca a quantidade de um produto (só o campo "quantidade" do corpo é usado)
     @PutMapping("/{produtoId}")
-    public List<CarrinhoItemDTO> definirQuantidade(@PathVariable Long produtoId, @RequestBody CarrinhoItemDTO item, HttpSession sessao) {
-        return carrinhoService.definirQuantidade(ControleDeAcesso.exigirCliente(sessao), produtoId, item.quantidade());
+    public List<ItemCarrinhoDTO> definirQuantidade(@PathVariable Long produtoId, @RequestBody ItemCarrinhoDTO item, HttpSession sessao) {
+        return itemCarrinhoService.definirQuantidade(ControleDeAcesso.exigirCliente(sessao), produtoId, item.quantidade());
     }
 
     @DeleteMapping("/{produtoId}")
-    public List<CarrinhoItemDTO> remover(@PathVariable Long produtoId, HttpSession sessao) {
-        return carrinhoService.remover(ControleDeAcesso.exigirCliente(sessao), produtoId);
+    public List<ItemCarrinhoDTO> remover(@PathVariable Long produtoId, HttpSession sessao) {
+        return itemCarrinhoService.remover(ControleDeAcesso.exigirCliente(sessao), produtoId);
     }
 
     // Esvazia o carrinho
     @DeleteMapping
     public void limpar(HttpSession sessao) {
-        carrinhoService.limpar(ControleDeAcesso.exigirCliente(sessao));
+        itemCarrinhoService.limpar(ControleDeAcesso.exigirCliente(sessao));
     }
 }

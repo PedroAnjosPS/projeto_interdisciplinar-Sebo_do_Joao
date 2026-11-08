@@ -1,380 +1,289 @@
--- PROCEDURES DO BANCO DE DADOS - SEBO DO JOÃO --
-
--- 1-) Finaliza a compra de um cliente, realizando as validações necessárias, --
--- cadastrando a entrega (com o endereço de destino e o valor do frete), o pedido, --
--- seus respectivos produtos e pagamentos (com a bandeira e o final do cartão usado). --
--- Calcula o valor total da compra, atualiza o estoque por meio da trigger --
--- correspondente e retorna o ID do pedido criado para a aplicação Java. --
-CREATE PROCEDURE dbo.sp_finalizar_compra
-    @cliente_id INT,
-    -- Endereço de entrega escolhido pelo cliente (tabela enderecos). --
-    -- Ele é gravado na entrega, na coluna entregas.endereco_id. --
-    @endereco_id INT,
-    @itens_json NVARCHAR(MAX),
-    @forma_pagamento VARCHAR(50),
-    @quantidade_parcelas INT = 1,
-    @transportadora VARCHAR(100) = 'Correios (PAC)',
-    @prazo_dias INT = 7,
-    -- Valor do frete escolhido no site (opcional; 0 significa sem frete). --
-    -- Ele é somado ao total do pedido e fica registrado na entrega. --
-    @valor_frete DECIMAL(10,2) = 0,
-    -- Bandeira e 4 últimos dígitos do cartão usado (opcionais; ficam NULL no PIX e no boleto). --
-    -- São copiados para cada parcela em pagamentos, para o histórico não depender do cartão salvo. --
-    @bandeira VARCHAR(30) = NULL,
-    @final_cartao CHAR(4) = NULL,
-    @pedido_id INT OUTPUT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
-
-    BEGIN TRY
-
-        -- Verifica se o cliente informado existe --
-        IF NOT EXISTS (SELECT 1 FROM clientes WHERE usuario_id = @cliente_id)
-            THROW 50001, 'Cliente não encontrado!', 1;
-
-        -- Verifica se o endereço de entrega existe, pertence a este cliente e está ativo --
-        -- (um endereço "excluído" na tela ou de outra pessoa não é aceito). Código de erro 50009. --
-        IF NOT EXISTS (SELECT 1 FROM enderecos
-                       WHERE id = @endereco_id AND cliente_id = @cliente_id AND ativo = 1)
-            THROW 50009, 'Endereço de entrega inválido!', 1;
-
-        -- Valida a forma de pagamento escolhida --
-        IF @forma_pagamento NOT IN ('PIX', 'CARTAO_CREDITO', 'BOLETO')
-            THROW 50005, 'Forma de pagamento inválida!', 1;
-
-        -- Valida a quantidade de parcelas permitida --
-        -- Somente o cartão de crédito permite parcelamento, em até @max_parcelas vezes --
-        -- O limite de parcelas (3) fica guardado nesta variável, então é o único lugar a mudar --
-        -- caso a loja resolva aumentar a quantidade de parcelas no futuro. --
-        DECLARE @max_parcelas INT = 3;
-
-        IF @quantidade_parcelas < 1 OR @quantidade_parcelas > @max_parcelas OR
-            (@forma_pagamento <> 'CARTAO_CREDITO' AND @quantidade_parcelas <> 1)
-            THROW 50006, 'Quantidade de parcelas inválida!', 1;
-
-
-        -- Verifica se o frete é válido: não pode ser negativo nem nulo. O código 50008 permite ao Java identificar o erro. --
-        IF @valor_frete IS NULL OR @valor_frete < 0
-            THROW 50008, 'Valor de frete inválido!', 1;
-
-        -- Armazena temporariamente os produtos e suas quantidades recebidas em JSON --
-        -- Agrupa produtos repetidos, somando suas respectivas quantidades --
-        DECLARE @itens TABLE (
-            produto_id INT PRIMARY KEY,
-            quantidade INT NOT NULL
-        );
-
-        INSERT INTO @itens
-        SELECT produtoId, SUM(quantidade)
-        FROM OPENJSON(@itens_json)
-        WITH (
-            produtoId INT '$.produtoId',
-            quantidade INT '$.quantidade'
-        )
-        GROUP BY produtoId;
-
-
-        -- Verifica se o carrinho possui pelo menos um produto --
-        IF NOT EXISTS (SELECT 1 FROM @itens)
-            THROW 50002, 'O carrinho está vazio.', 1;
-
-        -- Verifica se os produtos existem, estão ativos e possuem estoque suficiente --
-        IF EXISTS (
-            SELECT 1
-            FROM @itens i
-            LEFT JOIN produtos p ON p.id = i.produto_id
-            WHERE p.id IS NULL OR p.status <> 1 OR i.quantidade <= 0 OR p.estoque < i.quantidade
-        )
-            THROW 50003, 'Algum produto está indisponível ou sem estoque suficiente.', 1;
-
-
-        -- Sorteia um funcionário ativo para ficar com o pedido --
-        DECLARE @funcionario_id INT =
-            (
-                SELECT TOP 1 f.usuario_id
-                FROM funcionarios f
-                INNER JOIN usuarios u ON u.id = f.usuario_id AND u.status = 1
-                ORDER BY NEWID()
-            );
-
-        -- Verifica se existe algum funcionário ativo disponível --
-        IF @funcionario_id IS NULL
-            THROW 50004, 'Nenhum funcionário disponível.', 1;
-
-
-        -- Inicia a transação para garantir que todas as operações sejam concluídas --
-        -- em conjunto ou desfeitas caso ocorra algum erro --
-        BEGIN TRANSACTION;
-
-
-        -- Cadastra a entrega com status inicial 1 e calcula a previsão de entrega --
-        -- A data de postagem entra como NULL: ela só é preenchida pela procedure sp_avancar_entrega, --
-        -- quando a entrega passa para "em trânsito". Aqui também são gravados o valor do frete --
-        -- (valor_frete) e o endereço de destino (endereco_id). --
-        INSERT INTO entregas (transportadora, status, data_postagem, data_previsao_entrega, valor_frete, endereco_id)
-        VALUES (
-            @transportadora,
-            1,
-            NULL,
-            DATEADD(DAY, @prazo_dias, CAST(GETDATE() AS DATE)),
-            @valor_frete,
-            @endereco_id
-        );
-
-        -- Recupera o ID da entrega recém-criada --
-        DECLARE @entrega_id INT = SCOPE_IDENTITY();
-
-
-        -- Cadastra o pedido com status inicial 1 (AGUARDANDO_PAGAMENTO) --
-        -- O total começa em zero e será atualizado após a inserção dos produtos --
-        INSERT INTO pedidos (total, status, entrega_id, cliente_id, funcionario_id)
-        VALUES (0, 1, @entrega_id, @cliente_id, @funcionario_id);
-
-        -- Recupera o ID do pedido criado e armazena no parâmetro de saída --
-        SET @pedido_id = SCOPE_IDENTITY();
-
-
-        -- Insere os produtos do carrinho na tabela item_pedidos --
-        -- O preço é obtido diretamente da tabela produtos, evitando alterações --
-        -- indevidas de valores enviados pelo navegador do cliente --
-        INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario)
-        SELECT @pedido_id, i.produto_id, i.quantidade, p.preco
-        FROM @itens i
-        INNER JOIN produtos p ON p.id = i.produto_id;
-        -- Dispara automaticamente a trigger de baixa de estoque --
-
-
-        -- Calcula o valor total do pedido utilizando a função fn_total_pedido --
-        -- O total do pedido é a soma dos produtos mais o frete. As parcelas do pagamento são calculadas --
-        -- sobre esse mesmo total, que é o valor mostrado ao cliente na tela de finalizar a compra. --
-        DECLARE @total DECIMAL(10,2) = dbo.fn_total_pedido(@pedido_id) + @valor_frete;
-
-        -- Atualiza o valor total do pedido cadastrado anteriormente --
-        UPDATE pedidos SET total = @total WHERE id = @pedido_id;
-
-
-        -- Define o status inicial dos pagamentos conforme a forma escolhida --
-        -- Cartão de crédito: aprovado (2). PIX e boleto: pendente (1) --
-        -- Simulação utilizada para a apresentação do sistema --
-        DECLARE @status_pagamento INT =
-            CASE
-                WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN 2
-                ELSE 1
-            END;
-
-
-        -- Gera e cadastra as parcelas utilizando a função fn_parcelas --
-        -- Define a data de pagamento somente quando o pagamento está aprovado --
-        INSERT INTO pagamentos (
-            numero_parcela, status, valor, quantidade_parcelas, forma_pagamento,
-            data_vencimento, data_pagamento, bandeira, final_cartao, pedido_id
-        )
-        SELECT
-            numero_parcela,
-            @status_pagamento,
-            valor,
-            @quantidade_parcelas,
-            @forma_pagamento,
-            data_vencimento,
-            CASE
-                WHEN @status_pagamento = 2 THEN CAST(GETDATE() AS DATE)
-            END,
-            -- A bandeira e o final do cartão só são gravados quando o pagamento é no cartão --
-            CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @bandeira END,
-            CASE WHEN @forma_pagamento = 'CARTAO_CREDITO' THEN @final_cartao END,
-            @pedido_id
-        FROM dbo.fn_parcelas(
-            @total,
-            @quantidade_parcelas,
-            CAST(GETDATE() AS DATE)
-        );
-        -- Dispara automaticamente a trigger de confirmação do pedido --
-
-
-        -- Confirma todas as operações realizadas na transação --
-        COMMIT TRANSACTION;
-
-
-    END TRY
-
-    BEGIN CATCH
-
-        -- Desfaz as operações caso ocorra algum erro durante a transação --
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-
-        -- Reenvia o erro original para a aplicação Java --
-        THROW;
-
-    END CATCH
-END
-GO
-
-
-
-
--- 2-) Avança automaticamente o status da entrega associada a um pedido, --
--- seguindo a sequência PENDENTE (1), PREPARANDO (2), EM TRÂNSITO (3) --
--- e ENTREGUE (4). Verifica se o pedido está em processamento e se a --
--- entrega ainda não foi finalizada. Ao entrar em trânsito, gera o código --
--- e o link de rastreamento e registra a data de postagem. Ao ser entregue, --
--- registra a data de conclusão e dispara a trigger de atualização do pedido. --
-CREATE PROCEDURE dbo.sp_avancar_entrega
-    @pedido_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
-
-    -- Declara variáveis para armazenar os dados do pedido e da entrega --
-    DECLARE @entrega_id INT,
-            @status_entrega INT,
-            @status_pedido INT;
-
-
-    -- Recupera o ID da entrega e os status atuais do pedido e da entrega --
-    SELECT
-        @entrega_id = e.id,
-        @status_entrega = e.status,
-        @status_pedido = pe.status
-    FROM pedidos pe
-    INNER JOIN entregas e ON e.id = pe.entrega_id
-    WHERE pe.id = @pedido_id;
-
-
-    -- Verifica se o pedido ou sua entrega não foram encontrados --
-    IF @entrega_id IS NULL
-        THROW 50010, 'Pedido ou entrega não encontrados.', 1;
-
-    -- Permite avançar a entrega somente quando o pedido está em PROCESSANDO (2) --
-    IF @status_pedido <> 2
-        THROW 50011, 'A entrega só avança depois que o pagamento for aprovado.', 1;
-
-    -- Impede o avanço de entregas que já foram finalizadas ou canceladas --
-    IF @status_entrega >= 4
-        THROW 50012, 'A entrega já foi finalizada ou cancelada.', 1;
-
-
-    -- Calcula o próximo status da entrega, avançando uma etapa --
-    DECLARE @novo INT = @status_entrega + 1;
-
-
-    -- Atualiza o status e as informações da entrega correspondente --
-    UPDATE entregas
-    SET
-        status = @novo,
-
-        -- Gera o código de rastreamento quando a entrega entra em trânsito --
-        codigo_rastreio = CASE
-            WHEN @novo = 3
-                THEN CONCAT('SJ', RIGHT(CONCAT('000000000', @entrega_id), 9), 'BR')
-            ELSE codigo_rastreio
-        END,
-
-        -- Gera o link de rastreamento quando a entrega entra em trânsito --
-        link_rastreio = CASE
-            WHEN @novo = 3
-                THEN CONCAT('https://rastreio.sebodojoao.demo/', @entrega_id)
-            ELSE link_rastreio
-        END,
-
-        -- Registra a data e hora da postagem quando a entrega entra em trânsito --
-        data_postagem = CASE
-            WHEN @novo = 3 THEN GETDATE()
-            ELSE data_postagem
-        END,
-
-        -- Registra a data e hora da entrega quando o pedido é entregue --
-        data_entrega = CASE
-            WHEN @novo = 4 THEN GETDATE()
-            ELSE data_entrega
-        END
-
-    WHERE id = @entrega_id;
-    -- Dispara automaticamente a trigger de conclusão do pedido --
-
-END
-GO
-
-
-
--- 3-) Permite que o cliente cancele seu próprio pedido enquanto a entrega --
--- ainda não estiver em trânsito. Verifica se o pedido pertence ao cliente --
--- informado e se ainda atende às condições de cancelamento. Estorna os --
--- pagamentos aprovados, recusa os pendentes, cancela a entrega e altera o --
--- status do pedido. --
--- A devolução dos produtos ao estoque é realizada automaticamente pela --
--- trigger tr_pedidos_devolver_estoque. --
-CREATE PROCEDURE dbo.sp_cancelar_pedido
-    @pedido_id INT,
-    @cliente_id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
-
-    -- Declara variáveis para armazenar os dados do pedido e da entrega --
-    DECLARE @status_pedido INT,
-            @entrega_id INT,
-            @status_entrega INT;
-
-    -- Recupera os dados somente se o pedido pertencer ao cliente informado --
-    SELECT
-        @status_pedido = pe.status,
-        @entrega_id = pe.entrega_id,
-        @status_entrega = e.status
-    FROM pedidos pe
-    LEFT JOIN entregas e ON e.id = pe.entrega_id
-    WHERE pe.id = @pedido_id
-      AND pe.cliente_id = @cliente_id;
-
-    -- Verifica se o pedido existe e pertence ao cliente informado --
-    IF @status_pedido IS NULL
-        THROW 50020, 'Pedido não encontrado para este cliente.', 1;
-
-    -- Impede o cancelamento de pedidos fora dos status permitidos --
-    -- e de entregas que já entraram em trânsito ou foram finalizadas --
-    IF @status_pedido NOT IN (1, 2) OR @status_entrega >= 3
-        THROW 50021, 'Este pedido não pode mais ser cancelado.', 1;
-
-    BEGIN TRY
-        BEGIN TRANSACTION;
-
-        -- Os pagamentos que já foram aprovados são estornados (4), pois o dinheiro volta para o cliente --
-        UPDATE pagamentos
-        SET status = 4
-        WHERE pedido_id = @pedido_id
-          AND status = 2;
-
-        -- Os que ainda estavam pendentes viram recusados (3), pois nunca chegaram a ser pagos --
-        UPDATE pagamentos
-        SET status = 3
-        WHERE pedido_id = @pedido_id
-          AND status = 1;
-
-        -- Atualiza o status da entrega para CANCELADA (5) --
-        UPDATE entregas
-        SET status = 5
-        WHERE id = @entrega_id;
-
-        -- Cancela o pedido, disparando a trigger de devolução do estoque --
-        UPDATE pedidos
-        SET status = 4
-        WHERE id = @pedido_id;
-
-        COMMIT TRANSACTION;
-
-    END TRY
-
-    BEGIN CATCH
-        -- Desfaz as alterações caso ocorra algum erro durante o cancelamento --
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-
-        -- Encaminha o erro para a aplicação Java --
-        THROW;
-    END CATCH
-END
-GO
+-----------------------------------------------------------------------
+-- Acessar o Banco de Dados
+-----------------------------------------------------------------------
+use Sebo_do_Joao
+go
+
+-----------------------------------------------------------------------
+-- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
+-- PROCEDURES - TRANSACTION
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+-- 1) Crie uma procedure que finalize a compra de um cliente. A compra
+-- cadastra a entrega (com o endereço de destino e o frete), o pedido,
+-- os itens do pedido e as parcelas do pagamento (com a bandeira e o
+-- final do cartão). O total é calculado pelo banco, o estoque é baixado
+-- pela trigger e o id do pedido criado volta para o Java no parâmetro
+-- de saída @pedido_id
+-----------------------------------------------------------------------
+create procedure sp_finalizar_compra
+(
+	@cliente_id				int,
+	@endereco_id			int,
+	@itens_json				nvarchar(max),
+	@forma_pagamento		varchar(50),
+	@quantidade_parcelas	int				= 1,
+	@transportadora			varchar(100)	= 'Correios (PAC)',
+	@prazo_dias				int				= 7,
+	@valor_frete			decimal(10,2)	= 0,
+	@bandeira				varchar(30)		= null,
+	@final_cartao			char(4)			= null,
+	@pedido_id				int				output
+)
+as
+begin		-- início da procedure
+	-- variáveis usadas na procedure
+	declare @max_parcelas		int
+	declare @funcionario_id		int
+	declare @entrega_id			int
+	declare @total				decimal(10,2)
+	declare @status_pagamento	int
+
+	-- a loja aceita parcelar no cartão em até 3 vezes (para mudar é só alterar aqui)
+	set @max_parcelas = 3
+
+	-- os THROW com número servem para o Java saber qual foi o erro
+	-- verificar se o cliente existe
+	if not exists (select 1 from clientes where usuario_id = @cliente_id)
+		throw 50001, 'Cliente não encontrado!', 1;
+
+	-- verificar se o endereço é deste cliente e está ativo
+	if not exists (select 1 from enderecos where id = @endereco_id and cliente_id = @cliente_id and ativo = 1)
+		throw 50009, 'Endereço de entrega inválido!', 1;
+
+	-- verificar a forma de pagamento
+	if @forma_pagamento not in ('PIX', 'CARTAO_CREDITO', 'BOLETO')
+		throw 50005, 'Forma de pagamento inválida!', 1;
+
+	-- só o cartão de crédito pode ser parcelado
+	if @quantidade_parcelas < 1 or @quantidade_parcelas > @max_parcelas
+	or (@forma_pagamento <> 'CARTAO_CREDITO' and @quantidade_parcelas <> 1)
+		throw 50006, 'Quantidade de parcelas inválida!', 1;
+
+	-- o frete não pode ser negativo
+	if @valor_frete is null or @valor_frete < 0
+		throw 50008, 'Valor de frete inválido!', 1;
+
+	-- guardar os produtos do carrinho (que chegam em JSON) numa variável do tipo TABLE
+	-- se o mesmo produto aparecer duas vezes, as quantidades são somadas
+	declare @itens table
+	(
+		produto_id		int		not null	primary key,
+		quantidade		int		not null
+	)
+
+	insert into @itens
+	select	produtoId, sum(quantidade)
+	from	openjson(@itens_json)
+			with (produtoId int '$.produtoId', quantidade int '$.quantidade')
+	group by produtoId
+
+	-- o carrinho precisa ter pelo menos um produto
+	if not exists (select 1 from @itens)
+		throw 50002, 'O carrinho está vazio.', 1;
+
+	-- os produtos precisam existir, estar ativos e ter estoque (LEFT JOIN para achar o que não existe)
+	if exists	(
+					select	1
+					from	@itens i		LEFT JOIN		produtos p
+					on		i.produto_id = p.id
+					where	p.id is null or p.status <> 1 or i.quantidade <= 0
+					or		p.estoque < i.quantidade
+				)
+		throw 50003, 'Algum produto está indisponível ou sem estoque suficiente.', 1;
+
+	-- sortear um funcionário ativo para cuidar do pedido
+	set @funcionario_id =	(
+								select top 1 f.usuario_id
+								from	funcionarios f		INNER JOIN		usuarios u
+								on		f.usuario_id = u.id
+								where	u.status = 1
+								order by newid()
+							)
+
+	if @funcionario_id is null
+		throw 50004, 'Nenhum funcionário disponível.', 1;
+
+	-- iniciar o try
+	begin try
+		-- iniciar a transaction
+		begin tran
+			-- cadastrar a entrega com status 1 (pendente)
+			-- a data de postagem fica null, pois só é preenchida na procedure sp_avancar_entrega
+			insert into entregas (transportadora, status, data_postagem, data_previsao_entrega, valor_frete, endereco_id)
+			values				 (@transportadora, 1, null, dateadd(day, @prazo_dias, cast(getdate() as date)), @valor_frete, @endereco_id)
+
+			-- recuperar o id da entrega gerado
+			set @entrega_id = SCOPE_IDENTITY()
+
+			-- cadastrar o pedido com status 1 (aguardando pagamento) e total zerado
+			insert into pedidos (total, status, entrega_id, cliente_id, funcionario_id)
+			values				(0, 1, @entrega_id, @cliente_id, @funcionario_id)
+
+			-- recuperar o id do pedido gerado e devolver para o Java
+			set @pedido_id = SCOPE_IDENTITY()
+
+			-- cadastrar os itens do pedido (o preço vem da tabela de produtos e não do navegador)
+			-- a trigger tr_item_pedidos_baixa_estoque dá a baixa no estoque
+			insert into item_pedidos (pedido_id, produto_id, quantidade, preco_unitario)
+			select	@pedido_id, i.produto_id, i.quantidade, p.preco
+			from	@itens i		INNER JOIN		produtos p
+			on		i.produto_id = p.id
+
+			-- calcular o total do pedido (itens + frete) usando a function fn_total_pedido
+			set @total = dbo.fn_total_pedido(@pedido_id) + @valor_frete
+
+			update pedidos set total = @total
+			where id = @pedido_id
+
+			-- cartão de crédito já nasce aprovado (2) e PIX e boleto ficam pendentes (1)
+			-- isso é uma simulação para a apresentação do sistema
+			if @forma_pagamento = 'CARTAO_CREDITO'
+				set @status_pagamento = 2
+			else
+				set @status_pagamento = 1
+
+			-- cadastrar as parcelas do pagamento usando a function fn_parcelas
+			-- a data de pagamento e os dados do cartão só são gravados no cartão de crédito
+			-- a trigger tr_pagamentos_confirma_pedido muda o pedido para processando
+			insert into pagamentos (numero_parcela, status, valor, quantidade_parcelas, forma_pagamento,
+									data_vencimento, data_pagamento, bandeira, final_cartao, pedido_id)
+			select	numero_parcela, @status_pagamento, valor, @quantidade_parcelas, @forma_pagamento,
+					data_vencimento,
+					case when @status_pagamento = 2 then cast(getdate() as date) end,
+					case when @forma_pagamento = 'CARTAO_CREDITO' then @bandeira end,
+					case when @forma_pagamento = 'CARTAO_CREDITO' then @final_cartao end,
+					@pedido_id
+			from	dbo.fn_parcelas(@total, @quantidade_parcelas, cast(getdate() as date))
+
+		-- deu tudo certo ===>>> confirmar dados
+		commit
+	end try		-- finalizando o try
+	begin catch -- iniciando o catch
+		-- deu erro ===>>> desfazer a operação
+		rollback
+		print 'ERRO! Compra não finalizada.';
+
+		-- mandar o erro de volta para o Java
+		throw;
+	end catch  -- finalizando o catch
+end  -- finalizando a procedure
+go
+
+-----------------------------------------------------------------------
+-- 2) Crie uma procedure que avance a entrega de um pedido para a
+-- próxima etapa: 1 - pendente, 2 - preparando, 3 - em trânsito e
+-- 4 - entregue. A entrega só avança se o pedido estiver processando
+-- (pagamento aprovado) e se ela ainda não foi finalizada. Ao entrar
+-- em trânsito são gerados o código e o link de rastreio e a data de
+-- postagem. Ao ser entregue é gravada a data de entrega e a trigger
+-- tr_entregas_conclui_pedido conclui o pedido
+-----------------------------------------------------------------------
+create procedure sp_avancar_entrega (@pedido_id int)
+as
+begin		-- início da procedure
+	-- variáveis usadas na procedure
+	declare @entrega_id			int
+	declare @status_entrega		int
+	declare @status_pedido		int
+	declare @novo_status		int
+
+	-- recuperar o id da entrega e o status do pedido e da entrega
+	select	@entrega_id = e.id, @status_entrega = e.status, @status_pedido = pe.status
+	from	pedidos pe		INNER JOIN		entregas e
+	on		pe.entrega_id = e.id
+	where	pe.id = @pedido_id
+
+	-- verificar se o pedido e a entrega existem
+	if @entrega_id is null
+		throw 50010, 'Pedido ou entrega não encontrados.', 1;
+
+	-- o pedido precisa estar processando (2)
+	if @status_pedido <> 2
+		throw 50011, 'A entrega só avança depois que o pagamento for aprovado.', 1;
+
+	-- entrega entregue (4) ou cancelada (5) não avança mais
+	if @status_entrega >= 4
+		throw 50012, 'A entrega já foi finalizada ou cancelada.', 1;
+
+	-- avançar uma etapa
+	set @novo_status = @status_entrega + 1
+
+	update entregas set status = @novo_status,
+		-- em trânsito (3): gerar o código e o link de rastreio e a data de postagem
+		codigo_rastreio =	case when @novo_status = 3
+							then 'SJ' + right('000000000' + cast(@entrega_id as varchar(9)), 9) + 'BR'
+							else codigo_rastreio end,
+		link_rastreio	=	case when @novo_status = 3
+							then 'https://rastreio.sebodojoao.demo/' + cast(@entrega_id as varchar(9))
+							else link_rastreio end,
+		data_postagem	=	case when @novo_status = 3 then getdate() else data_postagem end,
+		-- entregue (4): gravar a data da entrega
+		data_entrega	=	case when @novo_status = 4 then getdate() else data_entrega end
+	where id = @entrega_id
+end  -- finalizando a procedure
+go
+
+-----------------------------------------------------------------------
+-- 3) Crie uma procedure que permita o cliente cancelar o seu pedido
+-- enquanto a entrega ainda não estiver em trânsito. Os pagamentos
+-- aprovados são estornados (4), os pendentes ficam recusados (3), a
+-- entrega e o pedido ficam cancelados. A trigger
+-- tr_pedidos_devolver_estoque devolve os produtos ao estoque
+-----------------------------------------------------------------------
+create procedure sp_cancelar_pedido (@pedido_id int, @cliente_id int)
+as
+begin		-- início da procedure
+	-- variáveis usadas na procedure
+	declare @status_pedido		int
+	declare @entrega_id			int
+	declare @status_entrega		int
+
+	-- recuperar os dados do pedido, mas só se ele for do cliente informado
+	select	@status_pedido = pe.status, @entrega_id = pe.entrega_id, @status_entrega = e.status
+	from	pedidos pe		INNER JOIN		entregas e
+	on		pe.entrega_id = e.id
+	where	pe.id = @pedido_id and pe.cliente_id = @cliente_id
+
+	-- verificar se o pedido existe e é deste cliente
+	if @status_pedido is null
+		throw 50020, 'Pedido não encontrado para este cliente.', 1;
+
+	-- só cancela pedido aguardando pagamento (1) ou processando (2) e entrega que ainda não saiu
+	if @status_pedido not in (1, 2) or @status_entrega >= 3
+		throw 50021, 'Este pedido não pode mais ser cancelado.', 1;
+
+	-- iniciar o try
+	begin try
+		-- iniciar a transaction
+		begin tran
+			-- pagamento aprovado (2) vira compra estornada (4), pois o dinheiro volta para o cliente
+			update pagamentos set status = 4
+			where pedido_id = @pedido_id and status = 2
+
+			-- pagamento pendente (1) vira recusado (3), pois nunca foi pago
+			update pagamentos set status = 3
+			where pedido_id = @pedido_id and status = 1
+
+			-- cancelar a entrega (5)
+			update entregas set status = 5
+			where id = @entrega_id
+
+			-- cancelar o pedido (4)
+			update pedidos set status = 4
+			where id = @pedido_id
+
+		-- deu tudo certo ===>>> confirmar dados
+		commit
+	end try		-- finalizando o try
+	begin catch -- iniciando o catch
+		-- deu erro ===>>> desfazer a operação
+		rollback
+		print 'ERRO! Pedido não cancelado.';
+
+		-- mandar o erro de volta para o Java
+		throw;
+	end catch  -- finalizando o catch
+end  -- finalizando a procedure
+go

@@ -1397,3 +1397,40 @@ window.addEventListener('storage', async (evento) => {
     if (document.body.dataset.ecAdmin === undefined || !UsuarioStore.CHAVES.includes(evento.key)) return;
     if (!UsuarioStore.ehAdmin(await UsuarioStore.obter())) location.reload();
 });
+
+// ===== Mensagens que somem sozinhas =====
+// Todo alerta do Bootstrap (".alert") que aparece depois da página carregada some com um fade:
+// sucesso em 5 segundos e erro/aviso em 8. Passar o mouse em cima pausa a contagem.
+// Para um alerta ficar fixo, basta colocar data-ec-fixo nele. Os erros embaixo de cada campo
+// (.ec-form-erro) não são alertas, então continuam na tela até serem corrigidos.
+const TEMPO_ALERTA_SUCESSO = 5000;
+const TEMPO_ALERTA_ERRO = 8000;
+const TEMPO_DO_FADE = 400;
+
+function programarSumicoDoAlerta(alerta) {
+    if (alerta.dataset.ecFixo !== undefined || alerta.dataset.ecSumico) return;
+    alerta.dataset.ecSumico = 'programado';
+
+    const tempo = alerta.classList.contains('alert-success') ? TEMPO_ALERTA_SUCESSO : TEMPO_ALERTA_ERRO;
+    let contagem;
+
+    const iniciar = () => {
+        clearTimeout(contagem);
+        contagem = setTimeout(() => {
+            alerta.classList.add('ec-alerta-saindo');
+            setTimeout(() => alerta.remove(), TEMPO_DO_FADE);
+        }, tempo);
+    };
+
+    alerta.addEventListener('mouseenter', () => clearTimeout(contagem));
+    alerta.addEventListener('mouseleave', iniciar);
+    iniciar();
+}
+
+new MutationObserver((mudancas) => {
+    mudancas.forEach((mudanca) => mudanca.addedNodes.forEach((no) => {
+        if (no.nodeType !== 1) return;
+        if (no.matches('.alert')) programarSumicoDoAlerta(no);
+        no.querySelectorAll('.alert').forEach(programarSumicoDoAlerta);
+    }));
+}).observe(document.documentElement, { childList: true, subtree: true });

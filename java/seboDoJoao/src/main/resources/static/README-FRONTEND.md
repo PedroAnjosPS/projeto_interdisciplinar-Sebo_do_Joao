@@ -86,7 +86,7 @@ administrador), e `administrador-...` é só para o funcionário administrador (
 | `funcionario.html` | Painel com os atalhos do funcionário |
 | `cadastro-produto.html` | Cadastrar e editar produtos |
 | `produtos-cadastrados.html` | Lista de produtos, com edição e remoção |
-| `funcionario-pedidos.html` | Pedidos da loja: aprovar pagamento e avançar a entrega |
+| `funcionario-pedidos.html` | Pedidos já pagos da loja: avançar a entrega |
 | `funcionario-senha.html` | Alterar a senha do funcionário |
 | `funcionario-login.html` | Só redireciona para `login.html` (endereço antigo do login) |
 
@@ -186,10 +186,21 @@ coloque `data-ec-fixo` nele. Os erros embaixo de cada campo (`.ec-form-erro`) n�
 | `/api/carrinho` (e `/api/carrinho/juntar`) | Carrinho do cliente |
 | `/api/enderecos`, `/api/cartoes` | Endereços e cartões |
 | `/api/compras` | Finalizar compra, listar, cancelar e simular pagamento |
-| `/api/compras/gestao` | Pedidos da loja: aprovar pagamento e avançar a entrega |
+| `/api/compras/gestao` | Pedidos já pagos da loja: avançar a entrega |
 | `/api/administracao/funcionarios`, `/api/administracao/painel` | Gerenciamento de funcionários e dashboard |
 
 Os erros voltam como `{"mensagem": "..."}`, e o front mostra essa mensagem na tela.
+
+Quem pode chamar cada rota é conferido no servidor, em `ProtecaoDasRotas.java` e nos controllers:
+
+- produtos, categorias, gêneros e tabelas de apoio: qualquer pessoa consulta, só funcionário altera;
+- cadastro de cliente e `GET /api/clientes/email-disponivel`: abertos (é o "Criar conta");
+- dados de uma conta: só o dono (ou um funcionário, no caso de cliente); excluir conta: só o dono;
+- lista de clientes: funcionário; lista, cadastro e exclusão de funcionários: administrador;
+- pedidos, itens, pagamentos e entregas pelo CRUD direto: funcionário consulta e só o administrador altera.
+
+O servidor também repete as validações dos formulários (nome, e-mail, senha, CPF, telefone, produto...) e traduz
+os erros do banco (e-mail repetido, excluir algo em uso) para mensagens em português.
 
 ---
 
@@ -260,8 +271,8 @@ As cores são variáveis da seção 1 (`:root`), com nomes baseados na cor real:
 
 ## 10. Pontos conhecidos
 
-- A proteção das rotas da API e o hash das senhas ficaram para a etapa de hospedagem. Hoje o front-end já se
-  comporta como se existissem, mas parte das rotas ainda não confere quem está chamando.
+- O hash das senhas (BCrypt) ficou para a etapa de hospedagem. Até lá as senhas ficam em texto no banco e a API
+  ainda as devolve nas respostas de cliente e funcionário.
 - `data/produtos.json` e o código de "seed" em `produtos-store.js` estão comentados e só ficam como exemplo.
 - Os nomes das categorias e dos gêneros estão escritos em `produtos-store.js` e em `cadastro-produto.html`, com os
   mesmos ids da tabela do banco. Ao incluir uma categoria ou gênero novo, atualize os dois lugares.

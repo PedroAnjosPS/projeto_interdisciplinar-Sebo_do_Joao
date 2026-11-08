@@ -222,7 +222,7 @@ create table pedidos
 	status				int					null		default 1		check(status in (1,2,3,4)),
 	entrega_id			int								unique			references entregas(id),
 	cliente_id			int				not null		references clientes(usuario_id),
-	funcionario_id		int				not null		references funcionarios(usuario_id)
+	funcionario_id		int				    null		references funcionarios(usuario_id)
 )
 go
 
@@ -271,7 +271,7 @@ go
 
 -----------------------------------------------------------------------
 -- Tabela: item_carrinhos
--- Carrinho de compras do cliente. É separado de item_pedidos: não baixa
+-- O carrinho de compras do cliente é separado de item_pedidos: não baixa
 -- estoque (a trigger é só de item_pedidos), guarda o preço do produto no
 -- momento em que entrou no carrinho e não exige pedido
 -----------------------------------------------------------------------

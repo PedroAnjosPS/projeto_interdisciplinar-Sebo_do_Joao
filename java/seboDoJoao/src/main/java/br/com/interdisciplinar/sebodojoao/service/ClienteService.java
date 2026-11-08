@@ -8,11 +8,19 @@ import br.com.interdisciplinar.sebodojoao.repository.ClienteRepository;
 import br.com.interdisciplinar.sebodojoao.repository.EnderecoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ItemCarrinhoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.PedidoRepository;
+import br.com.interdisciplinar.sebodojoao.repository.UsuarioRepository;
 import br.com.interdisciplinar.sebodojoao.model.StatusUsuario;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.Types;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -25,6 +33,9 @@ public class ClienteService {
     private final CartaoRepository cartaoRepository;
     private final ItemCarrinhoRepository itemCarrinhoRepository;
     private final PedidoRepository pedidoRepository;
+    private final UsuarioRepository usuarioRepository;
+    // Usado para chamar a procedure sp_cadastrar_cliente
+    private final JdbcTemplate jdbc;
 
     public List<ClienteResponseDTO> listarTodos() {
         return clienteRepository.findAll()
@@ -68,22 +79,34 @@ public class ClienteService {
     }
 
     public ClienteResponseDTO cadastrar(ClienteRequestDTO dto) {
-        Cliente cliente = new Cliente();
-        cliente.setNome(dto.nome());
-        cliente.setEmail(dto.email());
-        cliente.setSenha(dto.senha());
-        cliente.setTelefone(dto.telefone());
-        cliente.setFotoPerfil(dto.fotoPerfil());
+        // Confere os dados no servidor (o formulário do site pode ser contornado)
+        String nome = ValidacaoDeConta.nome(dto.nome());
+        String email = ValidacaoDeConta.email(dto.email());
+        String senha = ValidacaoDeConta.senha(dto.senha());
+        String telefone = ValidacaoDeConta.telefone(dto.telefone());
+        String cpf = ValidacaoDeConta.cpf(dto.cpf());
+        LocalDate nascimento = ValidacaoDeConta.dataDeNascimento(dto.dataNascimento());
+        conferirEmailLivre(email, null);
+        conferirCpfLivre(cpf, -1L);
 
-        // Se vier null, o padrão do banco (1) será assumido (ou você pode setar manualmente aqui)
-        if (dto.status() != null) {
-                cliente.setStatus(dto.status());
-        }
-        
-        cliente.setCpf(dto.cpf());
-        cliente.setDataNascimento(dto.dataNascimento());
+        // A procedure sp_cadastrar_cliente grava o usuário e o cliente numa transação só
+        // (a conta nasce ativa, com o status padrão do banco) e devolve o id criado
+        Integer novoId = jdbc.execute((Connection conexao) -> {
+            try (CallableStatement chamada = conexao.prepareCall("{call dbo.sp_cadastrar_cliente(?,?,?,?,?,?,?,?)}")) {
+                chamada.setString(1, nome);
+                chamada.setString(2, email);
+                chamada.setString(3, senha);
+                chamada.setString(4, telefone);
+                chamada.setString(5, cpf);
+                chamada.setDate(6, java.sql.Date.valueOf(nascimento));
+                chamada.setString(7, dto.fotoPerfil());   // null quando não há foto
+                chamada.registerOutParameter(8, Types.INTEGER);
+                chamada.execute();
+                return chamada.getInt(8);
+            }
+        });
 
-        Cliente salvo = clienteRepository.save(cliente);
+        Cliente salvo = clienteRepository.findById(novoId.longValue()).orElseThrow();
 
         return new ClienteResponseDTO(
                 salvo.getId(),
@@ -104,14 +127,28 @@ public class ClienteService {
                 .orElseThrow();
 
         // Checa se os campos não são nulos antes de atualizar
-        if (dto.nome() != null) clienteExistente.setNome(dto.nome());
-        if (dto.email() != null) clienteExistente.setEmail(dto.email());
-        if (dto.senha() != null) clienteExistente.setSenha(dto.senha());
-        if (dto.telefone() != null) clienteExistente.setTelefone(dto.telefone());
+        // Só o que foi enviado é conferido e alterado
+        if (dto.nome() != null) clienteExistente.setNome(ValidacaoDeConta.nome(dto.nome()));
+        if (dto.email() != null) {
+            String email = ValidacaoDeConta.email(dto.email());
+            conferirEmailLivre(email, id);
+            clienteExistente.setEmail(email);
+        }
+        if (dto.senha() != null) clienteExistente.setSenha(ValidacaoDeConta.senha(dto.senha()));
+        // Telefone vazio mantém o que já existe, como o CPF logo abaixo
+        if (dto.telefone() != null && !dto.telefone().isBlank()) {
+            clienteExistente.setTelefone(ValidacaoDeConta.telefone(dto.telefone()));
+        }
         // O CPF é único no banco. Se dois clientes salvassem o campo vazio, o segundo receberia
         // erro e nada do perfil seria gravado, por isso o vazio mantém o valor que já existe.
-        if (dto.cpf() != null && !dto.cpf().isBlank()) clienteExistente.setCpf(dto.cpf());
-        if (dto.dataNascimento() != null) clienteExistente.setDataNascimento(dto.dataNascimento());
+        if (dto.cpf() != null && !dto.cpf().isBlank()) {
+            String cpf = ValidacaoDeConta.cpf(dto.cpf());
+            conferirCpfLivre(cpf, id);
+            clienteExistente.setCpf(cpf);
+        }
+        if (dto.dataNascimento() != null) {
+            clienteExistente.setDataNascimento(ValidacaoDeConta.dataDeNascimento(dto.dataNascimento()));
+        }
         // Texto vazio é o pedido de remover a foto: a coluna volta a ser NULL
         if (dto.fotoPerfil() != null) clienteExistente.setFotoPerfil(dto.fotoPerfil().isEmpty() ? null : dto.fotoPerfil());
 
@@ -132,6 +169,20 @@ public class ClienteService {
                 atualizado.getCpf(),
                 atualizado.getDataNascimento()
         );
+    }
+
+    // O e-mail é único entre todas as contas (clientes e funcionários)
+    private void conferirEmailLivre(String email, Long idDaPropriaConta) {
+        boolean emUso = idDaPropriaConta == null
+                ? usuarioRepository.existsByEmailIgnoreCase(email)
+                : usuarioRepository.existsByEmailIgnoreCaseAndIdNot(email, idDaPropriaConta);
+        if (emUso) throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe uma conta com esse e-mail.");
+    }
+
+    private void conferirCpfLivre(String cpf, Long idDaPropriaConta) {
+        if (clienteRepository.existeOutroComCpf(ValidacaoDeConta.soDigitosDoCpf(cpf), idDaPropriaConta)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um cliente com esse CPF.");
+        }
     }
 
     // Encerra a conta do cliente, tudo numa transação só. Devolve true se a conta foi apenas

@@ -32,7 +32,7 @@ public class PedidoService {
                         pedido.getTotal(),
                         pedido.getStatus(),
                         pedido.getCliente().getId(),
-                        pedido.getFuncionario().getId(),
+                        idDoFuncionario(pedido),
                         pedido.getEntrega().getId()
                 ))
                 .toList();
@@ -49,7 +49,7 @@ public class PedidoService {
                 pedido.getTotal(),
                 pedido.getStatus(),
                 pedido.getCliente().getId(),
-                pedido.getFuncionario().getId(),
+                idDoFuncionario(pedido),
                 pedido.getEntrega().getId()
         );
     }
@@ -59,9 +59,7 @@ public class PedidoService {
                 .findById(dto.clienteId())
                 .orElseThrow();
 
-        Funcionario funcionario = funcionarioRepository
-                .findById(dto.funcionarioId())
-                .orElseThrow();
+        Funcionario funcionario = buscarFuncionario(dto.funcionarioId());
 
         Entrega entrega = entregaRepository
                 .findById(dto.entregaId())
@@ -83,7 +81,7 @@ public class PedidoService {
                 salvo.getTotal(),
                 salvo.getStatus(),
                 salvo.getCliente().getId(),
-                salvo.getFuncionario().getId(),
+                idDoFuncionario(salvo),
                 salvo.getEntrega().getId()
         );
     }
@@ -97,9 +95,7 @@ public class PedidoService {
                 .findById(dto.clienteId())
                 .orElseThrow();
 
-        Funcionario funcionario = funcionarioRepository
-                .findById(dto.funcionarioId())
-                .orElseThrow();
+        Funcionario funcionario = buscarFuncionario(dto.funcionarioId());
 
         Entrega entrega = entregaRepository
                 .findById(dto.entregaId())
@@ -120,12 +116,21 @@ public class PedidoService {
                 atualizado.getTotal(),
                 atualizado.getStatus(),
                 atualizado.getCliente().getId(),
-                atualizado.getFuncionario().getId(),
+                idDoFuncionario(atualizado),
                 atualizado.getEntrega().getId()
         );
     }
 
     public void excluir(Long id) {
         pedidoRepository.deleteById(id);
+    }
+
+    // O funcionário responsável é opcional: o pedido só tem um depois que alguém avança a entrega
+    private Funcionario buscarFuncionario(Long id) {
+        return id == null ? null : funcionarioRepository.findById(id).orElseThrow();
+    }
+
+    private static Long idDoFuncionario(Pedido pedido) {
+        return pedido.getFuncionario() == null ? null : pedido.getFuncionario().getId();
     }
 }

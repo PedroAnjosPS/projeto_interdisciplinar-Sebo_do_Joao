@@ -24,7 +24,8 @@ import lombok.RequiredArgsConstructor;
 //   - sp_finalizar_compra : cria entrega + pedido + itens + parcelas do pagamento numa transação só
 //                           (se algo falhar, nada fica pela metade) e a trigger baixa o estoque;
 //   - sp_cancelar_pedido  : cancela o pedido e a trigger devolve o estoque;
-//   - sp_avancar_entrega  : anda um passo na entrega (Pendente > Preparando > Em trânsito > Entregue).
+//   - sp_avancar_entrega  : anda um passo na entrega (Pendente > Preparando > Em trânsito > Entregue)
+//                           e faz do funcionário que clicou primeiro o responsável pelo pedido.
 // Para LER os pedidos usamos a view vw_pedidos_detalhados e a função fn_itens_do_pedido.
 // As regras (estoque, parcelas, status...) ficam no banco; o Java só chama e traduz os erros.
 @Service
@@ -119,17 +120,18 @@ public class CompraService {
         return buscarPedido(pedidoId);
     }
 
-    public CompraResponseDTO avancarEntrega(Long pedidoId) {
-        executarProcedure("{call dbo.sp_avancar_entrega(?)}", pedidoId.intValue());
+    // funcionarioId = quem clicou. Na primeira vez ele vira o responsável pelo pedido (quem decide é a procedure)
+    public CompraResponseDTO avancarEntrega(Long pedidoId, Long funcionarioId) {
+        executarProcedure("{call dbo.sp_avancar_entrega(?,?)}", pedidoId.intValue(), funcionarioId.intValue());
         return buscarPedido(pedidoId);
     }
 
     // Só para a demonstração: "faz de conta" que o banco confirmou o pagamento (Pix, por exemplo).
     // Marca as parcelas pendentes como aprovadas; a trigger tr_pagamentos_confirma_pedido então muda
-    // o pedido de "Aguardando pagamento" para "Processando". clienteId = null quando é o funcionário.
+    // o pedido de "Aguardando pagamento" para "Processando". Quem paga é sempre o dono do pedido.
     public CompraResponseDTO aprovarPagamento(Long pedidoId, Long clienteId) {
         CompraResponseDTO pedido = buscarPedido(pedidoId);
-        if (clienteId != null && !clienteId.equals(pedido.clienteId())) {
+        if (!clienteId.equals(pedido.clienteId())) {
             throw erro(HttpStatus.NOT_FOUND, "Pedido não encontrado.");
         }
         if (!pedido.podePagar()) {
@@ -163,9 +165,15 @@ public class CompraService {
             SELECT_PEDIDO + " WHERE cliente_id = ? ORDER BY pedido_id DESC", clienteId));
     }
 
-    // Para o painel do funcionário: todos os pedidos da loja
+    // Para o painel do funcionário: só os pedidos que já foram pagos.
+    // Pedido ainda aguardando pagamento é assunto do cliente, e pedido cancelado sem ter sido pago
+    // não tem o que a loja fazer (os cancelados depois de pagos continuam aparecendo, por causa do estorno).
     public List<CompraResponseDTO> listarTodos() {
-        return montar(jdbc.queryForList(SELECT_PEDIDO + " ORDER BY pedido_id DESC"));
+        return montar(jdbc.queryForList(SELECT_PEDIDO
+            + " WHERE status_pedido <> 'Aguardando pagamento'"
+            + " AND (status_pedido <> 'Cancelado' OR EXISTS ("
+            + "   SELECT 1 FROM pagamentos pg WHERE pg.pedido_id = vw_pedidos_detalhados.pedido_id AND pg.status = 4))"
+            + " ORDER BY pedido_id DESC"));
     }
 
     // Devolve o pedido só se ele for do cliente informado (um cliente não enxerga o pedido de outro)
@@ -183,9 +191,9 @@ public class CompraService {
         return lista.get(0);
     }
 
-    // Lê a VIEW vw_pedidos_detalhados (pedido + cliente + atendente + entrega num SELECT só)
+    // Lê a VIEW vw_pedidos_detalhados (pedido + cliente + responsável + entrega num SELECT só)
     private static final String SELECT_PEDIDO =
-        "SELECT pedido_id, data, total, status_pedido, cliente_id, cliente, funcionario, "
+        "SELECT pedido_id, data, total, status_pedido, cliente_id, cliente, funcionario_id, funcionario, "
         + "transportadora, codigo_rastreio, data_previsao_entrega, status_entrega, "
         // Colunas novas da view (endereço de entrega)
         + "destinatario, telefone_entrega, logradouro, numero_endereco, complemento, bairro, cep_numero, cidade, uf "
@@ -251,6 +259,7 @@ public class CompraService {
             pedidos.add(new CompraResponseDTO(id, String.format("SJ-%05d", id),
                 l.get("data").toString().replace(' ', 'T'), total, subtotal, total.subtract(subtotal),
                 statusPedido, ((Number) l.get("cliente_id")).longValue(), (String) l.get("cliente"),
+                l.get("funcionario_id") == null ? null : ((Number) l.get("funcionario_id")).longValue(),
                 (String) l.get("funcionario"), entrega, endereco, pagamento, itens,
                 andamento && entregaNaoSaiu,                                            // podeCancelar (igual à sp_cancelar_pedido)
                 "Aguardando pagamento".equals(statusPedido) && temPendente,             // podePagar
@@ -271,7 +280,8 @@ public class CompraService {
             if (t instanceof ResponseStatusException r) return r;
             if (t instanceof SQLException sql && sql.getErrorCode() >= 50000 && sql.getErrorCode() < 51000) {
                 HttpStatus status = switch (sql.getErrorCode()) {
-                    case 50001 -> HttpStatus.UNAUTHORIZED;         // cliente não encontrado
+                    case 50001, 50013 -> HttpStatus.UNAUTHORIZED;  // cliente (ou funcionário) não encontrado
+                    case 50014 -> HttpStatus.FORBIDDEN;            // pedido sob responsabilidade de outro funcionário
                     case 50002, 50005, 50006, 50008, 50009 -> HttpStatus.BAD_REQUEST; // carrinho vazio, forma/parcelas/frete/endereço inválidos
                     case 50020 -> HttpStatus.NOT_FOUND;            // pedido não é deste cliente
                     default -> HttpStatus.CONFLICT;                // estoque, status do pedido/entrega...

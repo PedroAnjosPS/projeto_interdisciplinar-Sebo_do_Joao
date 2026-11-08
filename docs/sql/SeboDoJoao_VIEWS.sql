@@ -13,6 +13,8 @@ go
 -- 1) Crie uma view para consultar todos os pedidos
 -- Saída de dados: dados do pedido, do cliente, do funcionário que
 -- cuida do pedido, da entrega e do endereço de entrega
+-- O funcionário usa LEFT JOIN, pois o pedido só tem funcionário
+-- responsável depois que alguém avança a entrega (antes disso é null)
 -----------------------------------------------------------------------
 create view vw_pedidos_detalhados
 as
@@ -39,7 +41,7 @@ as
 			ed.logradouro, ed.numero numero_endereco, ed.complemento, ed.bairro, ed.cep_numero,
 			ci.nome cidade, ci.uf_sigla uf
 	from	pedidos pe					INNER JOIN		usuarios uc
-	on		pe.cliente_id = uc.id		INNER JOIN		usuarios uf
+	on		pe.cliente_id = uc.id		LEFT JOIN		usuarios uf
 	on		pe.funcionario_id = uf.id	INNER JOIN		entregas en
 	on		pe.entrega_id = en.id		INNER JOIN		enderecos ed
 	on		en.endereco_id = ed.id		INNER JOIN		ceps ce

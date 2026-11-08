@@ -34,8 +34,9 @@ public class Pedido {
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
+    // Fica null até um funcionário avançar a entrega do pedido (ele passa a ser o responsável)
     @ManyToOne
-    @JoinColumn(name = "funcionario_id", nullable = false)
+    @JoinColumn(name = "funcionario_id")
     private Funcionario funcionario;
 
     @OneToMany(mappedBy = "pedido")

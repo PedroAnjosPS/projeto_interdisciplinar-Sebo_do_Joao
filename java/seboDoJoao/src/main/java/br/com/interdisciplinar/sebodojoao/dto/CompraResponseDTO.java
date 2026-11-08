@@ -17,7 +17,8 @@ public record CompraResponseDTO(
     String statusPedido,         // Aguardando pagamento | Processando | Concluido | Cancelado
     Long clienteId,
     String cliente,
-    String funcionario,          // atendente responsável pelo pedido
+    Long funcionarioId,          // responsável pelo pedido (null até alguém avançar a entrega)
+    String funcionario,          // nome do responsável (null enquanto não há)
     Entrega entrega,
     Endereco endereco,           // Endereço de entrega (vem do banco: tabelas enderecos/ceps/cidades)
     Pagamento pagamento,

@@ -7,14 +7,21 @@ import br.com.interdisciplinar.sebodojoao.model.Funcionario;
 import br.com.interdisciplinar.sebodojoao.model.Genero;
 import br.com.interdisciplinar.sebodojoao.model.ImagemProduto;
 import br.com.interdisciplinar.sebodojoao.model.Produto;
+import br.com.interdisciplinar.sebodojoao.model.StatusProduto;
 import br.com.interdisciplinar.sebodojoao.repository.CategoriaRepository;
 import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
 import br.com.interdisciplinar.sebodojoao.repository.GeneroRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ImagemProdutoRepository;
+import br.com.interdisciplinar.sebodojoao.repository.ItemCarrinhoRepository;
+import br.com.interdisciplinar.sebodojoao.repository.ItemPedidoRepository;
 import br.com.interdisciplinar.sebodojoao.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -25,6 +32,8 @@ public class ProdutoService {
     private final GeneroRepository generoRepository;
     private final FuncionarioRepository funcionarioRepository;
     private final ImagemProdutoRepository imagemProdutoRepository;
+    private final ItemPedidoRepository itemPedidoRepository;
+    private final ItemCarrinhoRepository itemCarrinhoRepository;
 
     public List<ProdutoResponseDTO> listarTodos() {
         return produtoRepository.findAll()
@@ -73,21 +82,15 @@ public class ProdutoService {
     }
 
     public ProdutoResponseDTO cadastrar(ProdutoRequestDTO dto) {
-        Categoria categoria = categoriaRepository
-                              .findById(dto.categoriaId())
-                              .orElseThrow();
-
-        Genero genero = generoRepository
-                        .findById(dto.generoId())
-                        .orElseThrow();
-
-        Funcionario funcionario = funcionarioRepository
-                                  .findById(dto.funcionarioId())
-                                  .orElseThrow();
+        // Confere os dados no servidor (o formulário do site pode ser contornado)
+        String nome = conferirDados(dto);
+        Categoria categoria = buscarCategoria(dto.categoriaId());
+        Genero genero = buscarGenero(dto.generoId());
+        Funcionario funcionario = buscarFuncionario(dto.funcionarioId());
 
         Produto produto = new Produto();
 
-        produto.setNome(dto.nome());
+        produto.setNome(nome);
         produto.setDescricao(dto.descricao());
         produto.setPreco(dto.preco());
         produto.setEstoque(dto.estoque());
@@ -128,19 +131,12 @@ public class ProdutoService {
                                     .findById(id)
                                     .orElseThrow();
 
-        Categoria categoria = categoriaRepository
-                                .findById(dto.categoriaId())
-                                .orElseThrow();
+        String nome = conferirDados(dto);
+        Categoria categoria = buscarCategoria(dto.categoriaId());
+        Genero genero = buscarGenero(dto.generoId());
+        Funcionario funcionario = buscarFuncionario(dto.funcionarioId());
 
-        Genero genero = generoRepository
-                        .findById(dto.generoId())
-                        .orElseThrow();
-
-        Funcionario funcionario = funcionarioRepository
-                                    .findById(dto.funcionarioId())
-                                    .orElseThrow();
-
-        produtoExistente.setNome(dto.nome());
+        produtoExistente.setNome(nome);
         produtoExistente.setDescricao(dto.descricao());
         produtoExistente.setPreco(dto.preco());
         produtoExistente.setEstoque(dto.estoque());
@@ -182,5 +178,55 @@ public class ProdutoService {
         );
     }
 
-    public void excluir(Long id) { produtoRepository.deleteById(id); }
+    // Produto que já foi vendido não pode ser apagado: o histórico dos pedidos aponta para ele.
+    // Nesse caso ele só fica INATIVO (some da loja). Produto que nunca foi vendido é apagado de vez,
+    // junto com as imagens e com as vezes em que estava no carrinho de alguém.
+    // Devolve true quando o produto foi apenas inativado.
+    @Transactional
+    public boolean excluir(Long id) {
+        Produto produto = produtoRepository.findById(id).orElseThrow();
+
+        if (itemPedidoRepository.existsByProduto_Id(id)) {
+            produto.setStatus(StatusProduto.INATIVO);
+            produtoRepository.save(produto);
+            return true;
+        }
+
+        itemCarrinhoRepository.apagarDoProduto(id);
+        imagemProdutoRepository.deleteAll(produto.getImagens());
+        produtoRepository.delete(produto);
+        produtoRepository.flush();
+        return false;
+    }
+
+    // Confere os dados do produto e devolve o nome já sem espaços nas pontas
+    private String conferirDados(ProdutoRequestDTO dto) {
+        String nome = dto.nome() == null ? "" : dto.nome().trim();
+        if (nome.isEmpty()) throw erro("Informe o nome do produto.");
+        if (nome.length() > 100) throw erro("O nome pode ter no máximo 100 caracteres.");
+
+        if (dto.preco() == null || dto.preco().signum() <= 0) throw erro("O preço precisa ser maior que zero.");
+        if (dto.preco().scale() > 2) throw erro("O preço deve ter no máximo 2 casas decimais.");
+        if (dto.preco().compareTo(new BigDecimal("99999999.99")) > 0) throw erro("O preço informado é alto demais.");
+
+        if (dto.estoque() == null || dto.estoque() < 0) throw erro("O estoque não pode ser negativo.");
+        if (dto.status() == null) throw erro("Escolha a situação do produto.");
+        return nome;
+    }
+
+    private Categoria buscarCategoria(Long id) {
+        return categoriaRepository.findById(id).orElseThrow(() -> erro("Categoria não encontrada."));
+    }
+
+    private Genero buscarGenero(Long id) {
+        return generoRepository.findById(id).orElseThrow(() -> erro("Gênero não encontrado."));
+    }
+
+    private Funcionario buscarFuncionario(Long id) {
+        return funcionarioRepository.findById(id).orElseThrow(() -> erro("Funcionário responsável não encontrado."));
+    }
+
+    private static ResponseStatusException erro(String mensagem) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, mensagem);
+    }
 }

@@ -84,7 +84,7 @@ SELECT pe.id AS 'Id do Pedido', pe.data AS 'Data do pedido',
         uf.nome AS 'Funcionário'
 FROM    pedidos pe                      INNER JOIN      entregas ent
 ON      pe.entrega_id = ent.id          INNER JOIN      usuarios uc
-ON      pe.cliente_id = uc.id           INNER JOIN      usuarios uf
+ON      pe.cliente_id = uc.id           LEFT JOIN       usuarios uf
 ON      pe.funcionario_id = uf.id;
 GO
 

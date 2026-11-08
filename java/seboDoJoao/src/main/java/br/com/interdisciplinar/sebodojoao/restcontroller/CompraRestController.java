@@ -75,15 +75,8 @@ public class CompraRestController {
     // Anda um passo na entrega (procedure sp_avancar_entrega)
     @PostMapping("/gestao/{id}/avancar-entrega")
     public CompraResponseDTO avancarEntrega(@PathVariable Long id, HttpSession sessao) {
-        ControleDeAcesso.exigirFuncionario(sessao);
-        return compraService.avancarEntrega(id);
-    }
-
-    // Confirma o pagamento pendente (na vida real quem avisa é o banco; aqui o funcionário faz de conta)
-    @PostMapping("/gestao/{id}/aprovar-pagamento")
-    public CompraResponseDTO aprovarPagamento(@PathVariable Long id, HttpSession sessao) {
-        ControleDeAcesso.exigirFuncionario(sessao);
-        return compraService.aprovarPagamento(id, null);
+        Long funcionarioId = ControleDeAcesso.exigirFuncionario(sessao);
+        return compraService.avancarEntrega(id, funcionarioId);
     }
 
     // Os erros desta classe (sem login, estoque insuficiente, parcelas inválidas...) saem como

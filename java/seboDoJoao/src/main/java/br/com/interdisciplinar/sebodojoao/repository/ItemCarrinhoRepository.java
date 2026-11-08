@@ -20,4 +20,9 @@ public interface ItemCarrinhoRepository extends JpaRepository<ItemCarrinho, Item
     @Modifying
     @Query("DELETE FROM ItemCarrinho i WHERE i.cliente.id = :clienteId")
     void apagarDoCliente(@Param("clienteId") Long clienteId);
+
+    // Tira o produto do carrinho de todo mundo (usado quando o produto é excluído)
+    @Modifying
+    @Query("DELETE FROM ItemCarrinho i WHERE i.produto.id = :produtoId")
+    void apagarDoProduto(@Param("produtoId") Long produtoId);
 }

@@ -86,6 +86,41 @@ public final class ControleDeAcesso {
         return id;
     }
 
+    // Para ver ou alterar os dados de uma conta: o próprio dono (cliente ou funcionário) ou um funcionário.
+    // Devolve o ID de quem está logado.
+    public static Long exigirDonoOuFuncionario(HttpSession sessao, Long idDaConta) {
+        Object perfil = sessao.getAttribute(ATRIBUTO_PERFIL);
+
+        if (perfil == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "É preciso fazer login.");
+        }
+
+        Long idLogado = lerId(sessao);
+
+        if (!PERFIL_FUNCIONARIO.equals(perfil) && !idLogado.equals(idDaConta)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode acessar a sua própria conta.");
+        }
+
+        return idLogado;
+    }
+
+    // Para mexer na conta de um funcionário: o próprio funcionário ou o administrador.
+    public static Long exigirProprioOuAdministrador(HttpSession sessao, Long idDoFuncionario) {
+        Long idLogado = exigirFuncionario(sessao);
+
+        if (!idLogado.equals(idDoFuncionario) && !Boolean.TRUE.equals(sessao.getAttribute(ATRIBUTO_ADMIN))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode alterar a sua própria conta.");
+        }
+
+        return idLogado;
+    }
+
+    // Diz se quem está logado é o funcionário administrador (sem lançar erro).
+    public static boolean ehAdministrador(HttpSession sessao) {
+        return PERFIL_FUNCIONARIO.equals(sessao.getAttribute(ATRIBUTO_PERFIL))
+                && Boolean.TRUE.equals(sessao.getAttribute(ATRIBUTO_ADMIN));
+    }
+
     // Lê o ID guardado na sessão. Se não existir (ex.: sessão antiga), pede um novo login.
     private static Long lerId(HttpSession sessao) {
         Object id = sessao.getAttribute(ATRIBUTO_ID);

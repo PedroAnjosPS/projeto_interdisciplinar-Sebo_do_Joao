@@ -16,6 +16,12 @@
 // As contas de funcionário e de administrador vêm do banco
 // (veja docs/sql/SeboDoJoao_INSERTS.sql).
 const UsuarioStore = (() => {
+    // As rotas da API devolvem {"mensagem": "..."} quando recusam algo; essa mensagem é mostrada à pessoa
+    async function mensagemDoErro(resposta, padrao) {
+        const corpo = await resposta.json().catch(() => ({}));
+        return corpo.mensagem || padrao;
+    }
+
     // A chave de sessão vai guardar quem está logado no momento
     const CHAVE_SESSAO = 'sebo_do_joao_sessao';
     const PERFIL_ADMIN = 'FUNCIONARIO';
@@ -60,7 +66,7 @@ const UsuarioStore = (() => {
         });
 
         if (!resposta.ok) {
-            throw new Error('Erro ao cadastrar. O e-mail pode já estar em uso.');
+            throw new Error(await mensagemDoErro(resposta, 'Erro ao cadastrar. Tente novamente.'));
         }
 
         // Como acabou de se cadastrar, já fazemos o login automático. Ele passa pelo
@@ -159,7 +165,7 @@ const UsuarioStore = (() => {
 
         const resposta = await fetch(`${rota}/${usuarioLogado.id}`, opcoesFetch);
 
-        if (!resposta.ok) throw new Error('Erro ao atualizar os dados.');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Erro ao atualizar os dados.'));
 
         const usuarioAtualizado = await resposta.json();
         iniciarSessao({ ...usuarioAtualizado, perfil: usuarioLogado.perfil });
@@ -198,7 +204,7 @@ const UsuarioStore = (() => {
             body: JSON.stringify(dadosAtualizados)
         });
 
-        if (!resposta.ok) throw new Error('Erro ao alterar a senha no banco de dados!');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Erro ao alterar a senha.'));
 
         const usuarioAtualizado = await resposta.json();
         const novaSessao = { ...usuarioAtualizado, perfil: usuarioLogado.perfil };
@@ -220,18 +226,17 @@ const UsuarioStore = (() => {
 
     // Diz se o e-mail ainda está livre (o cadastro usa isso já na 1ª etapa, pra pessoa não
     // preencher tudo e só descobrir no final que o e-mail está em uso).
-    // Hoje a API não tem uma rota só pra isso, então olhamos a lista de clientes e de funcionários.
-    // Se a lista não carregar, devolve true e quem decide é o servidor, na hora de cadastrar.
+    // A API tem uma rota só pra isso (a lista de contas não é aberta a quem não está logado).
+    // Se a consulta falhar, devolve true e quem decide é o servidor, na hora de cadastrar.
     async function emailDisponivel(email, ignorarId = null) {
-        const procurado = String(email || '').trim().toLowerCase();
+        const procurado = String(email || '').trim();
         try {
-            for (const rota of ['/api/clientes', '/api/funcionarios']) {
-                const resposta = await fetch(rota);
-                if (!resposta.ok) continue;
-                const pessoas = await resposta.json();
-                if (pessoas.some((p) => String(p.email || '').toLowerCase() === procurado
-                    && String(p.id) !== String(ignorarId))) return false;
-            }
+            let url = '/api/clientes/email-disponivel?email=' + encodeURIComponent(procurado);
+            if (ignorarId != null) url += '&ignorarId=' + encodeURIComponent(ignorarId);
+            const resposta = await fetch(url);
+            if (!resposta.ok) return true;
+            const resultado = await resposta.json();
+            return resultado.disponivel !== false;
         } catch (erro) { /* deixa o servidor decidir */ }
         return true;
     }
@@ -263,7 +268,7 @@ const UsuarioStore = (() => {
                 body: JSON.stringify({ email })
             });
         }
-        if (!resposta.ok) throw new Error('Não foi possível trocar o e-mail agora. Tente novamente.');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Não foi possível trocar o e-mail agora. Tente novamente.'));
 
         const atualizado = await resposta.json();
         const novaSessao = { ...usuarioLogado, ...atualizado, perfil: usuarioLogado.perfil };
@@ -281,7 +286,7 @@ const UsuarioStore = (() => {
         if (!(await senhaConfere(usuarioLogado.email, senha))) throw new Error('A senha está incorreta.');
 
         const resposta = await fetch(`/api/clientes/${usuarioLogado.id}`, { method: 'DELETE' });
-        if (!resposta.ok) throw new Error('Não foi possível excluir a conta agora. Tente novamente.');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Não foi possível excluir a conta agora. Tente novamente.'));
 
         const resultado = await resposta.json().catch(() => ({}));
 

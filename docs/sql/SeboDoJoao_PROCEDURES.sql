@@ -35,7 +35,6 @@ as
 begin		-- início da procedure
 	-- variáveis usadas na procedure
 	declare @max_parcelas		int
-	declare @funcionario_id		int
 	declare @entrega_id			int
 	declare @total				decimal(10,2)
 	declare @status_pagamento	int
@@ -93,18 +92,6 @@ begin		-- início da procedure
 				)
 		throw 50003, 'Algum produto está indisponível ou sem estoque suficiente.', 1;
 
-	-- sortear um funcionário ativo para cuidar do pedido
-	set @funcionario_id =	(
-								select top 1 f.usuario_id
-								from	funcionarios f		INNER JOIN		usuarios u
-								on		f.usuario_id = u.id
-								where	u.status = 1
-								order by newid()
-							)
-
-	if @funcionario_id is null
-		throw 50004, 'Nenhum funcionário disponível.', 1;
-
 	-- iniciar o try
 	begin try
 		-- iniciar a transaction
@@ -118,8 +105,9 @@ begin		-- início da procedure
 			set @entrega_id = SCOPE_IDENTITY()
 
 			-- cadastrar o pedido com status 1 (aguardando pagamento) e total zerado
-			insert into pedidos (total, status, entrega_id, cliente_id, funcionario_id)
-			values				(0, 1, @entrega_id, @cliente_id, @funcionario_id)
+			-- o funcionario_id fica null: o primeiro funcionário que mexer na entrega vira o responsável
+			insert into pedidos (total, status, entrega_id, cliente_id)
+			values				(0, 1, @entrega_id, @cliente_id)
 
 			-- recuperar o id do pedido gerado e devolver para o Java
 			set @pedido_id = SCOPE_IDENTITY()
@@ -179,18 +167,24 @@ go
 -- em trânsito são gerados o código e o link de rastreio e a data de
 -- postagem. Ao ser entregue é gravada a data de entrega e a trigger
 -- tr_entregas_conclui_pedido conclui o pedido
+-- O pedido nasce sem funcionário responsável. O primeiro funcionário
+-- que avança a entrega passa a ser o responsável e, a partir daí, só
+-- ele (ou um funcionário administrador) consegue avançar o pedido
 -----------------------------------------------------------------------
-create procedure sp_avancar_entrega (@pedido_id int)
+create procedure sp_avancar_entrega (@pedido_id int, @funcionario_id int)
 as
 begin		-- início da procedure
 	-- variáveis usadas na procedure
 	declare @entrega_id			int
 	declare @status_entrega		int
 	declare @status_pedido		int
+	declare @responsavel_id		int
+	declare @admin				bit
 	declare @novo_status		int
 
-	-- recuperar o id da entrega e o status do pedido e da entrega
-	select	@entrega_id = e.id, @status_entrega = e.status, @status_pedido = pe.status
+	-- recuperar o id da entrega, o status do pedido e da entrega e o responsável atual
+	select	@entrega_id = e.id, @status_entrega = e.status, @status_pedido = pe.status,
+			@responsavel_id = pe.funcionario_id
 	from	pedidos pe		INNER JOIN		entregas e
 	on		pe.entrega_id = e.id
 	where	pe.id = @pedido_id
@@ -198,6 +192,15 @@ begin		-- início da procedure
 	-- verificar se o pedido e a entrega existem
 	if @entrega_id is null
 		throw 50010, 'Pedido ou entrega não encontrados.', 1;
+
+	-- o funcionário precisa existir e estar ativo (aproveita para ver se é administrador)
+	select	@admin = f.admin
+	from	funcionarios f		INNER JOIN		usuarios u
+	on		f.usuario_id = u.id
+	where	f.usuario_id = @funcionario_id and u.status = 1
+
+	if @admin is null
+		throw 50013, 'Funcionário não encontrado ou inativo.', 1;
 
 	-- o pedido precisa estar processando (2)
 	if @status_pedido <> 2
@@ -207,21 +210,50 @@ begin		-- início da procedure
 	if @status_entrega >= 4
 		throw 50012, 'A entrega já foi finalizada ou cancelada.', 1;
 
+	-- se o pedido já tem responsável, só ele ou um administrador avança
+	if @responsavel_id is not null and @responsavel_id <> @funcionario_id and @admin = 0
+		throw 50014, 'Este pedido está sob responsabilidade de outro funcionário.', 1;
+
 	-- avançar uma etapa
 	set @novo_status = @status_entrega + 1
 
-	update entregas set status = @novo_status,
-		-- em trânsito (3): gerar o código e o link de rastreio e a data de postagem
-		codigo_rastreio =	case when @novo_status = 3
-							then 'SJ' + right('000000000' + cast(@entrega_id as varchar(9)), 9) + 'BR'
-							else codigo_rastreio end,
-		link_rastreio	=	case when @novo_status = 3
-							then 'https://rastreio.sebodojoao.demo/' + cast(@entrega_id as varchar(9))
-							else link_rastreio end,
-		data_postagem	=	case when @novo_status = 3 then getdate() else data_postagem end,
-		-- entregue (4): gravar a data da entrega
-		data_entrega	=	case when @novo_status = 4 then getdate() else data_entrega end
-	where id = @entrega_id
+	-- iniciar o try
+	begin try
+		-- iniciar a transaction
+		begin tran
+			-- quem avança primeiro vira o responsável (o "and funcionario_id is null"
+			-- evita que dois funcionários peguem o mesmo pedido ao mesmo tempo)
+			update pedidos set funcionario_id = @funcionario_id
+			where id = @pedido_id and funcionario_id is null
+
+			-- se ninguém foi atualizado, outro funcionário assumiu o pedido um instante antes
+			if @responsavel_id is null and @@ROWCOUNT = 0
+				throw 50015, 'Outro funcionário acabou de assumir este pedido.', 1;
+
+			update entregas set status = @novo_status,
+				-- em trânsito (3): gerar o código e o link de rastreio e a data de postagem
+				codigo_rastreio =	case when @novo_status = 3
+									then 'SJ' + right('000000000' + cast(@entrega_id as varchar(9)), 9) + 'BR'
+									else codigo_rastreio end,
+				link_rastreio	=	case when @novo_status = 3
+									then 'https://rastreio.sebodojoao.demo/' + cast(@entrega_id as varchar(9))
+									else link_rastreio end,
+				data_postagem	=	case when @novo_status = 3 then getdate() else data_postagem end,
+				-- entregue (4): gravar a data da entrega
+				data_entrega	=	case when @novo_status = 4 then getdate() else data_entrega end
+			where id = @entrega_id
+
+		-- deu tudo certo ===>>> confirmar dados
+		commit
+	end try		-- finalizando o try
+	begin catch -- iniciando o catch
+		-- deu erro ===>>> desfazer a operação
+		rollback
+		print 'ERRO! Entrega não avançada.';
+
+		-- mandar o erro de volta para o Java
+		throw;
+	end catch  -- finalizando o catch
 end  -- finalizando a procedure
 go
 
@@ -281,6 +313,125 @@ begin		-- início da procedure
 		-- deu erro ===>>> desfazer a operação
 		rollback
 		print 'ERRO! Pedido não cancelado.';
+
+		-- mandar o erro de volta para o Java
+		throw;
+	end catch  -- finalizando o catch
+end  -- finalizando a procedure
+go
+
+-----------------------------------------------------------------------
+-- 4) Crie uma procedure que cadastre um cliente, mas lembre-se que todo
+-- cliente é um usuário. Os dados de acesso (nome, e-mail, senha...)
+-- vão para a tabela usuarios e os dados próprios do cliente (data de
+-- nascimento e CPF) vão para a tabela clientes. O id do usuário criado
+-- volta para o Java no parâmetro de saída @usuario_id
+-----------------------------------------------------------------------
+create procedure sp_cadastrar_cliente
+(
+	@nome				varchar(100),
+	@email				varchar(100),
+	@senha				varchar(255),
+	@telefone			varchar(20),
+	@cpf				varchar(14),
+	@data_nascimento	date,
+	@foto_perfil		varchar(255)	= null,
+	@usuario_id			int				output
+)
+as
+begin		-- início da procedure
+	-- o e-mail é único entre todos os usuários (clientes e funcionários)
+	if exists (select 1 from usuarios where email = @email)
+		throw 50030, 'Já existe uma conta com esse e-mail.', 1;
+
+	-- o CPF é comparado só pelos números, pois pode vir com pontos e traço
+	if exists	(
+					select	1
+					from	clientes
+					where	replace(replace(cpf, '.', ''), '-', '') = replace(replace(@cpf, '.', ''), '-', '')
+				)
+		throw 50031, 'Já existe um cliente com esse CPF.', 1;
+
+	-- iniciar o try
+	begin try
+		-- iniciar a transaction
+		begin tran
+			-- cadastrar os dados de acesso na tabela usuarios (o status e a data de cadastro têm valor padrão)
+			insert into usuarios (nome, email, senha, telefone, foto_perfil)
+			values				 (@nome, @email, @senha, @telefone, @foto_perfil)
+
+			-- recuperar o id do usuário gerado e devolver para o Java
+			set @usuario_id = SCOPE_IDENTITY()
+
+			-- cadastrar os dados do cliente na tabela clientes (o id é o mesmo do usuário)
+			insert into clientes (usuario_id, data_nascimento, cpf)
+			values				 (@usuario_id, @data_nascimento, @cpf)
+
+		-- deu tudo certo ===>>> confirmar dados
+		commit
+	end try		-- finalizando o try
+	begin catch -- iniciando o catch
+		-- deu erro ===>>> desfazer a operação
+		rollback
+		print 'ERRO! Dados do Cliente não cadastrados.';
+
+		-- mandar o erro de volta para o Java
+		throw;
+	end catch  -- finalizando o catch
+end  -- finalizando a procedure
+go
+
+-----------------------------------------------------------------------
+-- 5) Crie uma procedure que cadastre um funcionário, mas lembre-se que
+-- todo funcionário é um usuário. Os dados de acesso vão para a tabela
+-- usuarios e os dados próprios do funcionário (código e se é
+-- administrador) vão para a tabela funcionarios. O id do usuário criado
+-- volta para o Java no parâmetro de saída @usuario_id
+-----------------------------------------------------------------------
+create procedure sp_cadastrar_funcionario
+(
+	@nome				varchar(100),
+	@email				varchar(100),
+	@senha				varchar(255),
+	@telefone			varchar(20),
+	@codigo_funcionario	varchar(50),
+	@admin				bit				= 0,
+	@status				int				= 1,
+	@foto_perfil		varchar(255)	= null,
+	@usuario_id			int				output
+)
+as
+begin		-- início da procedure
+	-- o e-mail é único entre todos os usuários (clientes e funcionários)
+	if exists (select 1 from usuarios where email = @email)
+		throw 50030, 'Já existe uma conta com esse e-mail.', 1;
+
+	-- o código do funcionário também é único
+	if exists (select 1 from funcionarios where codigo_funcionario = @codigo_funcionario)
+		throw 50032, 'Já existe um funcionário com esse código.', 1;
+
+	-- iniciar o try
+	begin try
+		-- iniciar a transaction
+		begin tran
+			-- cadastrar os dados de acesso na tabela usuarios
+			insert into usuarios (nome, email, senha, telefone, status, foto_perfil)
+			values				 (@nome, @email, @senha, @telefone, @status, @foto_perfil)
+
+			-- recuperar o id do usuário gerado e devolver para o Java
+			set @usuario_id = SCOPE_IDENTITY()
+
+			-- cadastrar os dados do funcionário na tabela funcionarios (o id é o mesmo do usuário)
+			insert into funcionarios (usuario_id, codigo_funcionario, admin)
+			values					 (@usuario_id, @codigo_funcionario, @admin)
+
+		-- deu tudo certo ===>>> confirmar dados
+		commit
+	end try		-- finalizando o try
+	begin catch -- iniciando o catch
+		-- deu erro ===>>> desfazer a operação
+		rollback
+		print 'ERRO! Dados do Funcionário não cadastrados.';
 
 		-- mandar o erro de volta para o Java
 		throw;

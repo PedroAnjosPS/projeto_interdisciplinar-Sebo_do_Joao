@@ -47,7 +47,11 @@ public class ProdutoRestController {
                     @RequestParam("estoque") Integer estoque,
                     @RequestParam("status") StatusProduto status,
                     @RequestParam("descricao") String descricao,
-                    @RequestParam(value = "imagem", required = false) MultipartFile imagemFisica) {
+                    @RequestParam(value = "imagem", required = false) MultipartFile imagemFisica,
+                    jakarta.servlet.http.HttpSession sessao) {
+
+        // O funcionário responsável é quem está logado (o navegador não escolhe isso)
+        funcionarioId = ControleDeAcesso.exigirFuncionario(sessao);
         String caminhoImagemDb = null;
 
     if (imagemFisica != null && !imagemFisica.isEmpty()) {
@@ -123,8 +127,9 @@ public class ProdutoRestController {
         return ResponseEntity.ok(produtoService.atualizar(id, dto));
     }
 
+    // "inativado" = true quando o produto já foi vendido e por isso só ficou inativo, não foi apagado
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        produtoService.excluir(id);
+    public java.util.Map<String, Boolean> excluir(@PathVariable Long id) {
+        return java.util.Map.of("inativado", produtoService.excluir(id));
     }
 }

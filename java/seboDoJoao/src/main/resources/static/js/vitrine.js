@@ -859,6 +859,7 @@ const PedidosStore = (() => {
             criadoEm: dto.data,
             status: dto.statusPedido,
             cliente: dto.cliente,
+            funcionarioId: dto.funcionarioId,
             funcionario: dto.funcionario,
             itens: dto.itens.map((i) => ({
                 id: i.produtoId, nome: i.produto, preco: Number(i.precoUnitario), quantidade: i.quantidade,
@@ -1016,13 +1017,10 @@ const PedidosStore = (() => {
     async function avancarEntrega(id) {
         return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/avancar-entrega`, { method: 'POST' }));
     }
-    async function aprovarPagamento(id) {
-        return converter(await chamarApi(`/api/compras/gestao/${encodeURIComponent(id)}/aprovar-pagamento`, { method: 'POST' }));
-    }
 
     return {
         CHAVE_EXTRAS, STATUS_AGUARDANDO, STATUS_PROCESSANDO, STATUS_CONCLUIDO, STATUS_CANCELADO,
-        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega, aprovarPagamento
+        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega
     };
 })();
 

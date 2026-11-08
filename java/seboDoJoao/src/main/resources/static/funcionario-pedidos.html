@@ -41,7 +41,7 @@
     <main class="container py-5">
         <div class="mb-4">
             <h2 class="ec-admin-title fw-bold mb-1">PEDIDOS DA LOJA</h2>
-            <p class="ec-conta-email mb-0">Acompanhe as vendas e faça a entrega andar: Pendente &gt; Preparando &gt; Em trânsito &gt; Entregue.</p>
+            <p class="ec-conta-email mb-0">Aqui aparecem os pedidos já pagos. Quem avançar a entrega primeiro fica responsável pelo pedido. Faça a entrega andar: Pendente &gt; Preparando &gt; Em trânsito &gt; Entregue.</p>
         </div>
 
         <p id="gestao-erro" class="text-danger" role="alert"></p>
@@ -62,6 +62,9 @@
         // Texto do botão = o que vai acontecer com a entrega ao clicar
         const PROXIMO_PASSO = { 'Pendente': 'Começar a preparar', 'Preparando': 'Enviar (em trânsito)', 'Em transito': 'Marcar como entregue' };
 
+        // Quem está logado (usado para saber se o pedido é dele ou de outro funcionário)
+        let usuarioAtual = null;
+
         function dataCurta(iso) {
             return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
@@ -76,18 +79,24 @@
                 ? `${escaparHtml(e.destinatario)} (${escaparHtml(e.telefone)}) · ${linhasDoEndereco(e).map(escaparHtml).join(' · ')}`
                 : 'Endereço não informado';
 
-            // Os botões só aparecem quando o banco permite a ação (os campos podePagar / podeAvancarEntrega)
-            const botoes = [
-                p.podePagar ? `<button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-3" data-acao="pagar" data-id="${p.id}">Confirmar pagamento</button>` : '',
-                p.podeAvancarEntrega ? `<button type="button" class="btn ec-btn-dark ec-btn-pill px-3" data-acao="avancar" data-id="${p.id}">${escaparHtml(PROXIMO_PASSO[p.entrega.status] || 'Avançar entrega')}</button>` : ''
-            ].join('');
+            // O pedido só tem responsável depois que alguém avança a entrega pela primeira vez.
+            // Depois disso só o responsável (ou o administrador) mexe nele; a procedure confere de novo.
+            const ehAdministrador = !!usuarioAtual && usuarioAtual.admin === true;
+            const ehDeOutro = p.funcionarioId && (!usuarioAtual || p.funcionarioId !== usuarioAtual.id);
+            const responsavel = p.funcionario ? escaparHtml(p.funcionario) : 'sem responsável';
+
+            // O botão só aparece quando o banco permite avançar a entrega (campo podeAvancarEntrega).
+            // O pagamento não passa por aqui: quem paga é o cliente.
+            const botoes = p.podeAvancarEntrega && (!ehDeOutro || ehAdministrador)
+                ? `<button type="button" class="btn ec-btn-dark ec-btn-pill px-3" data-acao="avancar" data-id="${p.id}">${escaparHtml(PROXIMO_PASSO[p.entrega.status] || 'Avançar entrega')}</button>`
+                : '';
 
             return `
                 <article class="ec-ped-card" id="pedido-${p.id}">
                     <header class="ec-ped-topo">
                         <div>
                             <h3 class="ec-ped-codigo">Pedido ${escaparHtml(p.codigo)}</h3>
-                            <p class="ec-texto-suave mb-0">${escaparHtml(dataCurta(p.criadoEm))} · ${escaparHtml(p.cliente)} · atendente: ${escaparHtml(p.funcionario)}</p>
+                            <p class="ec-texto-suave mb-0">${escaparHtml(dataCurta(p.criadoEm))} · ${escaparHtml(p.cliente)} · responsável: ${responsavel}</p>
                         </div>
                         <span class="ec-status ${p.status === 'Aguardando pagamento' || p.status === 'Cancelado' ? 'ec-status-aguardando' : 'ec-status-ok'}">${escaparHtml(p.status === 'Concluido' ? 'Concluído' : p.status)}</span>
                     </header>
@@ -120,8 +129,7 @@
             botao.disabled = true;
             document.getElementById('gestao-erro').textContent = '';
             try {
-                if (botao.dataset.acao === 'pagar') await PedidosStore.aprovarPagamento(botao.dataset.id);
-                else await PedidosStore.avancarEntrega(botao.dataset.id);
+                await PedidosStore.avancarEntrega(botao.dataset.id);
                 await carregarPedidos(); // recarrega para mostrar o novo status vindo do banco
             } catch (erro) {
                 document.getElementById('gestao-erro').textContent = erro.message;
@@ -131,6 +139,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!(await exigirAdmin())) return; // só Funcionário entra aqui
+            usuarioAtual = await UsuarioStore.obter();
             carregarPedidos();
         });
     </script>

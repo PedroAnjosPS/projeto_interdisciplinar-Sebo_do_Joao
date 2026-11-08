@@ -384,7 +384,8 @@
 
             const senha = document.getElementById('signup-senha').value;
             let erroSenha = '';
-            if (senha.length < 6) erroSenha = 'A senha precisa ter pelo menos 6 caracteres.';
+            // Mesma regra da troca de senha e do servidor: pelo menos 8 caracteres, sem espaço nas pontas
+            if (erroDaSenhaNova(senha)) erroSenha = erroDaSenhaNova(senha);
             else if (senha !== document.getElementById('signup-confirmar').value) erroSenha = 'As senhas não conferem.';
 
             const comErro = CAMPOS_ETAPA_2.filter((campo) => !validarCampoCadastro(campo));

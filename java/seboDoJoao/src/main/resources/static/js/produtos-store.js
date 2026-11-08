@@ -9,6 +9,12 @@
 // Java com fetch() (/api/produtos). Se um dia a forma de guardar mudar,
 // só o que está aqui dentro precisa ser reescrito.
 const ProdutosStore = (() => {
+    // As rotas da API devolvem {"mensagem": "..."} quando recusam algo; essa mensagem é mostrada à pessoa
+    async function mensagemDoErro(resposta, padrao) {
+        const corpo = await resposta.json().catch(() => ({}));
+        return corpo.mensagem || padrao;
+    }
+
     const CHAVE_LOCALSTORAGE = 'sebo_do_joao_produtos';
     // O seed fica em data/produtos.json. O caminho é calculado a partir do
     // lugar deste arquivo (js/vitrine.js), assim não depende da pasta da página.
@@ -106,7 +112,7 @@ const ProdutosStore = (() => {
 
         const resposta = await fetch(URL_API, opcoesFetch);
 
-        if (!resposta.ok) throw new Error('Erro ao tentar salvar o produto');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Erro ao tentar salvar o produto'));
 
         return await resposta.json();
     }
@@ -127,7 +133,7 @@ const ProdutosStore = (() => {
 
         const resposta = await fetch(`${URL_API}/${id}`, opcoesFetch);
 
-        if (!resposta.ok) throw new Error('Erro ao tentar atualizar o produto');
+        if (!resposta.ok) throw new Error(await mensagemDoErro(resposta, 'Erro ao tentar atualizar o produto'));
 
         return await resposta.json();
     }
@@ -138,7 +144,14 @@ const ProdutosStore = (() => {
             method: 'DELETE'
         });
 
-        if (!resposta.ok) throw new Error('Erro ao tentar remover o produto');
+        if (!resposta.ok) {
+            const erro = await resposta.json().catch(() => ({}));
+            throw new Error(erro.mensagem || 'Erro ao tentar remover o produto');
+        }
+
+        // true = o produto já foi vendido, então o servidor só o deixou inativo em vez de apagar
+        const resultado = await resposta.json().catch(() => ({}));
+        return resultado.inativado === true;
     }
 
 

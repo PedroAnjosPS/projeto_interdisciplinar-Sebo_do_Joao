@@ -1,6 +1,8 @@
 ------------------------------------------------------------------------------------------------------------------
--- =========================	CONSULTAS SIMPLES ========================= --
+-- =========================	CONSULTAS SIMPLES	========================= --
 ------------------------------------------------------------------------------------------------------------------
+select * from pedidos;
+
 select * from entregas;
 
 select * from enderecos;
@@ -62,10 +64,21 @@ select pe.id AS [Id do Pedido], pe.data AS [Data do Pedido], pe.total AS Total,
 			WHEN 3 THEN 'CONCLUIDO'
 			WHEN 4 THEN 'CANCELADO'
 	   END AS [Status do Pedido],
-	   uc.nome AS Cliente, uf.nome AS Funcionario
+	   uc.nome AS Cliente, uf.nome AS [Funcionário], prod.nome AS [Produto], item_pe.quantidade AS [Quantidade Produto],
+	   item_pe.preco_unitario [Preço unitário], ent.valor_frete AS [Frete de Entrega],
+	   CASE	ent.status
+			WHEN 1 THEN 'PENDENTE'
+			WHEN 2 THEN 'PREPARANDO'
+			WHEN 3 THEN 'EM TRÂNSITO'
+			WHEN 4 THEN 'ENTREGUE'
+			WHEN 5 THEN 'CANCELADO'
+		END AS [Status da Entrega]
 from pedidos pe		
-	INNER JOIN		clientes cli		ON		 pe.cliente_id		=	cli.usuario_id	
-	LEFT JOIN		usuarios uc			ON		 cli.usuario_id		=	uc.id
-	LEFT JOIN		funcionarios func	ON		 pe.funcionario_id	=	func.usuario_id
-	LEFT JOIN		usuarios uf			ON		 func.usuario_id	=	uf.id
+	LEFT JOIN		clientes cli			ON		 pe.cliente_id			=	cli.usuario_id	
+	RIGHT JOIN		usuarios uc				ON		 uc.id					=	cli.usuario_id	
+	RIGHT JOIN		funcionarios func		ON		 pe.funcionario_id		=	func.usuario_id
+	RIGHT JOIN		usuarios uf				ON		 uf.id					=	func.usuario_id
+	INNER JOIN		item_pedidos item_pe	ON		 pe.id					=	item_pe.pedido_id
+	LEFT  JOIN		produtos prod			ON		 item_pe.produto_id		=	prod.id
+	LEFT JOIN		entregas ent			ON		 pe.entrega_id			=	ent.id
 go

@@ -16,7 +16,7 @@ A loja possui um amplo acervo de produtos culturais, com destaque para:
 - 💿 CDs
 - 📀 DVDs e Blu-rays
 - 🖼️ HQs e Mangás
-- 📻 Fitas cassete  
+- 📻 Fitas cassete (VHS)  
 
 ---
 
@@ -50,9 +50,6 @@ Diagramas de modelagem do sistema:
 
 ##### Diagrama de Banco de Dados
 ![Diagrama de Banco de Dados](docs/diagramas/Diagrama_Banco_de_Dados.png)
-
-##### Diagrama de Classe
-![Diagrama de Classe](docs/diagramas/Diagrama_de_classe-Sebo_do_Joao.png)
 
 ---
 
@@ -112,21 +109,51 @@ sebo-do-joao/
 │   ├── diagramas/
 │   │   ├── DER-Sebo_do_Joao.png
 │   │   ├── Diagrama_Banco_de_Dados.png
-|   |   └── ...
+│   │   └── ...
+│   ├── interfaces/
+│   │   ├── Tela-principal-index.png
+│   │   ├── Tela-cadastro-cliente.png
+│   │   └── ...
+│   ├── metodos-estatisticos/
+│   │   └── planilha-analise-estatistica-interdisciplinar.xlsx
 │   ├── sql/
-│   │   └── SeboDoJoao.sql
-│   └── interfaces/
-│       ├── Tela-principal-index.png
-│       └── ...
+│   │   ├── SeboDoJoao.sql
+│   │   ├── SeboDoJoao_INSERTS.sql    
+│   │   ├── SeboDoJoao_SELECTS.sql
+│   │   ├── SeboDoJoao_VIEWS.sql
+│   │   ├── SeboDoJoao_FUNCTIONS.sql
+│   │   ├── backup-sql/
+│   │   │   └── Sebo_Do_Joao.bak
+│   │   └── ...
+│   └── testes/   
+│       ├── dados-testes.txt
+│       └── Selects-de-testes.sql
 |
 ├── java/
-│   └── seboDoJoao/
-│       └── src/
-│           ├── app/
-│           │   └── Main.java
-│           └── model/
-│               ├── Produto.java
-│               ├── Cliente.java
-│               └── ...
+│   ├── seboDoJoao/
+│   │   └── src/
+│   │       ├── main/
+│   │       │   ├── java/br/com/interdisciplinar/sebodojoao/
+│   │       │   │   ├── dto/
+│   │       │   │   ├── model/
+│   │       │   │   ├── repository/
+│   │       │   │   ├── restcontroller/
+│   │       │   │   ├── service/
+│   │       │   │   └── SebodojoaoApplication.java
+│   │       │   └── resources/
+│   │       │       ├── static/  
+│   │       │       │   ├── css/
+│   │       │       │   ├── data/
+│   │       │       │   ├── imagens/
+│   │       │       │   ├── js/
+│   │       │       │   ├── index.html
+│   │       │       │   └── ...
+│   │       │       └── application.yaml   
+│   │       └── test/
+│   │           └── ...
+│   ├── target/
+│   ├── mvnw
+│   ├── pom.xml
+│   └── ...
 │
 └── README.md

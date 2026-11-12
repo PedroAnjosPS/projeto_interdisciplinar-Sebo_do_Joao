@@ -250,14 +250,14 @@ GO
 INSERT INTO pedidos (data, total, status, entrega_id, cliente_id, funcionario_id) VALUES
 ('2026-10-05T10:15:00',  80.50, 3,  1, 1, 7),   -- 1: Concluído
 ('2026-10-08T14:30:00',  45.50, 3,  2, 2, 8),   -- 2: Concluído
-('2026-10-12T09:40:00',  40.00, 1,  3, 1, NULL), -- 3: Aguardando pagamento (boleto)
-('2026-10-28T16:20:00',  55.00, 2,  4, 2, 10),  -- 4: Processando
-('2026-10-30T11:05:00',  60.00, 2,  5, 1, NULL), -- 5: Processando (ainda sem responsável)
-('2026-10-24T18:45:00', 150.00, 2,  6, 2, 8),   -- 6: Processando (entrega em trânsito)
+('2026-10-12T09:40:00',  40.00, 1,  3, 3, NULL), -- 3: Aguardando pagamento (boleto)
+('2026-10-28T16:20:00',  55.00, 2,  4, 4, 10),  -- 4: Processando
+('2026-10-30T11:05:00',  60.00, 2,  5, 5, NULL), -- 5: Processando (ainda sem responsável)
+('2026-10-24T18:45:00', 150.00, 2,  6, 6, 8),   -- 6: Processando (entrega em trânsito)
 ('2026-10-20T13:10:00',  90.00, 4,  7, 1, NULL), -- 7: Cancelado (antes de ter responsável)
 ('2026-10-14T08:55:00',  30.00, 3,  8, 2, 10),  -- 8: Concluído
-('2026-10-31T19:30:00',  35.00, 1,  9, 1, NULL), -- 9: Aguardando pagamento (PIX)
-('2026-10-29T15:00:00',  70.00, 2, 10, 2, 8);   -- 10: Processando
+('2026-10-31T19:30:00',  35.00, 1,  9, 3, NULL), -- 9: Aguardando pagamento (PIX)
+('2026-10-29T15:00:00',  70.00, 2, 10, 4, 8);   -- 10: Processando
 GO
 
 select * from pedidos

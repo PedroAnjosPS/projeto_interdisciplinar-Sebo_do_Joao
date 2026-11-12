@@ -26,4 +26,3 @@ public class Cliente extends Usuario{
     @JsonIgnore
     private List<Pedido> pedidos = new ArrayList<>();
 }
-

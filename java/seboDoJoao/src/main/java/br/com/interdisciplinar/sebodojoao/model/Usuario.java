@@ -1,6 +1,5 @@
 package br.com.interdisciplinar.sebodojoao.model;
 
-
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;

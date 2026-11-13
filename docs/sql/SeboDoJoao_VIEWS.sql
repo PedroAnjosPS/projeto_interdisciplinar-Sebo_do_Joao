@@ -191,3 +191,7 @@ from pedidos pe
 		group by pedido_id
 	) pag									ON		 pe.id					=	pag.pedido_id
 go
+
+-- testando a view --
+select * from vw_relatorio_pedidos;
+go

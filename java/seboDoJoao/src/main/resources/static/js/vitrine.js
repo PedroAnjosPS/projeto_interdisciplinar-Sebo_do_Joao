@@ -813,7 +813,8 @@ const PedidosStore = (() => {
     // Ícone de cada categoria (o banco devolve só o nome da categoria)
     const ICONES_POR_CATEGORIA = {
         'livros': 'fa-book-open', 'hqs': 'fa-mask', 'discos de vinil': 'fa-record-vinyl',
-        'blu-rays': 'fa-compact-disc', 'dvds': 'fa-film', 'cds': 'fa-compact-disc', 'fitas cassetes': 'fa-cassette-tape'
+        'blu-rays': 'fa-compact-disc', 'dvds': 'fa-film', 'cds': 'fa-compact-disc', 'fitas cassetes': 'fa-cassette-tape',
+        'mangás': 'fa-book-open'
     };
 
     // Apaga as anotações antigas ao carregar este arquivo.

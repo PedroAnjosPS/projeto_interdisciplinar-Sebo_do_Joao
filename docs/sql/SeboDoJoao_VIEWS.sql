@@ -101,3 +101,93 @@ go
 -- executar a view
 select * from vw_pagamentos_pendentes
 go
+
+
+-----------------------------------------------------------------------------------------------------------
+-- 4-) VIEW de Consulta de PEDIDOS (bem mais detalhado), para uso de dados estatísticos --
+-- na planilha do Excel na parte de estatística do trabalho (TESTE) --
+-----------------------------------------------------------------------------------------------------------
+create view vw_relatorio_pedidos
+as
+select	
+	-- Dados de pedidos --
+		pe.id AS [Id do Pedido], 
+		pe.data AS [Data do Pedido], 
+		pe.total AS Total, 
+		CASE pe.status
+			WHEN 1 THEN 'AGUARDANDO PAGAMENTO'
+			WHEN 2 THEN 'PROCESSANDO'
+			WHEN 3 THEN 'CONCLUIDO'
+			WHEN 4 THEN 'CANCELADO'
+			ELSE 'NÃO INFORMADO'
+		END AS [Status do Pedido],
+	-- Dados de clientes e funcionários --
+		uc.nome AS Cliente, 
+		uf.nome AS [Funcionário], 
+	-- Dados de produtos --
+		prod.nome AS [Produto], 
+		cat.nome AS Categoria,
+		gen.nome AS Genero,
+		item_pe.quantidade AS [Quantidade de Produto],
+		item_pe.preco_unitario [Preço Unitário], 
+	-- Valor do subtotal de produtos --
+		(item_pe.quantidade * item_pe.preco_unitario) AS [Subtotal de Produto],
+	-- Dados de entregas --
+		ent.valor_frete AS [Frete de Entrega],
+		CASE ent.status
+			WHEN 1 THEN 'PENDENTE'
+			WHEN 2 THEN 'PREPARANDO'
+			WHEN 3 THEN 'EM TRÂNSITO'
+			WHEN 4 THEN 'ENTREGUE'
+			WHEN 5 THEN 'CANCELADO'
+			ELSE 'NÃO INFORMADO'
+		END AS [Status da Entrega],
+	-- Dados de endereço da entrega --
+		cid.nome AS Cidade,
+		estado.nome AS Estado,
+	-- Dados de pagamentos --
+		CASE pag.status_pagamento
+			WHEN 1 THEN 'PENDENTE'
+			WHEN 2 THEN 'APROVADO'
+			WHEN 3 THEN 'RECUSADO'
+			WHEN 4 THEN 'COMPRA ESTORNADA'
+			ELSE 'NÃO INFORMADO'
+		END AS [Status de Pagamento],
+		pag.forma_pagamento AS [Forma de Pagamento],
+		pag.quantidade_parcelas AS [Quantidade de Parcelas],
+		pag.valor_total AS [Valor Total Pago]
+
+from pedidos pe		
+-- Junção com cliente --
+	LEFT JOIN		clientes cli			ON		 pe.cliente_id			=	cli.usuario_id	
+	LEFT JOIN		usuarios uc				ON		 uc.id					=	cli.usuario_id	
+-- Junção com funcionário responsável pelo pedido --
+	LEFT JOIN		funcionarios func		ON		 pe.funcionario_id		=	func.usuario_id
+	LEFT JOIN		usuarios uf				ON		 uf.id					=	func.usuario_id
+-- Junção com produtos e itens --
+	LEFT JOIN		item_pedidos item_pe	ON		 pe.id					=	item_pe.pedido_id
+	LEFT JOIN		produtos prod			ON		 item_pe.produto_id		=	prod.id
+	LEFT JOIN		categorias cat			ON		 cat.id					=	prod.categoria_id
+	LEFT JOIN		generos gen				ON		 gen.id					=	prod.genero_id
+-- Junção com entregas e endereços --
+	LEFT JOIN		entregas ent			ON		 pe.entrega_id			=	ent.id
+	LEFT JOIN		enderecos ender			ON		 ender.id				=	ent.endereco_id
+	LEFT JOIN		ceps cep				ON		 cep.numero_cep			=	ender.cep_numero
+	LEFT JOIN		cidades cid				ON		 cid.id					=	cep.cidade_id
+	LEFT JOIN		ufs estado				ON		 estado.sigla			=	cid.uf_sigla
+-- Junção com pagamentos com uso de um select mais robusto com o uso de funções, assim, -- 
+-- evitando a repetição de vários registros de um mesmo pedido, pois pagamento pode ser parcelado em até 3 vezes --
+-- e, consequentemente, cada pagamento de uma parcela possui um registro próprio no banco. --
+	LEFT JOIN
+	(
+		select
+			pedido_id,
+			MAX(status) AS status_pagamento,
+			MAX(forma_pagamento) AS forma_pagamento,
+			MAX(quantidade_parcelas) AS quantidade_parcelas,
+			SUM(valor) AS valor_total
+
+		from pagamentos
+		group by pedido_id
+	) pag									ON		 pe.id					=	pag.pedido_id
+go

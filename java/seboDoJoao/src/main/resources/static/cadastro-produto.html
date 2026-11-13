@@ -64,6 +64,7 @@
                             <option value="5">DVDs</option>
                             <option value="6">CDs</option>
                             <option value="7">Fitas Cassetes</option>
+                            <option value="8">Mangás</option>
                         </select>
                     </div>
                     <div class="col-md-5">
@@ -162,25 +163,31 @@
             { id: 17, nome: 'Documentário', grupo: 'Não ficção' },
             { id: 4, nome: 'Rock', grupo: 'Musical' }, { id: 5, nome: 'Heavy Metal', grupo: 'Musical' },
             { id: 8, nome: 'Rap', grupo: 'Musical' }, { id: 18, nome: 'Pop', grupo: 'Musical' },
-            { id: 19, nome: 'MPB', grupo: 'Musical' }, { id: 20, nome: 'Jazz', grupo: 'Musical' }
+            { id: 19, nome: 'MPB', grupo: 'Musical' }, { id: 20, nome: 'Jazz', grupo: 'Musical' },
+            { id: 21, nome: 'Clássica', grupo: 'Musical' }, { id: 22, nome: 'Samba/Pagode', grupo: 'Musical' },
+            { id: 23, nome: 'Sertanejo', grupo: 'Musical' }, { id: 24, nome: 'Blues', grupo: 'Musical' },
+            { id: 25, nome: 'Poesia/Crônica', grupo: 'Ficção' }, { id: 26, nome: 'HQ Independente', grupo: 'Ficção' },
+            { id: 27, nome: 'HQ Super-heróis', grupo: 'Ficção' }, { id: 28, nome: 'Mangá Shonen', grupo: 'Ficção' },
+            { id: 29, nome: 'Mangá Seinen/Shojo', grupo: 'Ficção' }
         ];
 
         // Quais gêneros cada categoria aceita (é isso que faz o select de Gênero mostrar só
         // opções que combinam com o produto). Livros e HQs têm gêneros de ficção e de não ficção;
         // Vinil e CD são só de música; Blu-ray, DVD e Fita Cassete podem ser filme (ficção ou
         // documentário) ou música (show, álbum).
-        const GENEROS_LIVROS = [1, 2, 3, 6, 7, 11, 12, 13, 14, 9, 10, 15, 16];
-        const GENEROS_MUSICAIS = [4, 5, 8, 18, 19, 20];
+        const GENEROS_LIVROS = [1, 2, 3, 6, 7, 11, 12, 13, 14, 9, 10, 15, 16, 25];
+        const GENEROS_MUSICAIS = [4, 5, 8, 18, 19, 20, 21, 22, 23, 24];
         const GENEROS_FILMES = [1, 2, 3, 6, 7, 11, 12, 13, 14, 10, 17];
 
         const GENEROS_POR_CATEGORIA = {
             '1': GENEROS_LIVROS,                                   // Livros
-            '2': [1, 2, 3, 6, 7, 12, 13, 14, 10],                 // HQs
+            '2': [1, 2, 3, 6, 7, 12, 13, 14, 10, 26, 27],         // HQs
             '3': GENEROS_MUSICAIS,                                 // Vinil
             '4': [...GENEROS_FILMES, ...GENEROS_MUSICAIS],         // Blu-rays
             '5': [...GENEROS_FILMES, ...GENEROS_MUSICAIS],         // DVDs
             '6': GENEROS_MUSICAIS,                                 // CDs
-            '7': [...GENEROS_FILMES, ...GENEROS_MUSICAIS]          // Fitas
+            '7': [...GENEROS_FILMES, ...GENEROS_MUSICAIS],         // Fitas
+            '8': [1, 2, 3, 6, 7, 11, 12, 13, 14, 28, 29]           // Mangás
         };
 
         const campoImagem = document.getElementById('campo-imagem');

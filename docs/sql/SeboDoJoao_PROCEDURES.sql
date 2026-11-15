@@ -5,12 +5,7 @@ use Sebo_Do_Joao
 go
 
 -----------------------------------------------------------------------
--- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
--- PROCEDURES - TRANSACTION
------------------------------------------------------------------------
-
------------------------------------------------------------------------
--- 1) Crie uma procedure que finalize a compra de um cliente. A compra
+-- 1) Procedure que finalize a compra de um cliente. A compra
 -- cadastra a entrega (com o endereço de destino e o frete), o pedido,
 -- os itens do pedido e as parcelas do pagamento (com a bandeira e o
 -- final do cartão). O total é calculado pelo banco, o estoque é baixado
@@ -160,7 +155,7 @@ end  -- finalizando a procedure
 go
 
 -----------------------------------------------------------------------
--- 2) Crie uma procedure que avance a entrega de um pedido para a
+-- 2) Procedure que avança a entrega de um pedido para a
 -- próxima etapa: 1 - pendente, 2 - preparando, 3 - em trânsito e
 -- 4 - entregue. A entrega só avança se o pedido estiver processando
 -- (pagamento aprovado) e se ela ainda não foi finalizada. Ao entrar
@@ -168,7 +163,7 @@ go
 -- postagem. Ao ser entregue é gravada a data de entrega e a trigger
 -- tr_entregas_conclui_pedido conclui o pedido
 -- O pedido nasce sem funcionário responsável. O primeiro funcionário
--- que avança a entrega passa a ser o responsável e, a partir daí, só
+-- que gerencia a entrega passa a ser o responsável e, a partir daí, só
 -- ele (ou um funcionário administrador) consegue avançar o pedido
 -----------------------------------------------------------------------
 create procedure sp_avancar_entrega (@pedido_id int, @funcionario_id int)
@@ -258,7 +253,7 @@ end  -- finalizando a procedure
 go
 
 -----------------------------------------------------------------------
--- 3) Crie uma procedure que permita o cliente cancelar o seu pedido
+-- 3) Procedure que permite o cliente cancelar o seu pedido
 -- enquanto a entrega ainda não estiver em trânsito. Os pagamentos
 -- aprovados são estornados (4), os pendentes ficam recusados (3), a
 -- entrega e o pedido ficam cancelados. A trigger
@@ -321,7 +316,7 @@ end  -- finalizando a procedure
 go
 
 -----------------------------------------------------------------------
--- 4) Crie uma procedure que cadastre um cliente, mas lembre-se que todo
+-- 4) Procedure que cadastra um cliente, mas todo
 -- cliente é um usuário. Os dados de acesso (nome, e-mail, senha...)
 -- vão para a tabela usuarios e os dados próprios do cliente (data de
 -- nascimento e CPF) vão para a tabela clientes. O id do usuário criado
@@ -382,7 +377,7 @@ end  -- finalizando a procedure
 go
 
 -----------------------------------------------------------------------
--- 5) Crie uma procedure que cadastre um funcionário, mas lembre-se que
+-- 5) Procedure que cadastra um funcionário, mas
 -- todo funcionário é um usuário. Os dados de acesso vão para a tabela
 -- usuarios e os dados próprios do funcionário (código e se é
 -- administrador) vão para a tabela funcionarios. O id do usuário criado

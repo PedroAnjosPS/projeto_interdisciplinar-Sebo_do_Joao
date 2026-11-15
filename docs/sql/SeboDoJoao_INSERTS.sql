@@ -19,10 +19,27 @@ INSERT INTO ufs (sigla, nome) VALUES
 ('SC', 'Santa Catarina'),
 ('GO', 'Goiás'),
 ('PE', 'Pernambuco'),
-('ES', 'Espírito Santo');
+('ES', 'Espírito Santo'),
+('AC', 'Acre'),
+('AL', 'Alagoas'),
+('AP', 'Amapá'),
+('AM', 'Amazonas'),
+('CE', 'Ceará'),
+('DF', 'Distrito Federal'),
+('MA', 'Maranhão'),
+('MT', 'Mato Grosso'),
+('MS', 'Mato Grosso do Sul'),
+('PA', 'Pará'),
+('PB', 'Paraíba'),
+('PI', 'Piauí'),
+('RN', 'Rio Grande do Norte'),
+('RO', 'Rondônia'),
+('RR', 'Roraima'),
+('SE', 'Sergipe'),
+('TO', 'Tocantins');
 GO
 
--- Demais estados do Brasil, completando as 27 UFs. --
+/*-- Demais estados do Brasil, completando as 27 UFs. --
 -- Ao salvar um endereço, o Java procura a UF informada nesta tabela (ela precisa existir) e --
 -- cadastra sozinho a cidade e o CEP que ainda não estiverem cadastrados. --
 INSERT INTO ufs (sigla, nome) VALUES
@@ -43,7 +60,7 @@ INSERT INTO ufs (sigla, nome) VALUES
 ('RR', 'Roraima'),
 ('SE', 'Sergipe'),
 ('TO', 'Tocantins');
-GO
+GO*/
 
 -- Tabela Cidades -- 
 INSERT INTO cidades (nome, uf_sigla) VALUES 
@@ -56,15 +73,18 @@ INSERT INTO cidades (nome, uf_sigla) VALUES
 ('Salvador', 'BA'),
 ('Florianópolis', 'SC'),
 ('Goiânia', 'GO'),
-('Recife', 'PE');
-GO
-
--- Cidades da planilha de vendas que ainda não estavam cadastradas (ids 11 a 13). --
-INSERT INTO cidades (nome, uf_sigla) VALUES
+('Recife', 'PE'),
 ('São Paulo', 'SP'),
 ('Ribeirão Preto', 'SP'),
 ('Brasília', 'DF');
 GO
+
+/*-- Cidades da planilha de vendas que ainda não estavam cadastradas (ids 11 a 13). --
+INSERT INTO cidades (nome, uf_sigla) VALUES
+('São Paulo', 'SP'),
+('Ribeirão Preto', 'SP'),
+('Brasília', 'DF');
+GO*/
 
 
 -- Tabela Ceps --
@@ -78,17 +98,22 @@ INSERT INTO ceps (numero_cep, cidade_id) VALUES
 ('40010-000', 7),
 ('88010-000', 8),
 ('74000-000', 9),
-('50010-000', 10);
-GO
-
--- CEPs das cidades novas e de mais dois bairros de São José do Rio Preto. --
-INSERT INTO ceps (numero_cep, cidade_id) VALUES
+('50010-000', 10),
 ('01310-100', 11),
 ('14010-000', 12),
 ('70040-010', 13),
 ('15015-000', 1),
 ('15090-000', 1);
 GO
+
+/*-- CEPs das cidades novas e de mais dois bairros de São José do Rio Preto. --
+INSERT INTO ceps (numero_cep, cidade_id) VALUES
+('01310-100', 11),
+('14010-000', 12),
+('70040-010', 13),
+('15015-000', 1),
+('15090-000', 1);
+GO*/
 
 
 -- Tabela Usuarios --
@@ -104,11 +129,7 @@ INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
 ('Ana Paula (Dona)', 'ana.dona@sebodojoao.com', 'admin123', 1, '(17) 99444-5555'),
 ('Pedro Atendente', 'pedro.func@sebodojoao.com', 'func123', 1, '(17) 99555-6666'),
 ('Marcos Supervisor', 'marcos.sup@sebodojoao.com', 'func123', 1, '(17) 99666-7777'),
-('Juliana Estoque', 'juliana.est@sebodojoao.com', 'func123', 1, '(17) 99777-8888');
-GO
-
--- Clientes novos (ids 11 a 22), para que cada cidade da planilha de vendas tenha pelo menos um comprador. --
-INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
+('Juliana Estoque', 'juliana.est@sebodojoao.com', 'func123', 1, '(17) 99777-8888'),
 ('Rafael Teixeira', 'rafael.teixeira@email.com', 'hash123', 1, '(17) 99123-4501'),
 ('Camila Ferraz', 'camila.ferraz@email.com', 'hash123', 1, '(17) 99123-4502'),
 ('Diego Martins', 'diego.martins@email.com', 'hash123', 1, '(17) 99123-4503'),
@@ -123,6 +144,22 @@ INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
 ('Vanessa Moura', 'vanessa.moura@email.com', 'hash123', 1, '(21) 99123-4512');
 GO
 
+/*-- Clientes novos (ids 11 a 22), para que cada cidade da planilha de vendas tenha pelo menos um comprador. --
+INSERT INTO usuarios (nome, email, senha, status, telefone) VALUES
+('Rafael Teixeira', 'rafael.teixeira@email.com', 'hash123', 1, '(17) 99123-4501'),
+('Camila Ferraz', 'camila.ferraz@email.com', 'hash123', 1, '(17) 99123-4502'),
+('Diego Martins', 'diego.martins@email.com', 'hash123', 1, '(17) 99123-4503'),
+('Fernanda Costa', 'fernanda.costa@email.com', 'hash123', 1, '(17) 99123-4504'),
+('Thiago Alves', 'thiago.alves@email.com', 'hash123', 1, '(17) 99123-4505'),
+('Patrícia Rocha', 'patricia.rocha@email.com', 'hash123', 1, '(11) 98123-4506'),
+('Gustavo Nunes', 'gustavo.nunes@email.com', 'hash123', 1, '(19) 97123-4507'),
+('Larissa Duarte', 'larissa.duarte@email.com', 'hash123', 1, '(16) 99123-4508'),
+('Bruno Carvalho', 'bruno.carvalho@email.com', 'hash123', 1, '(62) 99123-4509'),
+('Aline Barbosa', 'aline.barbosa@email.com', 'hash123', 1, '(61) 99123-4510'),
+('Renato Pires', 'renato.pires@email.com', 'hash123', 1, '(71) 99123-4511'),
+('Vanessa Moura', 'vanessa.moura@email.com', 'hash123', 1, '(21) 99123-4512');
+GO*/
+
 
 -- Tabela Clientes --
 INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES 
@@ -133,11 +170,7 @@ INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES
 (3, '1978-12-03', '333.444.555-08'),
 (4, '1995-06-18', '444.555.666-19'),
 (5, '1988-11-30', '555.666.777-20'),
-(6, '2000-01-15', '666.777.888-30');
-GO
-
--- CPFs dos clientes novos, também com os dois dígitos verificadores corretos. --
-INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES
+(6, '2000-01-15', '666.777.888-30'),
 (11, '1990-03-14', '300.087.109-88'),
 (12, '1994-07-22', '300.095.028-15'),
 (13, '1987-11-05', '300.102.947-16'),
@@ -151,6 +184,22 @@ INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES
 (21, '1985-06-21', '300.166.299-90'),
 (22, '1997-10-03', '300.174.218-61');
 GO
+
+/*-- CPFs dos clientes novos, também com os dois dígitos verificadores corretos. --
+INSERT INTO clientes (usuario_id, data_nascimento, cpf) VALUES
+(11, '1990-03-14', '300.087.109-88'),
+(12, '1994-07-22', '300.095.028-15'),
+(13, '1987-11-05', '300.102.947-16'),
+(14, '1998-02-19', '300.110.866-53'),
+(15, '1983-09-30', '300.118.785-92'),
+(16, '1991-05-08', '300.126.704-64'),
+(17, '1986-12-12', '300.134.623-00'),
+(18, '1996-04-27', '300.142.542-39'),
+(19, '1989-08-16', '300.150.461-76'),
+(20, '1993-01-09', '300.158.380-05'),
+(21, '1985-06-21', '300.166.299-90'),
+(22, '1997-10-03', '300.174.218-61');
+GO*/
 
 
 -- Tabela Funcionarios --
@@ -173,11 +222,7 @@ INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, 
 ('Rua da Praia',    '20',   'Apto 3',   'Copacabana',  1, 'Casa',      1, '20010-000', 3), -- 4
 ('Rua Bahia',       '45',   NULL,       'Savassi',     1, 'Casa',      1, '30110-000', 4), -- 5
 ('Rua XV',          '300',  NULL,       'Centro',      1, 'Casa',      1, '80010-000', 5), -- 6
-('Av. Ipiranga',    '1000', 'Bloco B',  'Menino Deus', 1, 'Casa',      1, '90010-000', 6); -- 7
-GO
-
--- Endereços dos clientes novos (um para cada cliente). --
-INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, padrao, cep_numero, cliente_id) VALUES
+('Av. Ipiranga',    '1000', 'Bloco B',  'Menino Deus', 1, 'Casa',      1, '90010-000', 6), -- 7
 ('Rua Bernardino de Campos', '850', NULL, 'Centro', 1, 'Casa', 1, '15010-000', 11), -- 8
 ('Av. Alberto Andaló', '3200', NULL, 'Vila Redentora', 1, 'Casa', 1, '15015-000', 12), -- 9
 ('Rua Independência', '415', NULL, 'Boa Vista', 1, 'Casa', 1, '15090-000', 13), -- 10
@@ -191,6 +236,22 @@ INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, 
 ('Av. Sete de Setembro', '1500', NULL, 'Barra', 1, 'Casa', 1, '40010-000', 21), -- 18
 ('Rua Voluntários da Pátria', '200', NULL, 'Botafogo', 1, 'Casa', 1, '20010-000', 22); -- 19
 GO
+
+/*-- Endereços dos clientes novos (um para cada cliente). --
+INSERT INTO enderecos (logradouro, numero, complemento, bairro, ativo, apelido, padrao, cep_numero, cliente_id) VALUES
+('Rua Bernardino de Campos', '850', NULL, 'Centro', 1, 'Casa', 1, '15010-000', 11), -- 8
+('Av. Alberto Andaló', '3200', NULL, 'Vila Redentora', 1, 'Casa', 1, '15015-000', 12), -- 9
+('Rua Independência', '415', NULL, 'Boa Vista', 1, 'Casa', 1, '15090-000', 13), -- 10
+('Rua Voluntários de São Paulo', '1200', NULL, 'Centro', 1, 'Casa', 1, '15010-000', 14), -- 11
+('Av. Brasil', '900', NULL, 'Boa Vista', 1, 'Casa', 1, '15015-000', 15), -- 12
+('Rua Augusta', '1500', NULL, 'Consolação', 1, 'Casa', 1, '01310-100', 16), -- 13
+('Rua Barão de Jaguara', '700', NULL, 'Centro', 1, 'Casa', 1, '13010-000', 17), -- 14
+('Av. Presidente Vargas', '2100', NULL, 'Jardim América', 1, 'Casa', 1, '14010-000', 18), -- 15
+('Av. Goiás', '300', NULL, 'Centro', 1, 'Casa', 1, '74000-000', 19), -- 16
+('SQS 308 Bloco A', '12', NULL, 'Asa Sul', 1, 'Casa', 1, '70040-010', 20), -- 17
+('Av. Sete de Setembro', '1500', NULL, 'Barra', 1, 'Casa', 1, '40010-000', 21), -- 18
+('Rua Voluntários da Pátria', '200', NULL, 'Botafogo', 1, 'Casa', 1, '20010-000', 22); -- 19
+GO*/
 
 
 -- Tabela Cartoes --
@@ -211,12 +272,13 @@ INSERT INTO categorias (nome) VALUES
 ('Blu-rays'),
 ('DVDs'),
 ('CDs'),
-('Fitas Cassetes')
+('Fitas Cassetes'),
+('Mangás');
 GO
 
--- A planilha de vendas separa os mangás dos quadrinhos, então eles ganham uma categoria própria (id 8). --
+/*-- A planilha de vendas separa os mangás dos quadrinhos, então eles ganham uma categoria própria (id 8). --
 INSERT INTO categorias (nome) VALUES ('Mangás');
-GO
+GO*/
 
 
 -- Tabela Generos --
@@ -240,11 +302,7 @@ INSERT INTO generos (nome) VALUES
 ('Documentário'),
 ('Pop'),
 ('MPB'),
-('Jazz')
-GO
-
--- Gêneros da planilha de vendas que ainda não existiam (ids 21 a 29). --
-INSERT INTO generos (nome) VALUES
+('Jazz'),
 ('Clássica'),
 ('Samba/Pagode'),
 ('Sertanejo'),
@@ -256,8 +314,22 @@ INSERT INTO generos (nome) VALUES
 ('Mangá Seinen/Shojo');
 GO
 
+/*-- Gêneros da planilha de vendas que ainda não existiam (ids 21 a 29). --
+INSERT INTO generos (nome) VALUES
+('Clássica'),
+('Samba/Pagode'),
+('Sertanejo'),
+('Blues'),
+('Poesia/Crônica'),
+('HQ Independente'),
+('HQ Super-heróis'),
+('Mangá Shonen'),
+('Mangá Seinen/Shojo');
+GO*/
+
 -- Tabela Produtos --
 -- Cada título da planilha vira um produto por formato (o mesmo álbum em vinil, CD e fita são três produtos). --
+-- Os 12 últimos produtos (DVDs, Blu-rays e fitas VHS de filmes) não aparecem em nenhuma venda. --
 -- O preço do produto é o da venda mais recente do título na planilha; o preço de cada venda fica em item_pedidos. --
 -- O estoque informado é o inicial, antes das vendas: o que foi vendido (pedidos não cancelados) mais uma sobra de 1 a 5 unidades. --
 -- Gêneros: onde a planilha tem dois (ex.: "Suspense/Terror") ficou o primeiro. --
@@ -342,7 +414,19 @@ INSERT INTO produtos (nome, descricao, estoque, preco, status, categoria_id, gen
 ('Drácula - Bram Stoker', 'Livro usado, em bom estado.', 3, 14.90, 1, 1, 3, 7), -- 78
 ('Batman: O Cavaleiro das Trevas - Frank Miller', 'HQ usada, em bom estado.', 6, 49.90, 1, 2, 27, 7), -- 79
 ('Fita Cassete Acabou Chorare - Novos Baianos', 'Fita cassete usada, funcionando.', 4, 19.90, 1, 7, 19, 7), -- 80
-('CD Elis & Tom - Elis Regina', 'CD original usado, em bom estado.', 5, 39.90, 1, 6, 19, 7); -- 81
+('CD Elis & Tom - Elis Regina', 'CD original usado, em bom estado.', 5, 39.90, 1, 6, 19, 7), -- 81
+('DVD O Senhor dos Anéis: A Sociedade do Anel', 'DVD original usado, em bom estado.', 4, 29.90, 1, 5, 12, 7), -- 82
+('DVD De Volta para o Futuro', 'DVD original usado, em bom estado.', 5, 24.90, 1, 5, 1, 7), -- 83
+('DVD Cidade de Deus', 'DVD original usado, em bom estado.', 3, 27.90, 1, 5, 13, 7), -- 84
+('DVD Os Caça-Fantasmas', 'DVD original usado, em bom estado.', 6, 19.90, 1, 5, 14, 7), -- 85
+('Blu-ray Blade Runner 2049', 'Blu-ray original usado, em bom estado.', 3, 49.90, 1, 4, 1, 7), -- 86
+('Blu-ray Batman: O Cavaleiro das Trevas', 'Blu-ray original usado, em bom estado.', 4, 59.90, 1, 4, 6, 7), -- 87
+('Blu-ray Interestelar', 'Blu-ray original usado, em bom estado.', 3, 54.90, 1, 4, 1, 7), -- 88
+('Blu-ray Parasita', 'Blu-ray original usado, em bom estado.', 5, 44.90, 1, 4, 13, 7), -- 89
+('Fita VHS Jurassic Park - O Parque dos Dinossauros', 'Fita VHS usada, funcionando.', 3, 34.90, 1, 7, 7, 7), -- 90
+('Fita VHS O Exorcista', 'Fita VHS usada, funcionando.', 2, 29.90, 1, 7, 2, 7), -- 91
+('Fita VHS Rocky, um Lutador', 'Fita VHS usada, funcionando.', 4, 24.90, 1, 7, 6, 7), -- 92
+('Fita VHS Curtindo a Vida Adoidado', 'Fita VHS usada, funcionando.', 5, 19.90, 1, 7, 14, 7); -- 93
 GO
 
 -- Tabela Imagem_Produtos --
@@ -428,7 +512,19 @@ INSERT INTO imagem_produtos (caminho, produto_id) VALUES
 ('/imagens/produtos/imagemProduto78.jpg', 78),
 ('/imagens/produtos/imagemProduto79.jpg', 79),
 ('/imagens/produtos/imagemProduto80.jpg', 80),
-('/imagens/produtos/imagemProduto81.jpg', 81);
+('/imagens/produtos/imagemProduto81.jpg', 81),
+('/imagens/produtos/imagemProduto82.jpg', 82),
+('/imagens/produtos/imagemProduto83.jpg', 83),
+('/imagens/produtos/imagemProduto84.jpg', 84),
+('/imagens/produtos/imagemProduto85.jpg', 85),
+('/imagens/produtos/imagemProduto86.jpg', 86),
+('/imagens/produtos/imagemProduto87.jpg', 87),
+('/imagens/produtos/imagemProduto88.jpg', 88),
+('/imagens/produtos/imagemProduto89.jpg', 89),
+('/imagens/produtos/imagemProduto90.jpg', 90),
+('/imagens/produtos/imagemProduto91.jpg', 91),
+('/imagens/produtos/imagemProduto92.jpg', 92),
+('/imagens/produtos/imagemProduto93.jpg', 93);
 GO
 
 -- Tabela Item_Carrinhos --

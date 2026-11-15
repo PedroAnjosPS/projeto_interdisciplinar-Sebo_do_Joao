@@ -10,9 +10,10 @@ go
 use Sebo_do_Joao
 go
 
--- Desliga o cache de IDENTITY do SQL Server. Por padrão ele reserva blocos de 1000 números
--- em memória e, se o servidor reinicia sem desligar direito (ex.: o container do Docker),
--- o bloco é perdido e os ids pulam (ex.: de 12 para 1002). Desligado, os ids seguem em sequência.
+-- Desliga o cache de IDENTITY do SQL Server. Por padrão ele reserva blocos de 1000 números --
+-- em memória e, se o servidor reinicia sem desligar direito (ex: o nosso projeto usa container do --
+-- Docker para o funcionamento da aplicação), --
+-- o bloco é perdido e os ids pulam (ex.: de 12 para 1002). Desligado, os ids seguem em sequência. --
 alter database scoped configuration set identity_cache = off
 go
 

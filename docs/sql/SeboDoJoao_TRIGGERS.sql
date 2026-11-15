@@ -12,7 +12,7 @@ go
 -----------------------------------------------------------------------
 
 -----------------------------------------------------------------------
--- 1) Crie uma trigger que dê baixa no estoque dos produtos quando os
+-- 1) Essa trigger serve para dar baixa no estoque dos produtos quando os
 -- itens de um pedido são cadastrados. Se algum produto não tiver
 -- estoque suficiente, a operação é cancelada com uma mensagem de erro
 -----------------------------------------------------------------------
@@ -45,7 +45,7 @@ end
 go
 
 -----------------------------------------------------------------------
--- 2) Crie uma trigger que devolva ao estoque os produtos de um pedido
+-- 2) Trigger que devolve ao estoque os produtos de um pedido
 -- quando ele for cancelado (status passa a ser 4)
 -----------------------------------------------------------------------
 create trigger tr_pedidos_devolver_estoque
@@ -79,7 +79,7 @@ end
 go
 
 -----------------------------------------------------------------------
--- 3) Crie uma trigger que mude o pedido para processando (2) quando
+-- 3) Trigger que muda o pedido para processando (2) quando
 -- todos os pagamentos dele estiverem aprovados (2)
 -----------------------------------------------------------------------
 create trigger tr_pagamentos_confirma_pedido
@@ -102,7 +102,7 @@ end
 go
 
 -----------------------------------------------------------------------
--- 4) Crie uma trigger que conclua o pedido (status 3) quando a entrega
+-- 4) Trigger que conclua o pedido (status 3) quando a entrega
 -- dele passar para entregue (4)
 -----------------------------------------------------------------------
 create trigger tr_entregas_conclui_pedido

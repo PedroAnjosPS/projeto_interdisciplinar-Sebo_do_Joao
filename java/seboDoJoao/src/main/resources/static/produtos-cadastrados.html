@@ -22,11 +22,14 @@
             <img src="imagens/sebo.png" alt="Sebo do João" class="ec-admin-logo-img">
         </a>
 
-        <div class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden"
-            style="max-width: 500px; width: 90%;">
-            <input type="text" class="form-control ec-search-input border-0" placeholder="Pesquisar...">
-            <button class="btn ec-search-btn" type="button"><i class="fas fa-search"></i></button>
-        </div>
+        <!-- Filtra a lista de produtos desta tela (por nome, categoria ou código) -->
+        <form id="form-pesquisa" class="input-group ec-search-bar ec-search-bar-central rounded-pill overflow-hidden"
+            style="max-width: 500px; width: 90%;" role="search">
+            <input id="campo-pesquisa" type="search" class="form-control ec-search-input border-0"
+                placeholder="Pesquisar por nome, categoria ou código..." aria-label="Pesquisar produtos cadastrados"
+                autocomplete="off">
+            <button class="btn ec-search-btn" type="submit" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+        </form>
 
         <nav class="ms-auto d-flex align-items-center gap-4" aria-label="Menu principal">
             <a href="funcionario.html" class="ec-header-link text-decoration-none d-flex align-items-center gap-2">
@@ -144,11 +147,28 @@
             `;
         }
 
-        async function renderizarLista() {
-            const container = document.getElementById('lista-produtos');
-            const produtos = await ProdutosStore.listar();
+        const campoPesquisa = document.getElementById('campo-pesquisa');
+        let todosOsProdutos = [];
 
-            if (!produtos.length) {
+        // Tira acentos e maiúsculas, para "cancao" achar "Canção"
+        function normalizarTexto(texto) {
+            return String(texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        }
+
+        function produtosFiltrados() {
+            const termo = normalizarTexto(campoPesquisa.value).trim();
+            if (!termo) return todosOsProdutos;
+            return todosOsProdutos.filter((produto) =>
+                normalizarTexto(produto.nome).includes(termo)
+                || normalizarTexto(produto.categoria).includes(termo)
+                || String(produto.id) === termo);
+        }
+
+        function desenharLista() {
+            const container = document.getElementById('lista-produtos');
+            const lista = produtosFiltrados();
+
+            if (!todosOsProdutos.length) {
                 container.innerHTML = `
                     <p class="ec-admin-empty text-center w-100 mt-4">
                         Nenhum produto cadastrado ainda.
@@ -157,8 +177,28 @@
                 return;
             }
 
-            container.innerHTML = produtos.map(montarCardProduto).join('');
+            if (!lista.length) {
+                container.innerHTML = `
+                    <p class="ec-admin-empty text-center w-100 mt-4">
+                        Nenhum produto encontrado para "${escaparHtml(campoPesquisa.value.trim())}".
+                    </p>`;
+                return;
+            }
+
+            container.innerHTML = lista.map(montarCardProduto).join('');
         }
+
+        async function renderizarLista() {
+            todosOsProdutos = await ProdutosStore.listar();
+            desenharLista();
+        }
+
+        // A lista se atualiza enquanto o funcionário digita; o botão e o Enter só reaplicam o filtro
+        campoPesquisa.addEventListener('input', desenharLista);
+        document.getElementById('form-pesquisa').addEventListener('submit', (evento) => {
+            evento.preventDefault();
+            desenharLista();
+        });
 
         // Modal de confirmação de remoção (em vez do confirm() do navegador)
         const elementoModalRemocao = document.getElementById('modalConfirmarRemocao');

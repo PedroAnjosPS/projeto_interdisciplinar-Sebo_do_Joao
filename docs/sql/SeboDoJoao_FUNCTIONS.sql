@@ -5,12 +5,7 @@ use Sebo_Do_Joao
 go
 
 -----------------------------------------------------------------------
--- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
--- FUNCTIONS
------------------------------------------------------------------------
-
------------------------------------------------------------------------
--- 1) Crie uma function que calcule o total de um pedido, somando a
+-- 1) Function que calcula o total de um pedido, somando a
 -- quantidade vezes o preço de cada item do pedido
 -- Saída de dados: o valor total (zero se o pedido não tiver itens)
 -----------------------------------------------------------------------
@@ -35,7 +30,7 @@ select dbo.fn_total_pedido(1) Total_Pedido
 go
 
 -----------------------------------------------------------------------
--- 2) Crie uma function que traga os itens de um pedido
+-- 2-) Function que traga os itens de um pedido
 -- Saída de dados: id e nome do produto, categoria, quantidade, preço
 -- unitário e subtotal de cada item
 -----------------------------------------------------------------------
@@ -57,7 +52,7 @@ select * from dbo.fn_itens_do_pedido(1)
 go
 
 -----------------------------------------------------------------------
--- 3) Crie uma function que gere as parcelas de uma compra
+-- 3-) Crie uma function que gere as parcelas de uma compra
 -- Saída de dados: número da parcela, valor e data de vencimento
 -- Se o total não dividir certinho, os centavos que sobram ficam na
 -- última parcela. Cada parcela vence um mês depois da anterior

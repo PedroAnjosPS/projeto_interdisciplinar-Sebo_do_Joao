@@ -5,12 +5,7 @@ use Sebo_do_Joao
 go
 
 -----------------------------------------------------------------------
--- PROGRAMAÇÃO DE BANCO DE DADOS - SEBO DO JOÃO
--- VIEWS
------------------------------------------------------------------------
-
------------------------------------------------------------------------
--- 1) Crie uma view para consultar todos os pedidos
+-- 1) View para consultar todos os pedidos
 -- Saída de dados: dados do pedido, do cliente, do funcionário que
 -- cuida do pedido, da entrega e do endereço de entrega
 -- O funcionário usa LEFT JOIN, pois o pedido só tem funcionário
@@ -54,7 +49,7 @@ select * from vw_pedidos_detalhados
 go
 
 -----------------------------------------------------------------------
--- 2) Crie uma view para consultar as vendas de cada produto
+-- 2) View para consultar as vendas de cada produto
 -- Saída de dados: produto, categoria, gênero, quantidade de pedidos,
 -- unidades vendidas e faturamento
 -- Só entram os pedidos processando (2) e concluídos (3)
@@ -79,7 +74,7 @@ select * from vw_vendas_por_produto
 go
 
 -----------------------------------------------------------------------
--- 3) Crie uma view para consultar os pagamentos pendentes
+-- 3) View para consultar os pagamentos pendentes
 -- Saída de dados: pagamento, pedido, cliente, parcela, valor, data de
 -- vencimento e quantos dias a parcela está atrasada
 -----------------------------------------------------------------------
@@ -106,6 +101,8 @@ go
 -----------------------------------------------------------------------------------------------------------
 -- 4-) VIEW de Consulta de PEDIDOS (bem mais detalhado), para uso de dados estatísticos --
 -- na planilha do Excel na parte de estatística do trabalho (TESTE) --
+-- ESSA VIEW NÂO ESTÁ SENDO USADA NO SITE, APENAS NA PLANILHA DO EXCEL: -- 
+-- "\projeto_interdisciplinar-Sebo_do_Joao\docs\metodos-estatisticos" --
 -----------------------------------------------------------------------------------------------------------
 create view vw_relatorio_pedidos
 as

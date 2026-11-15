@@ -33,17 +33,19 @@ const ProdutosStore = (() => {
     // Os ids são os mesmos das <option> de cadastro-produto.html (e da tabela do banco).
     const NOMES_CATEGORIAS = {
         1: 'Livros', 2: 'HQs', 3: 'Discos de Vinil', 4: 'Blu-rays',
-        5: 'Dvds', 6: 'Cds', 7: 'Fitas Cassetes'
+        5: 'Dvds', 6: 'Cds', 7: 'Fitas Cassetes', 8: 'Mangás'
     };
     const ICONES_CATEGORIAS = {
         1: 'fa-book-open', 2: 'fa-mask', 3: 'fa-record-vinyl', 4: 'fa-compact-disc',
-        5: 'fa-film', 6: 'fa-compact-disc', 7: 'fa-cassette-tape'
+        5: 'fa-film', 6: 'fa-compact-disc', 7: 'fa-cassette-tape', 8: 'fa-book-open'
     };
     const NOMES_GENEROS = {
         1: 'Ficção Científica', 2: 'Terror', 3: 'Suspense', 4: 'Rock', 5: 'Heavy Metal',
         6: 'Ação', 7: 'Aventura', 8: 'Rap', 9: 'Didático', 10: 'Biografia',
         11: 'Romance', 12: 'Fantasia', 13: 'Drama', 14: 'Comédia', 15: 'Auto-ajuda',
-        16: 'Científico', 17: 'Documentário', 18: 'Pop', 19: 'MPB', 20: 'Jazz'
+        16: 'Científico', 17: 'Documentário', 18: 'Pop', 19: 'MPB', 20: 'Jazz',
+        21: 'Clássica', 22: 'Samba/Pagode', 23: 'Sertanejo', 24: 'Blues', 25: 'Poesia/Crônica',
+        26: 'HQ Independente', 27: 'HQ Super-heróis', 28: 'Mangá Shonen', 29: 'Mangá Seinen/Shojo'
     };
 
     function completarProduto(produto) {

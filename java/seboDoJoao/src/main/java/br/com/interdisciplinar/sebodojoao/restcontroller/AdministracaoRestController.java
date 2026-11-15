@@ -72,7 +72,7 @@ public class AdministracaoRestController {
         }
     }
 
-    // Números do painel de dados. Pedido cancelado não conta como venda.
+    // Números do painel de dados. Só pedido pago conta como venda (status 2 = processando e 3 = concluído).
     @GetMapping("/painel")
     public Map<String, Object> painel(HttpSession sessao) {
         ControleDeAcesso.exigirAdministrador(sessao);
@@ -81,12 +81,12 @@ public class AdministracaoRestController {
 
         // Cartões de números
         Map<String, Object> numeros = new LinkedHashMap<>();
-        numeros.put("vendas", jdbc.queryForObject("SELECT COUNT(*) FROM pedidos WHERE status <> 4", Integer.class));
-        numeros.put("valorVendido", jdbc.queryForObject("SELECT COALESCE(SUM(total), 0) FROM pedidos WHERE status <> 4", java.math.BigDecimal.class));
+        numeros.put("vendas", jdbc.queryForObject("SELECT COUNT(*) FROM pedidos WHERE status IN (2, 3)", Integer.class));
+        numeros.put("valorVendido", jdbc.queryForObject("SELECT COALESCE(SUM(total), 0) FROM pedidos WHERE status IN (2, 3)", java.math.BigDecimal.class));
         numeros.put("faturamento", jdbc.queryForObject("SELECT COALESCE(SUM(valor), 0) FROM pagamentos WHERE status = 2", java.math.BigDecimal.class));
+        // A view vw_pagamentos_pendentes já traz só as parcelas pendentes de pedidos não cancelados
         numeros.put("aReceber", jdbc.queryForObject(
-            "SELECT COALESCE(SUM(pg.valor), 0) FROM pagamentos pg INNER JOIN pedidos pe ON pe.id = pg.pedido_id "
-            + "WHERE pg.status = 1 AND pe.status <> 4", java.math.BigDecimal.class));
+            "SELECT COALESCE(SUM(valor), 0) FROM dbo.vw_pagamentos_pendentes", java.math.BigDecimal.class));
         numeros.put("estornado", jdbc.queryForObject("SELECT COALESCE(SUM(valor), 0) FROM pagamentos WHERE status = 4", java.math.BigDecimal.class));
         numeros.put("clientes", jdbc.queryForObject("SELECT COUNT(*) FROM clientes", Integer.class));
         numeros.put("clientesAtivos", jdbc.queryForObject(
@@ -116,7 +116,7 @@ public class AdministracaoRestController {
         painel.put("vendasPorDia", jdbc.queryForList(
             "SELECT dia, quantidade, valor FROM ("
             + "  SELECT TOP 30 CONVERT(VARCHAR(10), data, 23) AS dia, COUNT(*) AS quantidade, SUM(total) AS valor "
-            + "  FROM pedidos WHERE status <> 4 GROUP BY CONVERT(VARCHAR(10), data, 23) ORDER BY dia DESC"
+            + "  FROM pedidos WHERE status IN (2, 3) GROUP BY CONVERT(VARCHAR(10), data, 23) ORDER BY dia DESC"
             + ") ultimos ORDER BY dia"));
 
         // Quanto cada categoria vendeu (as sem venda aparecem com zero)
@@ -127,22 +127,21 @@ public class AdministracaoRestController {
             + "FROM categorias c "
             + "LEFT JOIN produtos pr ON pr.categoria_id = c.id "
             + "LEFT JOIN item_pedidos ip ON ip.produto_id = pr.id "
-            + "LEFT JOIN pedidos pe ON pe.id = ip.pedido_id AND pe.status <> 4 "
+            + "LEFT JOIN pedidos pe ON pe.id = ip.pedido_id AND pe.status IN (2, 3) "
             + "GROUP BY c.id, c.nome ORDER BY c.id"));
 
-        // Os 5 produtos mais vendidos
+        // Os 5 produtos mais vendidos. A view vw_vendas_por_produto só conta pedidos pagos
+        // (processando ou concluídos) e já traz as unidades vendidas de cada produto
         painel.put("produtosMaisVendidos", jdbc.queryForList(
-            "SELECT TOP 5 pr.nome, SUM(ip.quantidade) AS unidades "
-            + "FROM item_pedidos ip "
-            + "INNER JOIN pedidos pe ON pe.id = ip.pedido_id AND pe.status <> 4 "
-            + "INNER JOIN produtos pr ON pr.id = ip.produto_id "
-            + "GROUP BY pr.id, pr.nome ORDER BY SUM(ip.quantidade) DESC, pr.nome"));
+            "SELECT TOP 5 produto AS nome, unidades_vendidas AS unidades "
+            + "FROM dbo.vw_vendas_por_produto "
+            + "ORDER BY unidades_vendidas DESC, produto"));
 
         // Como os clientes pagam (conta um pagamento por pedido: a primeira parcela)
         painel.put("formasDePagamento", jdbc.queryForList(
             "SELECT pg.forma_pagamento AS nome, COUNT(*) AS quantidade "
             + "FROM pagamentos pg INNER JOIN pedidos pe ON pe.id = pg.pedido_id "
-            + "WHERE pg.numero_parcela = 1 AND pe.status <> 4 "
+            + "WHERE pg.numero_parcela = 1 AND pe.status IN (2, 3) "
             + "GROUP BY pg.forma_pagamento ORDER BY quantidade DESC"));
 
         return painel;

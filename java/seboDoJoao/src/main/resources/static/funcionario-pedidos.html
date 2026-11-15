@@ -71,7 +71,9 @@
 
         function montarPedidoGestao(p) {
             const itens = p.itens.map((i) => `<li>${escaparHtml(i.nome)} <span class="ec-texto-suave">× ${i.quantidade}</span></li>`).join('');
-            const parcelas = p.pagamento.tipo === 'pix' ? 'Pix' : `Cartão de crédito · ${p.pagamento.parcelas}x`;
+            const parcelas = p.pagamento.tipo === 'pix' ? 'Pix'
+                : p.pagamento.tipo === 'boleto' ? 'Boleto'
+                : `Cartão de crédito · ${p.pagamento.parcelas}x`;
             // Para onde enviar o pedido. O endereço vem do banco (entregas.endereco_id) e mostra quem recebe,
             // o telefone de contato e o endereço completo, que são os dados necessários para despachar.
             const e = p.endereco;

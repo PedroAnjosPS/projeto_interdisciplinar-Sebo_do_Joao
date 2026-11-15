@@ -10,7 +10,7 @@ import java.util.List;
 public record CompraRequestDTO(
     // Produtos do carrinho: cada um com o id e a quantidade
     List<ItemCompraDTO> itens,
-    // "PIX" ou "CARTAO_CREDITO" (o banco também aceita "BOLETO", mas o site ainda não oferece)
+    // "PIX", "BOLETO" ou "CARTAO_CREDITO"
     String formaPagamento,
     // Quantidade de parcelas (1 a 3; só o cartão parcela). Se vier vazio, vale 1.
     Integer parcelas,

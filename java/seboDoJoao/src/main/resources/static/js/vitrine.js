@@ -836,11 +836,30 @@ const PedidosStore = (() => {
             '62' + String(4 + codigoDoPedido.length).padStart(2, '0') + '05' + String(codigoDoPedido.length).padStart(2, '0') + codigoDoPedido + '6304DEMO';
     }
 
+    // Linha digitável de exemplo do boleto (47 números, fictícia). Como o código do Pix, é calculada a
+    // partir do código do pedido: o mesmo pedido sempre mostra a mesma linha.
+    function gerarLinhaDigitavel(total, codigoDoPedido) {
+        let h = 2166136261;
+        let numeros = '';
+        // 32 números "aleatórios" (banco, carteira, nosso número...), tudo de mentira
+        while (numeros.length < 32) {
+            for (const c of codigoDoPedido + numeros.length) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+            numeros += String(h % 100000).padStart(5, '0');
+        }
+        numeros = numeros.slice(0, 32);
+        const valor = String(Math.round(Number(total) * 100)).padStart(10, '0');
+        // Depois dos 32 números vêm 1 dígito verificador, o fator de vencimento (4) e o valor (10)
+        const d = numeros + '1' + '9999' + valor;
+        return `${d.slice(0, 5)}.${d.slice(5, 10)} ${d.slice(10, 15)}.${d.slice(15, 21)} ` +
+            `${d.slice(21, 26)}.${d.slice(26, 32)} ${d.slice(32, 33)} ${d.slice(33)}`;
+    }
+
     // Converte o pedido que veio do Java (CompraResponseDTO) para o formato que as telas já usam.
     function converter(dto) {
         const entrega = dto.entrega || {};
         const pg = dto.pagamento || {};
         const ehPix = pg.forma === 'PIX';
+        const ehBoleto = pg.forma === 'BOLETO';
 
         // O endereço de entrega vem do banco (dto.endereco) e é traduzido para o mesmo formato
         // usado pelas telas (rua, numero, semNumero...), igual ao EnderecosStore.
@@ -875,14 +894,15 @@ const PedidosStore = (() => {
             endereco,
             entrega: { status: entrega.statusEntrega, codigoRastreio: entrega.codigoRastreio },
             pagamento: {
-                tipo: ehPix ? 'pix' : 'cartao',
+                tipo: ehPix ? 'pix' : ehBoleto ? 'boleto' : 'cartao',
                 status: pg.statusPagamento,
                 parcelas: pg.parcelas || 1,
                 valorParcela: Number(pg.valorParcela),
                 // Bandeira e final do cartão vêm do banco (pagamentos.bandeira / final_cartao)
                 bandeira: pg.bandeira || '',
                 ultimos4: pg.finalCartao || '',
-                pixCodigo: ehPix ? gerarCodigoPix(dto.total, dto.codigo) : undefined
+                pixCodigo: ehPix ? gerarCodigoPix(dto.total, dto.codigo) : undefined,
+                boletoCodigo: ehBoleto ? gerarLinhaDigitavel(dto.total, dto.codigo) : undefined
             },
             podeCancelar: dto.podeCancelar,
             podePagar: dto.podePagar,
@@ -910,7 +930,7 @@ const PedidosStore = (() => {
     // parcelas...) para avisar rápido, mas quem decide de verdade é o banco: ele usa o preço
     // cadastrado do produto, confere o estoque e desfaz tudo se algo falhar.
     //   pagamento: { tipo: 'cartao', cartaoId | cartaoNovo: { numero, titular, validade, salvar }, cvv, parcelas }
-    //              ou { tipo: 'pix' }
+    //              ou { tipo: 'pix' } ou { tipo: 'boleto' }
     async function criar({ enderecoId, freteId, pagamento }) {
         const usuario = await usuarioLogadoOuErro();
 
@@ -939,7 +959,7 @@ const PedidosStore = (() => {
         const total = subtotal + frete.preco;
 
         // ----- pagamento -----
-        let formaPagamento;   // o nome que o banco entende: 'PIX' ou 'CARTAO_CREDITO'
+        let formaPagamento;   // o nome que o banco entende: 'PIX', 'BOLETO' ou 'CARTAO_CREDITO'
         let parcelasEscolhidas = 1;
         let cartaoUsado = null;
         if (pagamento && pagamento.tipo === 'cartao') {
@@ -965,6 +985,8 @@ const PedidosStore = (() => {
             cartaoUsado = { bandeira: cartao.bandeira, ultimos4: cartao.ultimos4 };
         } else if (pagamento && pagamento.tipo === 'pix') {
             formaPagamento = 'PIX';
+        } else if (pagamento && pagamento.tipo === 'boleto') {
+            formaPagamento = 'BOLETO';
         } else {
             throw new Error('Escolha uma forma de pagamento.');
         }
@@ -998,9 +1020,9 @@ const PedidosStore = (() => {
         return converter(pedidoCriado);
     }
 
-    // Só pra demonstração: "paga" um Pix pendente (no mundo real quem avisa é o banco/gateway).
+    // Só pra demonstração: "paga" um Pix ou boleto pendente (no mundo real quem avisa é o banco/gateway).
     // O Java marca as parcelas como aprovadas no banco e a trigger muda o pedido para "Processando".
-    async function simularPagamentoDoPix(id) {
+    async function simularPagamento(id) {
         await usuarioLogadoOuErro();
         return converter(await chamarApi(`/api/compras/${encodeURIComponent(id)}/simular-pagamento`, { method: 'POST' }));
     }
@@ -1021,7 +1043,7 @@ const PedidosStore = (() => {
 
     return {
         CHAVE_EXTRAS, STATUS_AGUARDANDO, STATUS_PROCESSANDO, STATUS_CONCLUIDO, STATUS_CANCELADO,
-        listar, obter, criar, simularPagamentoDoPix, cancelar, listarTodos, avancarEntrega
+        listar, obter, criar, simularPagamento, cancelar, listarTodos, avancarEntrega
     };
 })();
 

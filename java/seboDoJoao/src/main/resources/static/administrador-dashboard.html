@@ -48,7 +48,7 @@
     <main class="container py-5">
         <div class="mb-4">
             <h2 class="ec-admin-title fw-bold mb-1">INFORMAÇÕES DO SEBO</h2>
-            <p class="ec-conta-email mb-0">Resumo das vendas, dos clientes e do estoque. Pedidos cancelados não entram na conta das vendas.</p>
+            <p class="ec-conta-email mb-0">Resumo das vendas, dos clientes e do estoque. Só pedidos pagos entram na conta das vendas.</p>
         </div>
 
         <p id="dash-erro" class="text-danger" role="alert"></p>
@@ -131,7 +131,7 @@
         function mostrarNumeros(n) {
             const ticket = n.vendas ? n.valorVendido / n.vendas : 0;
             document.getElementById('dash-numeros').innerHTML = [
-                cartao('fa-cart-shopping', 'Número de vendas', n.vendas, 'pedidos não cancelados'),
+                cartao('fa-cart-shopping', 'Número de vendas', n.vendas, 'pedidos pagos'),
                 cartao('fa-sack-dollar', 'Faturamento', dinheiro(n.faturamento), `${dinheiro(n.aReceber)} ainda a receber`),
                 cartao('fa-receipt', 'Ticket médio', dinheiro(ticket), `${dinheiro(n.valorVendido)} vendidos no total`),
                 cartao('fa-rotate-left', 'Valor estornado', dinheiro(n.estornado), 'pedidos cancelados e pagos'),

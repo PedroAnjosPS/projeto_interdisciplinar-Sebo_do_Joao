@@ -134,6 +134,18 @@
                                 <p class="ec-texto-suave mb-0">Depois de confirmar a compra, você vê o QR Code e o código Pix pra pagar.</p>
                             </div>
                         </div>
+
+                        <!-- Boleto -->
+                        <div class="ec-co-opcao" id="opcao-boleto">
+                            <label class="ec-co-opcao-rotulo">
+                                <input type="radio" name="forma" value="boleto" class="form-check-input">
+                                <i class="fas fa-barcode ec-co-opcao-icone"></i>
+                                <span class="flex-grow-1">Boleto<small>Compensação em até 3 dias úteis</small></span>
+                            </label>
+                            <div class="ec-co-opcao-corpo" id="detalhes-boleto" hidden>
+                                <p class="ec-texto-suave mb-0">Depois de confirmar a compra, você vê a linha digitável do boleto pra pagar. O pedido só é preparado depois que o pagamento é confirmado.</p>
+                            </div>
+                        </div>
                     </div>
                     <div id="erro-co-pagamento" class="ec-form-erro" role="alert"></div>
                 </section>
@@ -176,7 +188,7 @@
             enderecoId: null,
             opcoesFrete: [],
             freteId: null,
-            forma: 'cartao',      // 'cartao' | 'pix'
+            forma: 'cartao',      // 'cartao' | 'pix' | 'boleto'
             cartoes: [],
             cartaoId: 'novo',     // id de um cartão salvo, ou 'novo'
             parcelas: 1
@@ -300,8 +312,10 @@
         function renderizarFormaDePagamento() {
             $('opcao-cartao').classList.toggle('ec-co-opcao-ativa', estado.forma === 'cartao');
             $('opcao-pix').classList.toggle('ec-co-opcao-ativa', estado.forma === 'pix');
+            $('opcao-boleto').classList.toggle('ec-co-opcao-ativa', estado.forma === 'boleto');
             $('detalhes-cartao').hidden = estado.forma !== 'cartao';
             $('detalhes-pix').hidden = estado.forma !== 'pix';
+            $('detalhes-boleto').hidden = estado.forma !== 'boleto';
             document.querySelector('input[name="forma"][value="' + estado.forma + '"]').checked = true;
         }
 
@@ -405,7 +419,8 @@
                 primeiroCampoComErro = primeiroCampoComErro || $('secao-frete');
             }
 
-            let pagamento = { tipo: 'pix' };
+            // Pix e boleto não precisam de mais nenhum dado; só o cartão tem campos para conferir
+            let pagamento = { tipo: estado.forma };
             if (estado.forma === 'cartao') {
                 if (estado.cartaoId === 'novo') {
                     const ids = Object.keys(verificadoresDoCartaoNovo);

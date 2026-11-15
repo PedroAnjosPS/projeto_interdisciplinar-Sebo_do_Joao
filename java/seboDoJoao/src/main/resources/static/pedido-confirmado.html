@@ -119,6 +119,7 @@
             // final do cartão usado (pagamentos.bandeira / final_cartao). Se esses dois dados não existirem,
             // aparece só "Cartão de crédito".
             if (pg.tipo === 'pix') return 'Pix';
+            if (pg.tipo === 'boleto') return 'Boleto';
             const nome = pg.bandeira ? (NOMES_DAS_BANDEIRAS[pg.bandeira] || 'Cartão') : 'Cartão de crédito';
             const final = pg.ultimos4 ? ` final ${pg.ultimos4}` : '';
             const parcelas = pg.parcelas === 1
@@ -155,6 +156,29 @@
                             <p class="ec-form-dica mt-2 mb-0">Demonstração: este site não cobra de verdade. "Simular pagamento" faz de conta que o Pix foi pago.</p>
                         </div>
                     </div>
+                </section>`;
+        }
+
+        // Boleto: o pedido fica aguardando pagamento até o boleto ser compensado (aqui, simulado)
+        function montarBlocoBoleto(p) {
+            if (p.pagamento.status === 'Aprovado') {
+                return `<section class="ec-ped-bloco ec-ped-pix-pago">
+                    <i class="fas fa-circle-check me-2"></i>Boleto pago. Obrigado!
+                </section>`;
+            }
+            // Pedido cancelado (pagamento recusado): não há mais nada a pagar
+            if (!p.podePagar) return '';
+            return `
+                <section class="ec-ped-bloco">
+                    <h3 class="ec-ped-bloco-titulo"><i class="fas fa-barcode me-2"></i>Pague com boleto</h3>
+                    <p class="ec-texto-suave">Pague no app do seu banco, no internet banking ou em uma lotérica usando a linha digitável abaixo. O pagamento leva até 3 dias úteis para ser confirmado.</p>
+                    <label class="ec-admin-label" for="boleto-codigo">Linha digitável</label>
+                    <textarea id="boleto-codigo" class="form-control ec-admin-input" rows="2" readonly>${escaparHtml(p.pagamento.boletoCodigo)}</textarea>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="button" id="boleto-copiar" class="btn ec-btn-dark ec-btn-pill px-4"><i class="far fa-copy me-2"></i>Copiar código</button>
+                        <button type="button" id="boleto-simular" class="btn ec-btn-outline-primary ec-btn-pill px-4">Simular pagamento</button>
+                    </div>
+                    <p class="ec-form-dica mt-2 mb-0">Demonstração: este site não cobra de verdade. "Simular pagamento" faz de conta que o boleto foi pago e compensado.</p>
                 </section>`;
         }
 
@@ -195,6 +219,7 @@
                 </section>
 
                 ${p.pagamento.tipo === 'pix' ? montarBlocoPix(p) : ''}
+                ${p.pagamento.tipo === 'boleto' ? montarBlocoBoleto(p) : ''}
 
                 <div class="row g-4">
                     <div class="col-lg-7">
@@ -279,12 +304,14 @@
                 });
             }
 
-            if (pedido.pagamento.tipo === 'pix' && pedido.podePagar) {
-                desenharQrIlustrativo(document.getElementById('pix-qr'), pedido.pagamento.pixCodigo);
+            // Pix e boleto pendentes têm os mesmos botões (copiar e simular pagamento), cada um com o seu prefixo
+            const tipoPagamento = pedido.pagamento.tipo;
+            if ((tipoPagamento === 'pix' || tipoPagamento === 'boleto') && pedido.podePagar) {
+                if (tipoPagamento === 'pix') desenharQrIlustrativo(document.getElementById('pix-qr'), pedido.pagamento.pixCodigo);
 
-                document.getElementById('pix-copiar').addEventListener('click', async (evento) => {
+                document.getElementById(`${tipoPagamento}-copiar`).addEventListener('click', async (evento) => {
                     const botao = evento.currentTarget;
-                    const campo = document.getElementById('pix-codigo');
+                    const campo = document.getElementById(`${tipoPagamento}-codigo`);
                     try {
                         await navigator.clipboard.writeText(campo.value);
                     } catch (erro) {
@@ -295,9 +322,9 @@
                     setTimeout(() => { botao.innerHTML = '<i class="far fa-copy me-2"></i>Copiar código'; }, 2500);
                 });
 
-                document.getElementById('pix-simular').addEventListener('click', async () => {
+                document.getElementById(`${tipoPagamento}-simular`).addEventListener('click', async () => {
                     try {
-                        await PedidosStore.simularPagamentoDoPix(pedido.id);
+                        await PedidosStore.simularPagamento(pedido.id);
                         renderizarPedido(usuario);
                     } catch (erro) {
                         mostrarErro(erro);

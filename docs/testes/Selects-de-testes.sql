@@ -144,3 +144,41 @@ order by
 	pe.id,
 	prod.nome;
 go
+
+-----------------------------------------------------------------------------------------------------------
+-- Consulta de ENDEREÇOS --
+-----------------------------------------------------------------------------------------------------------
+select ender.id ID_Endereco, ender.logradouro Logradouro, ender.numero [Numero do Endereco], ender.bairro Bairro, 
+ender.apelido Apelido, cid.nome Cidade, ufs.sigla UF, ender.cep_numero CEP,
+	case ender.ativo
+		when 1 then 'Sim'
+		else 'Não'
+	end as [Endereço Ativo?],
+	case ender.padrao
+		when 1 then 'Sim'
+		else 'Não'
+	end as [Endereço Padrão?],
+uc.nome Cliente, uc.email Email, cli.cpf CPF 
+from enderecos ender
+	INNER JOIN clientes cli		ON		ender.cliente_id	= cli.usuario_id
+	LEFT  JOIN usuarios uc		ON		cli.usuario_id		= uc.id
+	LEFT  JOIN ceps cep			ON		ender.cep_numero	= cep.numero_cep
+	LEFT  JOIN cidades cid		ON		cep.cidade_id		= cid.id
+	LEFT  JOIN ufs				ON		cid.uf_sigla		= ufs.sigla
+order by cli.usuario_id;
+go
+
+-----------------------------------------------------------------------------------------------------------
+-- Consulta de CARTÕES --
+-----------------------------------------------------------------------------------------------------------
+select cart.*, 
+	case cart.padrao
+		when 1 then 'Sim'
+		else 'Não'
+	end as [Cartão Padrão?],
+uc.nome Cliente, uc.email Email, cli.cpf CPF 
+from cartoes cart 
+	INNER JOIN clientes cli		ON		cart.cliente_id = cli.usuario_id
+	LEFT  JOIN usuarios uc		ON		cli.usuario_id	= uc.id
+order by cli.usuario_id;
+go

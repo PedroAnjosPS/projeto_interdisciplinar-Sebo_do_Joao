@@ -1,7 +1,7 @@
 =============== CADASTRAR CLIENTE ===============
 Cliente: Jessica;
 
-e-mail: jessica@gmail.com;
+e-mail: jessica@gmail.com, jessica@hotmail.com;
 
 senha: 12345678, jessica123;
 

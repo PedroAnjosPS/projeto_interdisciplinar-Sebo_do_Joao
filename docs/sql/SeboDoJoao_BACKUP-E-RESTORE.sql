@@ -46,6 +46,9 @@ WITH MOVE 'Sebo_do_Joao'     TO '/var/opt/mssql/data/Sebo_Do_Joao_Teste.mdf',
      MOVE 'Sebo_do_Joao_log' TO '/var/opt/mssql/data/Sebo_Do_Joao_Teste.ldf';
 
 
+-- Copia o arquivo .bak para pasta desejada do projeto --
+-- docker cp meu_sql_server:/var/opt/mssql/backup/Sebo_Do_Joao_Teste.bak "C:\Users\Particular\Documents\repo_local_Projeto-Interdisciplinar-Sebo-do-Joao\projeto_interdisciplinar-Sebo_do_Joao\docs\sql\backup-sql\Sebo_Do_Joao_Teste.bak" --
+
 -- Deleta o banco de dados restaurado sem gerar conflitos --
 USE master;
 GO

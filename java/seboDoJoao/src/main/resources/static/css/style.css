@@ -284,6 +284,34 @@ h3,
     height: 400px;
 }
 
+/* Ilustração de cada slide (pasta imagens/carrossel). O degradê fica por baixo,
+   então se a imagem não carregar o slide continua com o fundo de antes. */
+.ec-slide-livros,
+.ec-slide-vinis,
+.ec-slide-novidades {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.ec-slide-livros {
+    background-image: url('../imagens/carrossel/slide-livros.svg'), linear-gradient(135deg, #A29386 0%, #4D443B 100%);
+}
+
+.ec-slide-vinis {
+    background-image: url('../imagens/carrossel/slide-vinis.svg'), linear-gradient(135deg, #A29386 0%, #4D443B 100%);
+}
+
+.ec-slide-novidades {
+    background-image: url('../imagens/carrossel/slide-novidades.svg'), linear-gradient(135deg, #A29386 0%, #4D443B 100%);
+}
+
+/* Sombra leve para o texto não se perder em cima do desenho */
+.ec-carousel-slide h2,
+.ec-carousel-slide p {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
 .carousel-indicators [data-bs-target] {
     width: 10px;
     height: 10px;

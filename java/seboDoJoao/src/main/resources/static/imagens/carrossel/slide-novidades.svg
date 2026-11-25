@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A29386"/>
+      <stop offset="1" stop-color="#4D443B"/>
+    </linearGradient>
+    <radialGradient id="cd" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.15" stop-color="#E6E1DC"/>
+      <stop offset="0.6" stop-color="#C2B5A9"/>
+      <stop offset="1" stop-color="#A29386"/>
+    </radialGradient>
+    <!-- estrela de quatro pontas -->
+    <path id="brilho" d="M0 -28 C4 -8 8 -4 28 0 C8 4 4 8 0 28 C-4 8 -8 4 -28 0 C-8 -4 -4 -8 0 -28 Z" fill="#E6E1DC"/>
+  </defs>
+
+  <rect width="1600" height="400" fill="url(#fundo)"/>
+
+  <!-- ===== Fitas cassete (esquerda) ===== -->
+  <!-- fita de trás -->
+  <g transform="translate(40 190) rotate(9)">
+    <rect width="280" height="176" rx="14" fill="#8C7E70"/>
+    <rect x="20" y="16" width="240" height="84" rx="6" fill="#C2B5A9"/>
+    <rect x="36" y="32" width="130" height="8" fill="#6B5F53"/>
+    <rect x="36" y="52" width="180" height="6" fill="#8C7E70"/>
+    <rect x="72" y="112" width="136" height="42" rx="21" fill="#4D443B"/>
+  </g>
+  <!-- fita da frente -->
+  <g transform="translate(100 100) rotate(-7)">
+    <rect width="300" height="190" rx="14" fill="#E6E1DC"/>
+    <rect x="22" y="18" width="256" height="96" rx="6" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="40" y="36" width="150" height="8" fill="#A29386"/>
+    <rect x="40" y="56" width="200" height="6" fill="#C2B5A9"/>
+    <rect x="40" y="72" width="170" height="6" fill="#C2B5A9"/>
+    <path d="M70 190 L84 168 H216 L230 190 Z" fill="#C2B5A9"/>
+    <rect x="78" y="122" width="144" height="44" rx="22" fill="#4D443B"/>
+    <circle cx="112" cy="144" r="16" fill="#E6E1DC"/><circle cx="112" cy="144" r="6" fill="#4D443B"/>
+    <circle cx="188" cy="144" r="16" fill="#E6E1DC"/><circle cx="188" cy="144" r="6" fill="#4D443B"/>
+    <circle cx="14" cy="14" r="4" fill="#BFAFA1"/><circle cx="286" cy="14" r="4" fill="#BFAFA1"/>
+    <circle cx="14" cy="176" r="4" fill="#BFAFA1"/><circle cx="286" cy="176" r="4" fill="#BFAFA1"/>
+  </g>
+
+  <!-- ===== CDs (direita) ===== -->
+  <g>
+    <circle cx="1230" cy="250" r="120" fill="url(#cd)" opacity="0.85"/>
+    <circle cx="1230" cy="250" r="38" fill="none" stroke="#8C7E70" stroke-width="6" opacity="0.5"/>
+    <circle cx="1230" cy="250" r="18" fill="#4D443B"/>
+  </g>
+  <g>
+    <circle cx="1380" cy="190" r="150" fill="url(#cd)"/>
+    <circle cx="1380" cy="190" r="150" fill="none" stroke="#E6E1DC" stroke-width="3"/>
+    <path d="M1380 190 L1475 74 A150 150 0 0 1 1519 128 Z" fill="#FFFFFF" opacity="0.28"/>
+    <path d="M1380 190 L1285 306 A150 150 0 0 1 1241 252 Z" fill="#FFFFFF" opacity="0.2"/>
+    <circle cx="1380" cy="190" r="46" fill="none" stroke="#8C7E70" stroke-width="7" opacity="0.5"/>
+    <circle cx="1380" cy="190" r="22" fill="#4D443B"/>
+  </g>
+
+  <!-- brilhos de "novidade" -->
+  <use href="#brilho" transform="translate(520 70) scale(0.9)"/>
+  <use href="#brilho" transform="translate(640 335) scale(0.6)" opacity="0.8"/>
+  <use href="#brilho" transform="translate(1010 62) scale(0.7)" opacity="0.8"/>
+  <use href="#brilho" transform="translate(1085 340) scale(1)"/>
+  <use href="#brilho" transform="translate(470 330) scale(0.5)" opacity="0.7"/>
+</svg>

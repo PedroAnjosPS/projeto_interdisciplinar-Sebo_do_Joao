@@ -1,5 +1,257 @@
-cpf: 547.808.290-20; 259.801.380-80;
-telefone: 6739361557; 1221540365
-cep: 76804-037; 12220-460
-Dados do cartão de crédito: [Mastercard, 5135 3357 7663 8212, 08/28, 815]; [Visa, 4539 6819 2551 4530, 07/28, 551]
-senha: tiago123; tiago@124
+=============== CADASTRAR CLIENTE ===============
+Cliente: Jessica;
+
+e-mail: jessica@gmail.com;
+
+senha: 12345678, jessica123;
+
+cpfs: 530.740.090-04; 823.795.900-01, 971.109.870-94, 173.030.520-20;
+
+telefones: 1638451213 (SP); 3835148254 (MG)
+
+ceps: 15130-970 (Mirassol - SP); 30285-189 (Belo Horizonte - MG);
+
+Dados do cartão de crédito: [Mastercard, 5224 2192 5418 2475, 05/28, 419]; [Visa, 4556 3283 6477 9517, 07/30, 970];
+
+-----------------------------------------------------------------------------------------------------------------------
+- REGISTROS PREVIAMENTE CADASTRADOS:
+
+=========== CLIENTE ===========
+e-mail: marcos.sup@sebodojoao.com;
+senha de admin: func123;
+
+
+=========== FUNCIONÁRIO ===========
+e-mail: marcos.sup@sebodojoao.com;
+senha de admin: func123;
+
+
+=========== ADMIN ===========
+e-mail: ana.dona@sebodojoao.com;
+senha de admin: admin123;
+-----------------------------------------------------------------------------------------------------------------------
+
+=============== CADASTRAR FUNCIONÁRIO ===============
+
+Funcionário: Jones Estoque;
+
+e-mail: jones@gmail.com;
+
+senha: 12345678, jones123;
+
+telefone: 1732373406;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------
+Executar VIEWS
+----------------------------------------------
+SELECT TOP 10 * FROM vw_pedidos_detalhados;    -- pedido + cliente + funcionário + produtos + entrega
+SELECT * FROM vw_vendas_por_produto;           -- unidades e faturamento por produto (só pedidos pagos)
+SELECT * FROM vw_pagamentos_pendentes;         -- parcelas pendentes e dias de atraso
+SELECT TOP 10 * FROM vw_relatorio_pedidos;     -- relatório usado no Excel
+
+
+
+----------------------------------------------
+Executar FUNCTIONS
+----------------------------------------------
+SELECT dbo.fn_total_pedido(1) AS Total_Pedido;           -- escalar: devolve um valor
+SELECT * FROM dbo.fn_itens_do_pedido(1);                 -- inline: devolve uma tabela
+SELECT * FROM dbo.fn_parcelas(100.00, 3, GETDATE());     -- multi-statement: devolve variável do tipo tabela (33,33 / 33,33 / 33,34)
+
+
+
+----------------------------------------------
+Executar PROCEDURES
+----------------------------------------------
+sp_cadastrar_cliente (salva usuarios e clientes):
+BEGIN TRAN
+DECLARE @id INT
+EXEC sp_cadastrar_cliente @nome='Maria Teste', @email='maria.teste@email.com', @senha='senha1234',
+     @telefone='(17) 99999-1111', @cpf='529.982.247-25', @data_nascimento='1995-05-20', @usuario_id=@id OUTPUT
+SELECT @id AS novo_cliente
+SELECT * FROM usuarios WHERE id = @id
+ROLLBACK
+
+
+
+sp_cadastrar_funcionario (salva usuarios e funcionarios):
+BEGIN TRAN
+DECLARE @id INT
+EXEC sp_cadastrar_cliente @nome='Maria Teste', @email='maria.teste@email.com', @senha='senha1234',
+     @telefone='(17) 99999-1111', @cpf='529.982.247-25', @data_nascimento='1995-05-20', @usuario_id=@id OUTPUT
+SELECT @id AS novo_cliente
+SELECT * FROM usuarios WHERE id = @id
+ROLLBACK
+
+
+
+sp_finalizar_compra junto com sp_cancelar_pedido - este código mostra as triggers de estoque agindo, porque o estoque baixa na compra e volta no cancelamento:
+BEGIN TRAN
+DECLARE @p INT
+SELECT id, estoque FROM produtos WHERE id IN (2,7)                 -- antes: 5 e 5
+
+EXEC sp_finalizar_compra @cliente_id=1, @endereco_id=1,
+     @itens_json='[{"produtoId":2,"quantidade":1},{"produtoId":7,"quantidade":2}]',
+     @forma_pagamento='CARTAO_CREDITO', @quantidade_parcelas=3, @valor_frete=20.00,
+     @bandeira='visa', @final_cartao='1234', @pedido_id=@p OUTPUT
+
+SELECT id, estoque FROM produtos WHERE id IN (2,7)                 -- depois: 4 e 3 (trigger baixou)
+SELECT id, total, status FROM pedidos WHERE id = @p                -- status 2 (trigger confirmou o pagamento)
+SELECT * FROM pagamentos WHERE pedido_id = @p                      -- 3 parcelas (fn_parcelas)
+
+EXEC sp_cancelar_pedido @pedido_id=@p, @cliente_id=1
+SELECT id, estoque FROM produtos WHERE id IN (2,7)                 -- voltou para 5 e 5 (trigger devolveu)
+SELECT id, status FROM pedidos WHERE id = @p                       -- status 4 (cancelado)
+ROLLBACK
+
+
+sp_avancar_entrega (gera o código de rastreio quando o pedido entra em trânsito):
+BEGIN TRAN
+SELECT pe.id, pe.status, e.status AS entrega FROM pedidos pe JOIN entregas e ON e.id = pe.entrega_id WHERE pe.id = 123
+EXEC sp_avancar_entrega @pedido_id = 123, @funcionario_id = 7
+SELECT pe.id, e.status AS entrega, e.codigo_rastreio FROM pedidos pe JOIN entregas e ON e.id = pe.entrega_id WHERE pe.id = 123
+ROLLBACK
+
+
+----------------------------------------------
+Executar BACKUP E RESTORE DO BANCO
+----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------
+Executar TRIGGERS
+----------------------------------------------
+-- tr_pagamentos_confirma_pedido: pagamento aprovado muda o pedido de 1 para 2
+BEGIN TRAN
+SELECT id, status FROM pedidos WHERE id = 81                       -- 1 (aguardando)
+UPDATE pagamentos SET status = 2 WHERE pedido_id = 81
+SELECT id, status FROM pedidos WHERE id = 81                       -- 2 (processando)
+ROLLBACK
+
+-- tr_entregas_conclui_pedido: entrega entregue conclui o pedido (2 para 3)
+BEGIN TRAN
+SELECT id, status FROM pedidos WHERE id = 123                      -- 2
+UPDATE entregas SET status = 4 WHERE id = (SELECT entrega_id FROM pedidos WHERE id = 123)
+SELECT id, status FROM pedidos WHERE id = 123                      -- 3
+ROLLBACK
+
+-- tr_item_pedidos_baixa_estoque: recusa estoque insuficiente
+BEGIN TRY
+  BEGIN TRAN
+  INSERT INTO item_pedidos (pedido_id, produto_id, quantidade, preco_unitario) VALUES (81, 2, 9999, 10)
+  COMMIT
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS erro, ERROR_MESSAGE() AS msg           -- 50007 Estoque é insuficiente...
+  IF @@TRANCOUNT > 0 ROLLBACK
+END CATCH
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+IF @@TRANCOUNT > 0 ROLLBACK;

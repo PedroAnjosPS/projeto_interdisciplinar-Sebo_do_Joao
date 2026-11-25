@@ -50,9 +50,14 @@
     </header>
 
     <main class="container py-5">
-        <div class="mb-4">
-            <h2 class="ec-admin-title fw-bold mb-1">GERENCIAMENTO DE FUNCIONÁRIOS</h2>
-            <p class="ec-conta-email mb-0">Funcionários comuns da loja. Ao inativar, a pessoa não consegue mais entrar no sistema, mas o histórico de pedidos e produtos dela continua guardado.</p>
+        <div class="mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+            <div>
+                <h2 class="ec-admin-title fw-bold mb-1">GERENCIAMENTO DE FUNCIONÁRIOS</h2>
+                <p class="ec-conta-email mb-0">Funcionários comuns da loja. Ao inativar, a pessoa não consegue mais entrar no sistema, mas o histórico de pedidos e produtos dela continua guardado.</p>
+            </div>
+            <button type="button" id="btn-novo-funcionario" class="btn ec-btn-dark ec-btn-pill px-4">
+                <i class="fas fa-user-plus me-2"></i>Novo funcionário
+            </button>
         </div>
 
         <div id="mensagem-funcionarios" role="status"></div>
@@ -167,6 +172,102 @@
             } catch (erro) {
                 mostrarMensagem(erro.message, 'danger');
             }
+        });
+
+        // Janela de cadastro. O código (FUNC-NNN) é gerado pelo servidor, por isso não tem campo para ele.
+        function abrirModalNovoFuncionario() {
+            const html = `
+                <div class="modal-content ec-card ec-card-shadow border-0">
+                    <form id="form-funcionario" novalidate>
+                        <div class="modal-body p-4 p-md-5">
+                            <h5 class="ec-heading-dark fw-bold mb-1">Novo funcionário</h5>
+                            <p class="ec-texto-suave mb-4">
+                                O código é gerado automaticamente. Combine com a pessoa para trocar a senha no primeiro acesso.
+                            </p>
+
+                            <div class="row g-3">
+                                ${campoDeFormulario({ id: 'func-nome', rotulo: 'Nome completo',
+                                    atributos: 'maxlength="100" autocomplete="off" data-foco' })}
+                                ${campoDeFormulario({ id: 'func-email', rotulo: 'E-mail', tipo: 'email',
+                                    placeholder: 'nome@exemplo.com', atributos: 'maxlength="100" autocomplete="off"' })}
+                                ${campoDeFormulario({ id: 'func-telefone', rotulo: 'Telefone', classe: 'col-12',
+                                    placeholder: '(17) 99999-0000', atributos: 'inputmode="tel" maxlength="15" autocomplete="off"' })}
+                                <div class="col-12">
+                                    <label class="ec-admin-label" for="func-senha">Senha inicial</label>
+                                    <div class="ec-campo-senha">
+                                        <input id="func-senha" type="password" class="form-control ec-admin-input"
+                                            autocomplete="new-password" aria-describedby="erro-func-senha">
+                                        <button type="button" class="ec-btn-olho" data-ec-mostrar-senha="func-senha"
+                                            aria-label="Mostrar senha"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                    <div id="erro-func-senha" class="ec-form-erro" role="alert"></div>
+                                </div>
+                            </div>
+
+                            <div id="func-mensagem" class="mt-2" role="status"></div>
+
+                            <div class="d-flex justify-content-end gap-2 flex-wrap mt-4">
+                                <button type="button" class="btn ec-btn-outline-primary ec-btn-pill px-4" data-acao="cancelar">Cancelar</button>
+                                <button type="submit" class="btn ec-btn-dark ec-btn-pill px-4">Cadastrar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>`;
+
+            return abrirJanela(html, (el, fechar) => {
+                const $ = (id) => el.querySelector('#' + id);
+                const verificadores = {
+                    // Aqui quem preenche é o administrador, então os avisos de campo vazio falam do funcionário
+                    'func-nome': () => $('func-nome').value.trim() ? erroDoNome($('func-nome').value) : 'Informe o nome.',
+                    'func-email': () => $('func-email').value.trim() ? erroDoEmail($('func-email').value) : 'Informe o e-mail.',
+                    // No cadastro do funcionário o telefone é obrigatório
+                    'func-telefone': () => $('func-telefone').value.trim() ? erroDoTelefone($('func-telefone').value) : 'Informe o telefone.',
+                    'func-senha': () => $('func-senha').value ? erroDaSenhaNova($('func-senha').value) : 'Informe a senha inicial.'
+                };
+
+                ligarMascara($('func-telefone'), formatarTelefone);
+
+                Object.keys(verificadores).forEach((id) => {
+                    const input = $(id);
+                    input.addEventListener('blur', () => { if (!apertandoBotao && input.value.trim()) mostrarErroDoCampo(id, verificadores[id]()); });
+                    input.addEventListener('input', () => { if (input.classList.contains('is-invalid')) mostrarErroDoCampo(id, verificadores[id]()); });
+                });
+
+                el.querySelector('[data-acao="cancelar"]').addEventListener('click', () => fechar(null));
+
+                $('form-funcionario').addEventListener('submit', async (evento) => {
+                    evento.preventDefault();
+                    $('func-mensagem').innerHTML = '';
+
+                    const ids = Object.keys(verificadores);
+                    ids.forEach((id) => mostrarErroDoCampo(id, verificadores[id]()));
+                    const primeiro = ids.find((id) => verificadores[id]());
+                    if (primeiro) { $(primeiro).focus(); return; }
+
+                    const botao = $('form-funcionario').querySelector('[type="submit"]');
+                    botao.disabled = true;
+                    try {
+                        fechar(await chamarApi('/api/funcionarios', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                nome: $('func-nome').value.trim(), email: $('func-email').value.trim(),
+                                telefone: $('func-telefone').value.trim(), senha: $('func-senha').value
+                            })
+                        }));
+                    } catch (erro) {
+                        $('func-mensagem').innerHTML = `<div class="alert alert-danger py-2 mb-0 small">${escaparHtml(erro.message)}</div>`;
+                        botao.disabled = false;
+                    }
+                });
+            });
+        }
+
+        document.getElementById('btn-novo-funcionario').addEventListener('click', async () => {
+            mostrarMensagem('');
+            const criado = await abrirModalNovoFuncionario();
+            if (!criado) return;
+            mostrarMensagem(`${criado.nome} foi cadastrado(a). Código: ${criado.codigoFuncionario}.`);
+            await carregarFuncionarios();
         });
 
         document.addEventListener('DOMContentLoaded', async () => {

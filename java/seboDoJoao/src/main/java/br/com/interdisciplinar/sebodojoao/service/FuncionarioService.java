@@ -8,6 +8,7 @@ import br.com.interdisciplinar.sebodojoao.repository.FuncionarioRepository;
 import br.com.interdisciplinar.sebodojoao.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -72,29 +73,23 @@ public class FuncionarioService {
         String email = ValidacaoDeConta.email(dto.email());
         String senha = ValidacaoDeConta.senha(dto.senha());
         String telefone = ValidacaoDeConta.telefone(dto.telefone());
-        String codigo = ValidacaoDeConta.codigoDoFuncionario(dto.codigoFuncionario());
         conferirEmailLivre(email, null);
 
         // Sem status informado, a conta nasce ativa
         int status = dto.status() != null ? dto.status().getCodigo() : StatusUsuario.ATIVO.getCodigo();
 
-        // A procedure sp_cadastrar_funcionario grava o usuário e o funcionário numa transação só
-        // e devolve o id criado. Quem se cadastra por aqui nunca nasce administrador (admin = 0).
-        Integer novoId = jdbc.execute((Connection conexao) -> {
-            try (CallableStatement chamada = conexao.prepareCall("{call dbo.sp_cadastrar_funcionario(?,?,?,?,?,?,?,?,?)}")) {
-                chamada.setString(1, nome);
-                chamada.setString(2, email);
-                chamada.setString(3, senha);
-                chamada.setString(4, telefone);
-                chamada.setString(5, codigo);
-                chamada.setBoolean(6, false);
-                chamada.setInt(7, status);
-                chamada.setString(8, dto.fotoPerfil());   // null quando não há foto
-                chamada.registerOutParameter(9, Types.INTEGER);
-                chamada.execute();
-                return chamada.getInt(9);
+        // O código (FUNC-001, FUNC-002...) é sempre gerado aqui; o que vier no pedido é ignorado.
+        // Se dois cadastros pegarem o mesmo número ao mesmo tempo, o banco recusa o segundo
+        // (erro 50032 da procedure) e tentamos de novo com o número seguinte.
+        Integer novoId = null;
+        for (int tentativa = 1; novoId == null; tentativa++) {
+            try {
+                novoId = gravarFuncionario(nome, email, senha, telefone, proximoCodigo(), status, dto.fotoPerfil());
+            } catch (UncategorizedSQLException erro) {
+                boolean codigoRepetido = erro.getSQLException() != null && erro.getSQLException().getErrorCode() == 50032;
+                if (!codigoRepetido || tentativa >= 3) throw erro;
             }
-        });
+        }
 
         Funcionario salvo = funcionarioRepository.findById(novoId.longValue()).orElseThrow();
 
@@ -109,6 +104,36 @@ public class FuncionarioService {
                 salvo.getCodigoFuncionario(),
                 salvo.getAdmin()
         );
+    }
+
+    // Próximo código livre: o maior número já usado em FUNC-NNN, mais 1 (começa em FUNC-001).
+    // Usa o maior número, e não a contagem, para nunca repetir o código de um funcionário que saiu.
+    private String proximoCodigo() {
+        Integer maior = jdbc.queryForObject(
+                "SELECT MAX(TRY_CAST(SUBSTRING(codigo_funcionario, 6, 20) AS INT)) "
+                + "FROM funcionarios WHERE codigo_funcionario LIKE 'FUNC-%'", Integer.class);
+        return String.format("FUNC-%03d", (maior == null ? 0 : maior) + 1);
+    }
+
+    // A procedure sp_cadastrar_funcionario grava o usuário e o funcionário numa transação só
+    // e devolve o id criado. Quem se cadastra por aqui nunca nasce administrador (admin = 0).
+    private Integer gravarFuncionario(String nome, String email, String senha, String telefone,
+                                      String codigo, int status, String fotoPerfil) {
+        return jdbc.execute((Connection conexao) -> {
+            try (CallableStatement chamada = conexao.prepareCall("{call dbo.sp_cadastrar_funcionario(?,?,?,?,?,?,?,?,?)}")) {
+                chamada.setString(1, nome);
+                chamada.setString(2, email);
+                chamada.setString(3, senha);
+                chamada.setString(4, telefone);
+                chamada.setString(5, codigo);
+                chamada.setBoolean(6, false);
+                chamada.setInt(7, status);
+                chamada.setString(8, fotoPerfil);   // null quando não há foto
+                chamada.registerOutParameter(9, Types.INTEGER);
+                chamada.execute();
+                return chamada.getInt(9);
+            }
+        });
     }
 
     public FuncionarioResponseDTO atualizar(Long id, FuncionarioRequestDTO dto) {

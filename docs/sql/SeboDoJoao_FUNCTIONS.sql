@@ -52,7 +52,7 @@ select * from dbo.fn_itens_do_pedido(1)
 go
 
 -----------------------------------------------------------------------
--- 3-) Crie uma function que gere as parcelas de uma compra
+-- 3-) Function que gera as parcelas de uma compra
 -- Saída de dados: número da parcela, valor e data de vencimento
 -- Se o total não dividir certinho, os centavos que sobram ficam na
 -- última parcela. Cada parcela vence um mês depois da anterior
